@@ -234,6 +234,17 @@ const Workspace = () => {
                 <Code size={16} /> Code
               </button>
             </div>
+            <div className="preview-actions">
+              <Button 
+                size="sm" 
+                variant="outline" 
+                onClick={openInNewTab}
+                data-testid="open-new-tab-btn"
+                disabled={!project.generated_code}
+              >
+                <ExternalLink size={16} className="mr-1" /> Open in New Tab
+              </Button>
+            </div>
           </div>
           
           {previewMode === 'preview' ? (
