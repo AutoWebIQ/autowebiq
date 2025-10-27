@@ -73,6 +73,24 @@ const Workspace = () => {
     }
   };
 
+  const fetchUserCredits = async () => {
+    try {
+      const res = await axios.get(`${API}/auth/me`, axiosConfig);
+      setUserCredits(res.data.credits);
+    } catch (error) {
+      console.error('Failed to load credits');
+    }
+  };
+
+  const fetchModels = async () => {
+    try {
+      const res = await axios.get(`${API}/models`);
+      setModels(res.data);
+    } catch (error) {
+      console.error('Failed to load models');
+    }
+  };
+
   const sendMessage = async () => {
     if (!input.trim() || loading) return;
     
