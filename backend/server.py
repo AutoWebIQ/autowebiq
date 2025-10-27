@@ -359,102 +359,79 @@ async def download_project(project_id: str, user_id: str = Depends(get_current_u
         headers={"Content-Disposition": f"attachment; filename={project['name'].replace(' ', '_')}.zip"}
     )
 
-# WebSocket for streaming chat
-@app.websocket("/ws/chat")
-async def websocket_chat(websocket: WebSocket):
-    await websocket.accept()
+# Chat endpoint using HTTP POST instead of WebSocket
+@api_router.post("/chat")
+async def chat(request: ChatRequest, user_id: str = Depends(get_current_user)):
+    # Verify project
+    project = await db.projects.find_one({"id": request.project_id, "user_id": user_id})
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
     
+    # Save user message
+    user_msg = ChatMessage(
+        project_id=request.project_id,
+        role="user",
+        content=request.message
+    )
+    user_dict = user_msg.model_dump()
+    user_dict['created_at'] = user_dict['created_at'].isoformat()
+    await db.messages.insert_one(user_dict)
+    
+    # Get AI response
     try:
-        while True:
-            data = await websocket.receive_json()
-            project_id = data.get('project_id')
-            message = data.get('message')
-            model = data.get('model', 'gpt-5')
-            token = data.get('token')
-            
-            # Verify token
-            try:
-                payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
-                user_id = payload.get("user_id")
-            except:
-                await websocket.send_json({"error": "Invalid token"})
-                continue
-            
-            # Verify project
-            project = await db.projects.find_one({"id": project_id, "user_id": user_id})
-            if not project:
-                await websocket.send_json({"error": "Project not found"})
-                continue
-            
-            # Save user message
-            user_msg = ChatMessage(
-                project_id=project_id,
-                role="user",
-                content=message
-            )
-            user_dict = user_msg.model_dump()
-            user_dict['created_at'] = user_dict['created_at'].isoformat()
-            await db.messages.insert_one(user_dict)
-            
-            # Get AI response
-            try:
-                api_key = os.environ.get('EMERGENT_LLM_KEY')
-                chat = LlmChat(
-                    api_key=api_key,
-                    session_id=project_id,
-                    system_message="You are an expert web developer. Generate complete, production-ready websites. Provide ONLY the HTML code with inline CSS and JavaScript. Make it modern, responsive, and beautiful."
-                )
-                
-                if model.startswith('claude'):
-                    chat.with_model("anthropic", model)
-                else:
-                    chat.with_model("openai", model)
-                
-                prompt = f"{message}\n\nProject: {project['name']}\nDescription: {project['description']}"
-                if project['generated_code']:
-                    prompt += f"\n\nCurrent code:\n{project['generated_code'][:2000]}"
-                
-                user_message = UserMessage(text=prompt)
-                ai_response = await chat.send_message(user_message)
-                
-                # Extract HTML
-                html_code = ai_response.strip()
-                if "```html" in html_code:
-                    html_code = html_code.split("```html")[1].split("```")[0].strip()
-                elif "```" in html_code:
-                    html_code = html_code.split("```")[1].split("```")[0].strip()
-                
-                # Save AI message
-                ai_msg = ChatMessage(
-                    project_id=project_id,
-                    role="assistant",
-                    content=ai_response
-                )
-                ai_dict = ai_msg.model_dump()
-                ai_dict['created_at'] = ai_dict['created_at'].isoformat()
-                await db.messages.insert_one(ai_dict)
-                
-                # Update project code
-                await db.projects.update_one(
-                    {"id": project_id},
-                    {"$set": {
-                        "generated_code": html_code,
-                        "updated_at": datetime.now(timezone.utc).isoformat()
-                    }}
-                )
-                
-                # Send response
-                await websocket.send_json({
-                    "type": "message",
-                    "content": ai_response,
-                    "code": html_code
-                })
-                
-            except Exception as e:
-                await websocket.send_json({"error": str(e)})
+        api_key = os.environ.get('EMERGENT_LLM_KEY')
+        chat = LlmChat(
+            api_key=api_key,
+            session_id=request.project_id,
+            system_message="You are an expert web developer. Generate complete, production-ready websites. Provide ONLY the HTML code with inline CSS and JavaScript. Make it modern, responsive, and beautiful."
+        )
+        
+        if request.model.startswith('claude'):
+            chat.with_model("anthropic", request.model)
+        else:
+            chat.with_model("openai", request.model)
+        
+        prompt = f"{request.message}\n\nProject: {project['name']}\nDescription: {project['description']}"
+        if project['generated_code']:
+            prompt += f"\n\nCurrent code:\n{project['generated_code'][:2000]}"
+        
+        user_message = UserMessage(text=prompt)
+        ai_response = await chat.send_message(user_message)
+        
+        # Extract HTML
+        html_code = ai_response.strip()
+        if "```html" in html_code:
+            html_code = html_code.split("```html")[1].split("```")[0].strip()
+        elif "```" in html_code:
+            html_code = html_code.split("```")[1].split("```")[0].strip()
+        
+        # Save AI message
+        ai_msg = ChatMessage(
+            project_id=request.project_id,
+            role="assistant",
+            content=ai_response
+        )
+        ai_dict = ai_msg.model_dump()
+        ai_dict['created_at'] = ai_dict['created_at'].isoformat()
+        await db.messages.insert_one(ai_dict)
+        
+        # Update project code
+        await db.projects.update_one(
+            {"id": request.project_id},
+            {"$set": {
+                "generated_code": html_code,
+                "updated_at": datetime.now(timezone.utc).isoformat()
+            }}
+        )
+        
+        return {
+            "user_message": user_msg.model_dump(),
+            "ai_message": ai_msg.model_dump(),
+            "code": html_code
+        }
     
-    except WebSocketDisconnect:
-        pass
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"AI error: {str(e)}")
 
 app.include_router(api_router)
 
