@@ -36,6 +36,9 @@ JWT_EXPIRATION = timedelta(days=30)
 
 razorpay_client = razorpay.Client(auth=(os.environ['RAZORPAY_KEY_ID'], os.environ['RAZORPAY_KEY_SECRET']))
 
+# OpenAI client
+openai_client = AsyncOpenAI(api_key=os.environ.get('OPENAI_API_KEY'))
+
 app = FastAPI()
 api_router = APIRouter(prefix="/api")
 
