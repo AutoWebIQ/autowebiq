@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import ProjectView from './pages/ProjectView';
+import Workspace from './pages/Workspace';
 import CreditsPage from './pages/CreditsPage';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
