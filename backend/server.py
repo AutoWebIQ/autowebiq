@@ -206,6 +206,11 @@ async def get_me(user_id: str = Depends(get_current_user)):
 async def get_packages():
     return CREDIT_PACKAGES
 
+@api_router.get("/models")
+async def get_models():
+    """Get available AI models and their costs"""
+    return MODEL_COSTS
+
 @api_router.post("/credits/create-order")
 async def create_order(request: CreateOrderRequest, user_id: str = Depends(get_current_user)):
     package = next((p for p in CREDIT_PACKAGES if p["id"] == request.package_id), None)
