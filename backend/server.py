@@ -73,7 +73,7 @@ class Project(BaseModel):
     name: str
     description: str
     generated_code: str = ""
-    model: str = "claude-4-sonnet-20250514"  # Claude as default
+    model: str = "claude-4.5-sonnet-200k"  # Default to Claude 4.5 Sonnet
     status: str = "active"
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
@@ -84,17 +84,18 @@ class ChatMessage(BaseModel):
     project_id: str
     role: str  # user, assistant, system
     content: str
+    credits_used: int = 0  # Track credits used per message
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 class ProjectCreate(BaseModel):
     name: str
     description: str
-    model: str = "claude-4-sonnet-20250514"
+    model: str = "claude-4.5-sonnet-200k"
 
 class ChatRequest(BaseModel):
     project_id: str
     message: str
-    model: str = "claude-4-sonnet-20250514"
+    model: str = "claude-4.5-sonnet-200k"
 
 class CreateOrderRequest(BaseModel):
     package_id: str
