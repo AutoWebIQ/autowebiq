@@ -1,245 +1,133 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import ReactMarkdown from 'react-markdown';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Card } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Separator } from '@/components/ui/separator';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { toast } from 'sonner';
-import { Send, Plus, Trash2, Image as ImageIcon, Upload, Menu, X, MessageSquare, Sparkles, LogOut, Edit2, Check } from 'lucide-react';
+import { Sparkles, Code, Zap, Download, Eye, Trash2, Plus, CreditCard, Rocket, Menu, X, LogOut, CheckCircle } from 'lucide-react';
+import Prism from 'prismjs';
+import 'prismjs/themes/prism-tomorrow.css';
 import '@/App.css';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
-function App() {
-  const [token, setToken] = useState(localStorage.getItem('token'));
-  const [user, setUser] = useState(null);
-  const [showAuth, setShowAuth] = useState(!token);
-  const [isLogin, setIsLogin] = useState(true);
+const LandingPage = () => {
+  const navigate = useNavigate();
+  
+  return (
+    <div className="landing-page" data-testid="landing-page">
+      <nav className="landing-nav">
+        <div className="nav-content">
+          <div className="logo" data-testid="logo">
+            <Sparkles className="logo-icon" />
+            <span>Optra AI</span>
+          </div>
+          <div className="nav-buttons">
+            <Button data-testid="nav-login-btn" variant="ghost" onClick={() => navigate('/auth?mode=login')}>Login</Button>
+            <Button data-testid="nav-signup-btn" onClick={() => navigate('/auth?mode=register')}>Get Started Free</Button>
+          </div>
+        </div>
+      </nav>
+      
+      <section className="hero-section" data-testid="hero-section">
+        <div className="hero-content">
+          <h1 data-testid="hero-title">Build Websites with AI in Seconds</h1>
+          <p data-testid="hero-subtitle">Transform your ideas into beautiful, functional websites using the power of GPT-5. No coding required.</p>
+          <div className="hero-buttons">
+            <Button data-testid="hero-cta-btn" size="lg" onClick={() => navigate('/auth?mode=register')}>
+              <Rocket className="mr-2" />Start Building - 10 Free Credits
+            </Button>
+          </div>
+          <div className="hero-features">
+            <div className="feature-badge" data-testid="feature-1">
+              <CheckCircle size={16} /> 10 Free Credits
+            </div>
+            <div className="feature-badge" data-testid="feature-2">
+              <CheckCircle size={16} /> GPT-5 Powered
+            </div>
+            <div className="feature-badge" data-testid="feature-3">
+              <CheckCircle size={16} /> Instant Preview
+            </div>
+          </div>
+        </div>
+      </section>
+      
+      <section className="features-section" data-testid="features-section">
+        <h2 data-testid="features-title">Why Choose Optra AI?</h2>
+        <div className="features-grid">
+          <Card className="feature-card" data-testid="feature-card-1">
+            <Sparkles className="feature-icon" />
+            <h3>AI-Powered Generation</h3>
+            <p>Powered by GPT-5 for intelligent, creative website generation</p>
+          </Card>
+          <Card className="feature-card" data-testid="feature-card-2">
+            <Code className="feature-icon" />
+            <h3>Clean Code</h3>
+            <p>Production-ready HTML, CSS, and JavaScript code</p>
+          </Card>
+          <Card className="feature-card" data-testid="feature-card-3">
+            <Eye className="feature-icon" />
+            <h3>Live Preview</h3>
+            <p>See your website instantly with our live preview feature</p>
+          </Card>
+          <Card className="feature-card" data-testid="feature-card-4">
+            <Download className="feature-icon" />
+            <h3>Download & Deploy</h3>
+            <p>Download your website as a ZIP file and deploy anywhere</p>
+          </Card>
+        </div>
+      </section>
+    </div>
+  );
+};
+
+const AuthPage = () => {
+  const navigate = useNavigate();
+  const [params] = React.useState(new URLSearchParams(window.location.search));
+  const [isLogin, setIsLogin] = useState(params.get('mode') === 'login');
   const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [conversations, setConversations] = useState([]);
-  const [currentConversation, setCurrentConversation] = useState(null);
-  const [messages, setMessages] = useState([]);
-  const [inputMessage, setInputMessage] = useState('');
   const [loading, setLoading] = useState(false);
-  const [showImageDialog, setShowImageDialog] = useState(false);
-  const [imagePrompt, setImagePrompt] = useState('');
-  const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [editingConvId, setEditingConvId] = useState(null);
-  const [editTitle, setEditTitle] = useState('');
-  const messagesEndRef = useRef(null);
-  const fileInputRef = useRef(null);
-
-  const axiosConfig = {
-    headers: token ? { Authorization: `Bearer ${token}` } : {}
-  };
-
-  useEffect(() => {
-    if (token) {
-      fetchUser();
-      fetchConversations();
-    }
-  }, [token]);
-
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
-
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
-
-  const fetchUser = async () => {
-    try {
-      const res = await axios.get(`${API}/auth/me`, axiosConfig);
-      setUser(res.data);
-    } catch (error) {
-      console.error('Failed to fetch user', error);
-      handleLogout();
-    }
-  };
-
-  const fetchConversations = async () => {
-    try {
-      const res = await axios.get(`${API}/conversations`, axiosConfig);
-      setConversations(res.data);
-      if (res.data.length > 0 && !currentConversation) {
-        loadConversation(res.data[0].id);
-      }
-    } catch (error) {
-      console.error('Failed to fetch conversations', error);
-    }
-  };
-
-  const loadConversation = async (convId) => {
-    try {
-      const res = await axios.get(`${API}/conversations/${convId}`, axiosConfig);
-      setCurrentConversation(res.data.conversation);
-      setMessages(res.data.messages);
-    } catch (error) {
-      console.error('Failed to load conversation', error);
-    }
-  };
 
   const handleAuth = async (e) => {
     e.preventDefault();
+    setLoading(true);
+    
     try {
       const endpoint = isLogin ? '/auth/login' : '/auth/register';
-      const res = await axios.post(`${API}${endpoint}`, { username, password });
+      const payload = isLogin 
+        ? { email, password }
+        : { username, email, password };
+      
+      const res = await axios.post(`${API}${endpoint}`, payload);
       localStorage.setItem('token', res.data.access_token);
-      setToken(res.data.access_token);
-      setUser({ username: res.data.username });
-      setShowAuth(false);
-      toast.success(isLogin ? 'Welcome back!' : 'Account created!');
+      localStorage.setItem('user', JSON.stringify(res.data.user));
+      toast.success(isLogin ? 'Welcome back!' : 'Account created! You got 10 free credits!');
+      navigate('/dashboard');
     } catch (error) {
       toast.error(error.response?.data?.detail || 'Authentication failed');
-    }
-  };
-
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    setToken(null);
-    setUser(null);
-    setShowAuth(true);
-    setConversations([]);
-    setCurrentConversation(null);
-    setMessages([]);
-  };
-
-  const createConversation = async () => {
-    try {
-      const res = await axios.post(`${API}/conversations`, { title: 'New Conversation' }, axiosConfig);
-      setConversations([res.data, ...conversations]);
-      setCurrentConversation(res.data);
-      setMessages([]);
-      toast.success('New conversation started');
-    } catch (error) {
-      toast.error('Failed to create conversation');
-    }
-  };
-
-  const deleteConversation = async (convId, e) => {
-    e.stopPropagation();
-    try {
-      await axios.delete(`${API}/conversations/${convId}`, axiosConfig);
-      setConversations(conversations.filter(c => c.id !== convId));
-      if (currentConversation?.id === convId) {
-        setCurrentConversation(null);
-        setMessages([]);
-        if (conversations.length > 1) {
-          const nextConv = conversations.find(c => c.id !== convId);
-          if (nextConv) loadConversation(nextConv.id);
-        }
-      }
-      toast.success('Conversation deleted');
-    } catch (error) {
-      toast.error('Failed to delete conversation');
-    }
-  };
-
-  const updateConversationTitle = async (convId, newTitle) => {
-    try {
-      await axios.put(`${API}/conversations/${convId}`, { title: newTitle }, axiosConfig);
-      setConversations(conversations.map(c => c.id === convId ? { ...c, title: newTitle } : c));
-      if (currentConversation?.id === convId) {
-        setCurrentConversation({ ...currentConversation, title: newTitle });
-      }
-      setEditingConvId(null);
-    } catch (error) {
-      toast.error('Failed to update title');
-    }
-  };
-
-  const sendMessage = async () => {
-    if (!inputMessage.trim() || !currentConversation) return;
-
-    const userMsg = inputMessage;
-    setInputMessage('');
-    setLoading(true);
-
-    // Optimistically add user message
-    const tempUserMsg = { role: 'user', content: userMsg, created_at: new Date().toISOString() };
-    setMessages([...messages, tempUserMsg]);
-
-    try {
-      const res = await axios.post(`${API}/messages`, {
-        conversation_id: currentConversation.id,
-        content: userMsg
-      }, axiosConfig);
-
-      setMessages(prev => [...prev.slice(0, -1), res.data.user_message, res.data.ai_message]);
-    } catch (error) {
-      toast.error('Failed to send message');
-      setMessages(prev => prev.slice(0, -1));
     } finally {
       setLoading(false);
     }
   };
 
-  const generateImage = async () => {
-    if (!imagePrompt.trim() || !currentConversation) return;
-
-    setLoading(true);
-    setShowImageDialog(false);
-
-    try {
-      const res = await axios.post(`${API}/generate-image`, {
-        conversation_id: currentConversation.id,
-        prompt: imagePrompt
-      }, axiosConfig);
-
-      // Reload conversation to ensure we get all messages including the new image
-      await loadConversation(currentConversation.id);
-      setImagePrompt('');
-      toast.success('Image generated!');
-    } catch (error) {
-      toast.error('Failed to generate image');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleFileUpload = async (e) => {
-    const file = e.target.files[0];
-    if (!file || !currentConversation) return;
-
-    setLoading(true);
-    const formData = new FormData();
-    formData.append('file', file);
-
-    try {
-      const res = await axios.post(`${API}/upload-file?conversation_id=${currentConversation.id}`, formData, {
-        ...axiosConfig,
-        headers: { ...axiosConfig.headers, 'Content-Type': 'multipart/form-data' }
-      });
-
-      await fetchConversations();
-      await loadConversation(currentConversation.id);
-      toast.success('File analyzed!');
-    } catch (error) {
-      toast.error('Failed to upload file');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  if (showAuth) {
-    return (
-      <div className="auth-container" data-testid="auth-page">
-        <div className="auth-card">
-          <div className="auth-header">
-            <Sparkles className="auth-icon" data-testid="sparkles-icon" />
-            <h1 data-testid="auth-title">AI Assistant</h1>
-            <p data-testid="auth-subtitle">Your intelligent companion</p>
-          </div>
-          
-          <form onSubmit={handleAuth} data-testid="auth-form">
+  return (
+    <div className="auth-container" data-testid="auth-page">
+      <div className="auth-card">
+        <div className="auth-header">
+          <Sparkles className="auth-icon" />
+          <h1 data-testid="auth-title">Optra AI</h1>
+          <p data-testid="auth-subtitle">{isLogin ? 'Welcome back' : 'Get started with 10 free credits'}</p>
+        </div>
+        
+        <form onSubmit={handleAuth} data-testid="auth-form">
+          {!isLogin && (
             <Input
               data-testid="username-input"
               type="text"
@@ -248,238 +136,242 @@ function App() {
               onChange={(e) => setUsername(e.target.value)}
               required
             />
-            <Input
-              data-testid="password-input"
-              type="password"
-              placeholder="Password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
-            <Button data-testid="auth-submit-btn" type="submit" className="w-full">
-              {isLogin ? 'Login' : 'Register'}
-            </Button>
-          </form>
-          
-          <button
-            data-testid="toggle-auth-mode-btn"
-            className="auth-toggle"
-            onClick={() => setIsLogin(!isLogin)}
-          >
-            {isLogin ? "Don't have an account? Register" : 'Already have an account? Login'}
-          </button>
-        </div>
+          )}
+          <Input
+            data-testid="email-input"
+            type="email"
+            placeholder="Email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
+          <Input
+            data-testid="password-input"
+            type="password"
+            placeholder="Password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+          />
+          <Button data-testid="auth-submit-btn" type="submit" className="w-full" disabled={loading}>
+            {loading ? 'Please wait...' : (isLogin ? 'Login' : 'Create Account')}
+          </Button>
+        </form>
+        
+        <button
+          data-testid="toggle-auth-mode-btn"
+          className="auth-toggle"
+          onClick={() => setIsLogin(!isLogin)}
+        >
+          {isLogin ? "Don't have an account? Sign up for free" : 'Already have an account? Login'}
+        </button>
       </div>
-    );
+    </div>
+  );
+};
+
+const Dashboard = () => {
+  const navigate = useNavigate();
+  const [user, setUser] = useState(JSON.parse(localStorage.getItem('user') || '{}'));
+  const [projects, setProjects] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const [projectName, setProjectName] = useState('');
+  const [projectPrompt, setProjectPrompt] = useState('');
+  const [creating, setCreating] = useState(false);
+
+  const axiosConfig = {
+    headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const fetchData = async () => {
+    try {
+      const [userRes, projectsRes] = await Promise.all([
+        axios.get(`${API}/auth/me`, axiosConfig),
+        axios.get(`${API}/projects`, axiosConfig)
+      ]);
+      setUser(userRes.data);
+      localStorage.setItem('user', JSON.stringify(userRes.data));
+      setProjects(projectsRes.data);
+    } catch (error) {
+      toast.error('Failed to load data');
+      navigate('/auth?mode=login');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const createProject = async (e) => {
+    e.preventDefault();
+    if (user.credits < 1) {
+      toast.error('Insufficient credits. Please buy more credits.');
+      navigate('/credits');
+      return;
+    }
+    
+    setCreating(true);
+    try {
+      const res = await axios.post(`${API}/projects/create`, {
+        name: projectName,
+        prompt: projectPrompt
+      }, axiosConfig);
+      
+      toast.success('Website generated successfully!');
+      setShowCreateDialog(false);
+      setProjectName('');
+      setProjectPrompt('');
+      navigate(`/project/${res.data.id}`);
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Failed to create project');
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  const deleteProject = async (projectId) => {
+    try {
+      await axios.delete(`${API}/projects/${projectId}`, axiosConfig);
+      setProjects(projects.filter(p => p.id !== projectId));
+      toast.success('Project deleted');
+    } catch (error) {
+      toast.error('Failed to delete project');
+    }
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    navigate('/');
+  };
+
+  if (loading) {
+    return <div className="loading-screen">Loading...</div>;
   }
 
   return (
-    <div className="app-container" data-testid="main-app">
-      {/* Sidebar */}
-      <div className={`sidebar ${sidebarOpen ? 'open' : 'closed'}`} data-testid="sidebar">
-        <div className="sidebar-header">
-          <div className="sidebar-title">
-            <Sparkles size={24} data-testid="sidebar-sparkles-icon" />
-            <span data-testid="sidebar-title-text">AI Assistant</span>
+    <div className="dashboard-container" data-testid="dashboard">
+      <nav className="dashboard-nav">
+        <div className="nav-content">
+          <div className="logo" onClick={() => navigate('/dashboard')}>
+            <Sparkles className="logo-icon" />
+            <span>Optra AI</span>
           </div>
-          <Button
-            data-testid="new-conversation-btn"
-            size="sm"
-            onClick={createConversation}
-            className="new-conv-btn"
-          >
-            <Plus size={18} />
-          </Button>
-        </div>
-
-        <ScrollArea className="conversations-list" data-testid="conversations-list">
-          {conversations.map((conv) => (
-            <div
-              key={conv.id}
-              data-testid={`conversation-item-${conv.id}`}
-              className={`conversation-item ${currentConversation?.id === conv.id ? 'active' : ''}`}
-              onClick={() => loadConversation(conv.id)}
-            >
-              <MessageSquare size={18} data-testid={`conversation-icon-${conv.id}`} />
-              {editingConvId === conv.id ? (
-                <div className="edit-title-container">
-                  <Input
-                    data-testid={`edit-title-input-${conv.id}`}
-                    value={editTitle}
-                    onChange={(e) => setEditTitle(e.target.value)}
-                    onClick={(e) => e.stopPropagation()}
-                    className="edit-title-input"
-                  />
-                  <Button
-                    data-testid={`save-title-btn-${conv.id}`}
-                    size="sm"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      updateConversationTitle(conv.id, editTitle);
-                    }}
-                  >
-                    <Check size={14} />
-                  </Button>
-                </div>
-              ) : (
-                <>
-                  <span data-testid={`conversation-title-${conv.id}`} className="conversation-title">{conv.title}</span>
-                  <div className="conversation-actions">
-                    <Button
-                      data-testid={`edit-conversation-btn-${conv.id}`}
-                      size="sm"
-                      variant="ghost"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setEditingConvId(conv.id);
-                        setEditTitle(conv.title);
-                      }}
-                    >
-                      <Edit2 size={14} />
-                    </Button>
-                    <Button
-                      data-testid={`delete-conversation-btn-${conv.id}`}
-                      size="sm"
-                      variant="ghost"
-                      onClick={(e) => deleteConversation(conv.id, e)}
-                    >
-                      <Trash2 size={14} />
-                    </Button>
-                  </div>
-                </>
-              )}
+          <div className="nav-buttons">
+            <div className="credits-badge" data-testid="credits-badge">
+              <CreditCard size={16} />
+              <span>{user.credits} Credits</span>
             </div>
-          ))}
-        </ScrollArea>
-
-        <div className="sidebar-footer">
-          <div className="user-info" data-testid="user-info">
-            <span data-testid="username-display">{user?.username}</span>
+            <Button data-testid="buy-credits-btn" variant="ghost" onClick={() => navigate('/credits')}>
+              Buy Credits
+            </Button>
+            <Button data-testid="logout-btn" variant="ghost" onClick={handleLogout}>
+              <LogOut size={18} />
+            </Button>
           </div>
-          <Button
-            data-testid="logout-btn"
-            size="sm"
-            variant="ghost"
-            onClick={handleLogout}
-          >
-            <LogOut size={18} />
+        </div>
+      </nav>
+
+      <div className="dashboard-content">
+        <div className="dashboard-header">
+          <div>
+            <h1 data-testid="dashboard-title">My Projects</h1>
+            <p data-testid="dashboard-subtitle">Create and manage your AI-generated websites</p>
+          </div>
+          <Button data-testid="create-project-btn" size="lg" onClick={() => setShowCreateDialog(true)}>
+            <Plus className="mr-2" /> New Project
           </Button>
         </div>
-      </div>
 
-      {/* Main Chat Area */}
-      <div className="chat-container" data-testid="chat-container">
-        <div className="chat-header">
-          <Button
-            data-testid="toggle-sidebar-btn"
-            size="sm"
-            variant="ghost"
-            onClick={() => setSidebarOpen(!sidebarOpen)}
-          >
-            {sidebarOpen ? <X size={20} /> : <Menu size={20} />}
-          </Button>
-          <h2 data-testid="chat-header-title">{currentConversation?.title || 'Select a conversation'}</h2>
-        </div>
-
-        <ScrollArea className="messages-area" data-testid="messages-area">
-          {messages.map((msg, idx) => (
-            <div key={idx} data-testid={`message-${idx}`} className={`message ${msg.role}`}>
-              <div className="message-content">
-                {msg.image_url ? (
-                  <img data-testid={`message-image-${idx}`} src={msg.image_url} alt="Generated" className="generated-image" />
-                ) : (
-                  <div className="markdown-content">
-                    <ReactMarkdown data-testid={`message-text-${idx}`}>
-                      {msg.content}
-                    </ReactMarkdown>
-                  </div>
-                )}
-              </div>
-            </div>
-          ))}
-          {loading && (
-            <div data-testid="loading-indicator" className="message assistant">
-              <div className="message-content">
-                <div className="typing-indicator">
-                  <span></span><span></span><span></span>
+        <div className="projects-grid" data-testid="projects-grid">
+          {projects.map(project => (
+            <Card key={project.id} className="project-card" data-testid={`project-card-${project.id}`}>
+              <div className="project-card-header">
+                <h3 data-testid={`project-name-${project.id}`}>{project.name}</h3>
+                <div className="project-card-status" data-testid={`project-status-${project.id}`}>
+                  {project.status === 'completed' && <CheckCircle size={16} className="text-green-500" />}
+                  {project.status === 'generating' && <div className="spinner" />}
                 </div>
               </div>
+              <p className="project-prompt" data-testid={`project-prompt-${project.id}`}>{project.prompt}</p>
+              <div className="project-card-actions">
+                <Button
+                  data-testid={`view-project-btn-${project.id}`}
+                  size="sm"
+                  onClick={() => navigate(`/project/${project.id}`)}
+                  disabled={project.status !== 'completed'}
+                >
+                  <Eye size={16} className="mr-1" /> View
+                </Button>
+                <Button
+                  data-testid={`delete-project-btn-${project.id}`}
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => deleteProject(project.id)}
+                >
+                  <Trash2 size={16} />
+                </Button>
+              </div>
+            </Card>
+          ))}
+          
+          {projects.length === 0 && (
+            <div className="empty-state" data-testid="empty-state">
+              <Sparkles size={48} className="empty-icon" />
+              <h3>No projects yet</h3>
+              <p>Create your first AI-generated website</p>
+              <Button onClick={() => setShowCreateDialog(true)}>Create Project</Button>
             </div>
           )}
-          <div ref={messagesEndRef} />
-        </ScrollArea>
-
-        <div className="input-area" data-testid="input-area">
-          <input
-            data-testid="file-input"
-            type="file"
-            ref={fileInputRef}
-            style={{ display: 'none' }}
-            onChange={handleFileUpload}
-          />
-          <Button
-            data-testid="upload-file-btn"
-            size="sm"
-            variant="ghost"
-            onClick={() => fileInputRef.current?.click()}
-            disabled={!currentConversation || loading}
-          >
-            <Upload size={20} />
-          </Button>
-          <Button
-            data-testid="generate-image-btn"
-            size="sm"
-            variant="ghost"
-            onClick={() => setShowImageDialog(true)}
-            disabled={!currentConversation || loading}
-          >
-            <ImageIcon size={20} />
-          </Button>
-          <Textarea
-            data-testid="message-input"
-            placeholder="Type your message..."
-            value={inputMessage}
-            onChange={(e) => setInputMessage(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                sendMessage();
-              }
-            }}
-            disabled={!currentConversation || loading}
-            className="message-input"
-          />
-          <Button
-            data-testid="send-message-btn"
-            onClick={sendMessage}
-            disabled={!currentConversation || loading || !inputMessage.trim()}
-          >
-            <Send size={20} />
-          </Button>
         </div>
       </div>
 
-      {/* Image Generation Dialog */}
-      <Dialog open={showImageDialog} onOpenChange={setShowImageDialog}>
-        <DialogContent data-testid="image-dialog" aria-describedby="image-dialog-description">
+      <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
+        <DialogContent data-testid="create-project-dialog" aria-describedby="create-project-description">
           <DialogHeader>
-            <DialogTitle data-testid="image-dialog-title">Generate Image</DialogTitle>
+            <DialogTitle>Create New Project</DialogTitle>
+            <DialogDescription id="create-project-description">
+              Describe your website and let AI build it for you (costs 1 credit)
+            </DialogDescription>
           </DialogHeader>
-          <p id="image-dialog-description" className="text-sm text-gray-600 mb-4">
-            Describe the image you want to generate using AI
-          </p>
-          <Textarea
-            data-testid="image-prompt-input"
-            placeholder="Describe the image you want to generate..."
-            value={imagePrompt}
-            onChange={(e) => setImagePrompt(e.target.value)}
-          />
-          <Button data-testid="generate-image-submit-btn" onClick={generateImage} disabled={!imagePrompt.trim()}>
-            Generate
-          </Button>
+          <form onSubmit={createProject} className="create-project-form">
+            <Input
+              data-testid="project-name-input"
+              placeholder="Project Name"
+              value={projectName}
+              onChange={(e) => setProjectName(e.target.value)}
+              required
+            />
+            <Textarea
+              data-testid="project-prompt-input"
+              placeholder="Describe your website... (e.g., 'A modern landing page for a coffee shop with menu, location, and contact form')"
+              value={projectPrompt}
+              onChange={(e) => setProjectPrompt(e.target.value)}
+              rows={6}
+              required
+            />
+            <Button data-testid="generate-btn" type="submit" disabled={creating} className="w-full">
+              {creating ? 'Generating...' : 'Generate Website (1 Credit)'}
+            </Button>
+          </form>
         </DialogContent>
       </Dialog>
     </div>
+  );
+};
+
+function App() {
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<LandingPage />} />
+        <Route path="/auth" element={<AuthPage />} />
+        <Route path="/dashboard" element={<Dashboard />} />
+      </Routes>
+    </BrowserRouter>
   );
 }
 
