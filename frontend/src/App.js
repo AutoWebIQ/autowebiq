@@ -125,7 +125,7 @@ const AuthPage = () => {
         <div className="auth-header">
           <Sparkles className="auth-icon" />
           <h1 data-testid="auth-title">Optra AI</h1>
-          <p data-testid="auth-subtitle">{isLogin ? 'Welcome back' : 'Get started with 10 free credits'}</p>
+          <p data-testid="auth-subtitle">{isLogin ? 'Welcome back' : 'Get started with 50 free credits'}</p>
         </div>
         
         <form onSubmit={handleAuth} data-testid="auth-form">
