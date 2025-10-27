@@ -194,7 +194,8 @@ function App() {
         prompt: imagePrompt
       }, axiosConfig);
 
-      setMessages([...messages, res.data.message]);
+      // Reload conversation to ensure we get all messages including the new image
+      await loadConversation(currentConversation.id);
       setImagePrompt('');
       toast.success('Image generated!');
     } catch (error) {
