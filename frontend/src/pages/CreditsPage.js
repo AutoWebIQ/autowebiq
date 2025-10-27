@@ -110,7 +110,16 @@ const CreditsPage = () => {
       <div className="credits-content">
         <div className="credits-header">
           <h1 data-testid="credits-title">Buy Credits</h1>
-          <p data-testid="credits-subtitle">Each credit lets you generate one complete website with AI</p>
+          <p data-testid="credits-subtitle">Use credits for AI messages. Different models cost different credits per message.</p>
+          <div className="model-costs-info">
+            <p><strong>Credit Costs:</strong></p>
+            <ul>
+              <li>Claude 4.5 Sonnet (200k): 5 credits/message</li>
+              <li>Claude 4.5 Sonnet - 1M (PRO): 10 credits/message</li>
+              <li>GPT-5 (Beta): 8 credits/message</li>
+              <li>Claude 4.0 Sonnet: 4 credits/message</li>
+            </ul>
+          </div>
         </div>
 
         <div className="packages-grid" data-testid="packages-grid">
