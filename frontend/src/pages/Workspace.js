@@ -51,65 +51,7 @@ const Workspace = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  const connectWebSocket = () => {
-    ws.current = new WebSocket(`${WS_URL}/ws/chat`);
-    
-    ws.current.onopen = () => {
-      console.log('WebSocket connected');
-    };
-    
-    ws.current.onmessage = (event) => {
-      const data = JSON.parse(event.data);
-      
-      if (data.error) {
-        toast.error(data.error);
-        setLoading(false);
-        return;
-      }
-      
-      if (data.type === 'message') {
-        setMessages(prev => [...prev, {
-          role: 'assistant',
-          content: data.content,
-          created_at: new Date().toISOString()
-        }]);
-        
-        if (data.code) {
-          setProject(prev => ({ ...prev, generated_code: data.code }));
-        }
-        
-        setLoading(false);
-      }
-    };
-    
-    ws.current.onerror = (error) => {
-      console.error('WebSocket error:', error);
-      toast.error('Connection error');
-      setLoading(false);
-    };
-  };
-
-  const fetchProject = async () => {
-    try {
-      const res = await axios.get(`${API}/projects/${id}`, axiosConfig);
-      setProject(res.data);
-      setSelectedModel(res.data.model);
-    } catch (error) {
-      toast.error('Failed to load project');
-      navigate('/dashboard');
-    }
-  };
-
-  const fetchMessages = async () => {
-    try {
-      const res = await axios.get(`${API}/projects/${id}/messages`, axiosConfig);
-      setMessages(res.data.filter(m => m.role !== 'system'));
-    } catch (error) {
-      console.error('Failed to load messages');
-    }
-  };
-
-  const sendMessage = () => {
+  const sendMessage = async () => {
     if (!input.trim() || loading) return;
     
     const userMessage = {
@@ -118,21 +60,34 @@ const Workspace = () => {
       created_at: new Date().toISOString()
     };
     
+    const messageText = input;
     setMessages(prev => [...prev, userMessage]);
     setInput('');
     setLoading(true);
     
-    if (ws.current && ws.current.readyState === WebSocket.OPEN) {
-      ws.current.send(JSON.stringify({
+    try {
+      const res = await axios.post(`${API}/chat`, {
         project_id: id,
-        message: input,
-        model: selectedModel,
-        token: localStorage.getItem('token')
-      }));
-    } else {
-      toast.error('Connection lost. Reconnecting...');
-      connectWebSocket();
-      setTimeout(() => sendMessage(), 1000);
+        message: messageText,
+        model: selectedModel
+      }, axiosConfig);
+      
+      setMessages(prev => [...prev, {
+        role: 'assistant',
+        content: res.data.ai_message.content,
+        created_at: res.data.ai_message.created_at
+      }]);
+      
+      if (res.data.code) {
+        setProject(prev => ({ ...prev, generated_code: res.data.code }));
+      }
+      
+      toast.success('Generated!');
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Failed to generate');
+      setMessages(prev => prev.slice(0, -1));
+    } finally {
+      setLoading(false);
     }
   };
 
