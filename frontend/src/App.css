@@ -702,6 +702,40 @@ h1, h2, h3, h4, h5, h6 {
 .credits-header p {
   color: #64748b;
   font-size: 1.1rem;
+  margin-bottom: 1rem;
+}
+
+.model-costs-info {
+  background: white;
+  padding: 1.5rem;
+  border-radius: 12px;
+  border: 2px solid #e5e7eb;
+  margin-top: 1.5rem;
+  text-align: left;
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.model-costs-info p {
+  font-weight: 600;
+  color: #1e293b;
+  margin-bottom: 0.5rem;
+}
+
+.model-costs-info ul {
+  list-style: none;
+  padding: 0;
+}
+
+.model-costs-info li {
+  color: #64748b;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.model-costs-info li:last-child {
+  border-bottom: none;
 }
 
 .packages-grid {
