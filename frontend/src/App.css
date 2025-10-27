@@ -448,8 +448,20 @@ h1, h2, h3, h4, h5, h6 {
   align-items: center;
 }
 
+.credits-display {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 0.75rem 1.5rem;
+  border-radius: 50px;
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
 .model-selector {
-  min-width: 200px;
+  min-width: 280px;
 }
 
 .workspace-content {
