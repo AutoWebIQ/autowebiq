@@ -290,7 +290,18 @@ async def create_project(project_data: ProjectCreate, user_id: str = Depends(get
     sys_dict['created_at'] = sys_dict['created_at'].isoformat()
     await db.messages.insert_one(sys_dict)
     
-    return proj_dict
+    # Return clean project data without MongoDB _id
+    return {
+        "id": project.id,
+        "user_id": project.user_id,
+        "name": project.name,
+        "description": project.description,
+        "generated_code": project.generated_code,
+        "model": project.model,
+        "status": project.status,
+        "created_at": proj_dict['created_at'],
+        "updated_at": proj_dict['updated_at']
+    }
 
 @api_router.get("/projects")
 async def get_projects(user_id: str = Depends(get_current_user)):
