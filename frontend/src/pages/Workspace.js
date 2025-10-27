@@ -11,7 +11,6 @@ import ReactMarkdown from 'react-markdown';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
-const WS_URL = BACKEND_URL.replace('https://', 'wss://').replace('http://', 'ws://');
 
 const Workspace = () => {
   const { id } = useParams();
@@ -22,7 +21,6 @@ const Workspace = () => {
   const [loading, setLoading] = useState(false);
   const [selectedModel, setSelectedModel] = useState('gpt-5');
   const [previewMode, setPreviewMode] = useState('preview');
-  const ws = useRef(null);
   const messagesEndRef = useRef(null);
   const iframeRef = useRef(null);
 
