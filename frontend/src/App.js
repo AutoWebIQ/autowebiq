@@ -304,10 +304,9 @@ const Dashboard = () => {
                 <Button
                   data-testid={`view-project-btn-${project.id}`}
                   size="sm"
-                  onClick={() => navigate(`/project/${project.id}`)}
-                  disabled={project.status !== 'completed'}
+                  onClick={() => navigate(`/workspace/${project.id}`)}
                 >
-                  <Eye size={16} className="mr-1" /> View
+                  <Eye size={16} className="mr-1" /> Open
                 </Button>
                 <Button
                   data-testid={`delete-project-btn-${project.id}`}
