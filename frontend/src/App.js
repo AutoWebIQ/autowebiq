@@ -220,7 +220,7 @@ const Dashboard = () => {
       const res = await axios.post(`${API}/projects/create`, {
         name: projectName,
         description: projectPrompt,
-        model: 'gpt-5'
+        model: 'claude-4-sonnet-20250514'
       }, axiosConfig);
       
       toast.success('Project created! Opening workspace...');
