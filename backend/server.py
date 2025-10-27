@@ -18,6 +18,7 @@ import io
 import zipfile
 import json
 import asyncio
+from openai import AsyncOpenAI
 from emergentintegrations.llm.chat import LlmChat, UserMessage
 
 ROOT_DIR = Path(__file__).parent
