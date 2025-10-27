@@ -47,7 +47,7 @@ const LandingPage = () => {
           </div>
           <div className="hero-features">
             <div className="feature-badge" data-testid="feature-1">
-              <CheckCircle size={16} /> 10 Free Credits
+              <CheckCircle size={16} /> 50 Free Credits
             </div>
             <div className="feature-badge" data-testid="feature-2">
               <CheckCircle size={16} /> GPT-5 Powered
