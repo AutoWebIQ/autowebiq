@@ -336,7 +336,7 @@ const Dashboard = () => {
           <DialogHeader>
             <DialogTitle>Create New Project</DialogTitle>
             <DialogDescription id="create-project-description">
-              Describe your website and let AI build it for you (costs 1 credit)
+              Describe your website and let AI build it for you (uses credits per message)
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={createProject} className="create-project-form">
