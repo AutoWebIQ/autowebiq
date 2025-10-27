@@ -6,7 +6,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from 'sonner';
-import { Send, Download, ArrowLeft, Loader2, Code, Eye, ExternalLink } from 'lucide-react';
+import { Send, Download, ArrowLeft, Loader2, Code, Eye, ExternalLink, CreditCard } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
