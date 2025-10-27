@@ -51,6 +51,26 @@ const Workspace = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
+  const fetchProject = async () => {
+    try {
+      const res = await axios.get(`${API}/projects/${id}`, axiosConfig);
+      setProject(res.data);
+      setSelectedModel(res.data.model);
+    } catch (error) {
+      toast.error('Failed to load project');
+      navigate('/dashboard');
+    }
+  };
+
+  const fetchMessages = async () => {
+    try {
+      const res = await axios.get(`${API}/projects/${id}/messages`, axiosConfig);
+      setMessages(res.data.filter(m => m.role !== 'system'));
+    } catch (error) {
+      console.error('Failed to load messages');
+    }
+  };
+
   const sendMessage = async () => {
     if (!input.trim() || loading) return;
     
