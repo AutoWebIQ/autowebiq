@@ -356,7 +356,7 @@ const Dashboard = () => {
               required
             />
             <Button data-testid="generate-btn" type="submit" disabled={creating} className="w-full">
-              {creating ? 'Creating Project...' : 'Create Project (1 Credit)'}
+              {creating ? 'Creating Project...' : 'Create Project (Free)'}
             </Button>
           </form>
         </DialogContent>
