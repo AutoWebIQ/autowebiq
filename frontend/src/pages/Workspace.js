@@ -33,6 +33,8 @@ const Workspace = () => {
   useEffect(() => {
     fetchProject();
     fetchMessages();
+    fetchUserCredits();
+    fetchModels();
   }, [id]);
 
   useEffect(() => {
