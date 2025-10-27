@@ -140,10 +140,20 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
         raise HTTPException(status_code=401, detail="Invalid token")
 
 CREDIT_PACKAGES = [
-    {"id": "pkg_10", "name": "Starter Pack", "credits": 10, "price": 9900, "currency": "INR"},
-    {"id": "pkg_100", "name": "Professional Pack", "credits": 100, "price": 49900, "currency": "INR"},
-    {"id": "pkg_250", "name": "Enterprise Pack", "credits": 250, "price": 99900, "currency": "INR"},
+    {"id": "pkg_100", "name": "Starter Pack", "credits": 100, "price": 170000, "currency": "INR"},
+    {"id": "pkg_250", "name": "Professional Pack", "credits": 250, "price": 425000, "currency": "INR"},
+    {"id": "pkg_500", "name": "Business Pack", "credits": 500, "price": 850000, "currency": "INR"},
+    {"id": "pkg_3000", "name": "Enterprise Pack", "credits": 3000, "price": 4250000, "currency": "INR"},
+    {"id": "pkg_6000", "name": "Agency Pack", "credits": 6000, "price": 8500000, "currency": "INR"},
 ]
+
+# AI Model costs per message (in credits)
+MODEL_COSTS = {
+    "claude-4.5-sonnet-200k": {"name": "Claude 4.5 Sonnet", "cost": 5, "context": "200k"},
+    "claude-4.5-sonnet-1m": {"name": "Claude 4.5 Sonnet - 1M", "cost": 10, "context": "1M", "pro": True},
+    "gpt-5": {"name": "GPT-5 (Beta)", "cost": 8, "context": "128k"},
+    "claude-4-sonnet-20250514": {"name": "Claude 4.0 Sonnet", "cost": 4, "context": "200k"},
+}
 
 # Auth endpoints
 @api_router.post("/auth/register", response_model=TokenResponse)
