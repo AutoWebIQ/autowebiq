@@ -461,10 +461,13 @@ function App() {
 
       {/* Image Generation Dialog */}
       <Dialog open={showImageDialog} onOpenChange={setShowImageDialog}>
-        <DialogContent data-testid="image-dialog">
+        <DialogContent data-testid="image-dialog" aria-describedby="image-dialog-description">
           <DialogHeader>
             <DialogTitle data-testid="image-dialog-title">Generate Image</DialogTitle>
           </DialogHeader>
+          <p id="image-dialog-description" className="text-sm text-gray-600 mb-4">
+            Describe the image you want to generate using AI
+          </p>
           <Textarea
             data-testid="image-prompt-input"
             placeholder="Describe the image you want to generate..."
