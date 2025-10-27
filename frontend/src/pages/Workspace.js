@@ -33,11 +33,6 @@ const Workspace = () => {
   useEffect(() => {
     fetchProject();
     fetchMessages();
-    connectWebSocket();
-    
-    return () => {
-      if (ws.current) ws.current.close();
-    };
   }, [id]);
 
   useEffect(() => {
