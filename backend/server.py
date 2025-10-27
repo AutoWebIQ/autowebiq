@@ -85,7 +85,7 @@ class ChatMessage(BaseModel):
 class ProjectCreate(BaseModel):
     name: str
     description: str
-    model: str = "gpt-5"
+    model: str = "claude-4-sonnet-20250514"
 
 class ChatRequest(BaseModel):
     project_id: str
