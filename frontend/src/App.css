@@ -397,7 +397,7 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 /* Code blocks */
-.message-content pre {
+.markdown-content pre {
   background: #1e293b !important;
   border-radius: 10px;
   padding: 1rem !important;
@@ -405,17 +405,39 @@ h1, h2, h3, h4, h5, h6 {
   overflow-x: auto;
 }
 
-.message-content code {
+.markdown-content code {
   background: rgba(14, 165, 233, 0.1);
   padding: 0.2rem 0.4rem;
   border-radius: 4px;
   font-family: 'Courier New', monospace;
   font-size: 0.9em;
+  color: #0c4a6e;
 }
 
-.message-content pre code {
+.markdown-content pre code {
   background: transparent;
   padding: 0;
+  color: #e2e8f0;
+}
+
+.markdown-content h1, .markdown-content h2, .markdown-content h3 {
+  margin-top: 1rem;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+}
+
+.markdown-content p {
+  margin-bottom: 0.5rem;
+}
+
+.markdown-content ul, .markdown-content ol {
+  margin-left: 1.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.markdown-content a {
+  color: #0ea5e9;
+  text-decoration: underline;
 }
 
 /* Scrollbar */
