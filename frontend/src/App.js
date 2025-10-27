@@ -372,7 +372,7 @@ function App() {
         <Route path="/" element={<LandingPage />} />
         <Route path="/auth" element={<AuthPage />} />
         <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/project/:id" element={<ProjectView />} />
+        <Route path="/workspace/:id" element={<Workspace />} />
         <Route path="/credits" element={<CreditsPage />} />
       </Routes>
     </BrowserRouter>
