@@ -73,7 +73,7 @@ class Project(BaseModel):
     name: str
     description: str
     generated_code: str = ""
-    model: str = "gpt-4o"  # Using GPT-4o with user's API key
+    model: str = "claude-4-sonnet-20250514"  # Claude as default
     status: str = "active"
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
@@ -89,12 +89,12 @@ class ChatMessage(BaseModel):
 class ProjectCreate(BaseModel):
     name: str
     description: str
-    model: str = "gpt-4o"
+    model: str = "claude-4-sonnet-20250514"
 
 class ChatRequest(BaseModel):
     project_id: str
     message: str
-    model: str = "gpt-4o"
+    model: str = "claude-4-sonnet-20250514"
 
 class CreateOrderRequest(BaseModel):
     package_id: str
