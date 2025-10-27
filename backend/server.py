@@ -49,7 +49,7 @@ class User(BaseModel):
     username: str
     email: str
     password_hash: str
-    credits: int = 10
+    credits: int = 50  # Give 50 free credits (10 messages) on signup
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 class UserRegister(BaseModel):
