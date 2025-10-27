@@ -69,7 +69,7 @@ class Project(BaseModel):
     name: str
     description: str
     generated_code: str = ""
-    model: str = "gpt-5"  # or claude-4-sonnet-20250514
+    model: str = "claude-4-sonnet-20250514"  # Claude as default
     status: str = "active"  # active, archived
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
