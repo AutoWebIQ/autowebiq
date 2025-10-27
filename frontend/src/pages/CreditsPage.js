@@ -86,48 +86,48 @@ const CreditsPage = () => {
   }
 
   return (
-    <div className=\"credits-page-container\" data-testid=\"credits-page\">
-      <nav className=\"dashboard-nav\">
-        <div className=\"nav-content\">
+    <div className="credits-page-container" data-testid="credits-page">
+      <nav className="dashboard-nav">
+        <div className="nav-content">
           <Button
-            data-testid=\"back-to-dashboard-btn\"
-            variant=\"ghost\"
+            data-testid="back-to-dashboard-btn"
+            variant="ghost"
             onClick={() => navigate('/dashboard')}
           >
-            <ArrowLeft className=\"mr-2\" /> Back to Dashboard
+            <ArrowLeft className="mr-2" /> Back to Dashboard
           </Button>
-          <div className=\"logo\">
-            <Sparkles className=\"logo-icon\" />
+          <div className="logo">
+            <Sparkles className="logo-icon" />
             <span>Optra AI</span>
           </div>
-          <div className=\"credits-badge\" data-testid=\"current-credits\">
+          <div className="credits-badge" data-testid="current-credits">
             <CreditCard size={16} />
             <span>{user.credits} Credits</span>
           </div>
         </div>
       </nav>
 
-      <div className=\"credits-content\">
-        <div className=\"credits-header\">
-          <h1 data-testid=\"credits-title\">Buy Credits</h1>
-          <p data-testid=\"credits-subtitle\">Each credit lets you generate one complete website with AI</p>
+      <div className="credits-content">
+        <div className="credits-header">
+          <h1 data-testid="credits-title">Buy Credits</h1>
+          <p data-testid="credits-subtitle">Each credit lets you generate one complete website with AI</p>
         </div>
 
-        <div className=\"packages-grid\" data-testid=\"packages-grid\">
+        <div className="packages-grid" data-testid="packages-grid">
           {packages.map(pkg => (
-            <Card key={pkg.id} className=\"package-card\" data-testid={`package-card-${pkg.id}`}>
-              <div className=\"package-header\">
+            <Card key={pkg.id} className="package-card" data-testid={`package-card-${pkg.id}`}>
+              <div className="package-header">
                 <h3 data-testid={`package-name-${pkg.id}`}>{pkg.name}</h3>
-                <div className=\"package-price\" data-testid={`package-price-${pkg.id}`}>
-                  <span className=\"currency\">₹</span>
-                  <span className=\"amount\">{pkg.price / 100}</span>
+                <div className="package-price" data-testid={`package-price-${pkg.id}`}>
+                  <span className="currency">₹</span>
+                  <span className="amount">{pkg.price / 100}</span>
                 </div>
               </div>
-              <div className=\"package-credits\" data-testid={`package-credits-${pkg.id}`}>
-                <CreditCard size={24} className=\"credits-icon\" />
-                <span className=\"credits-amount\">{pkg.credits} Credits</span>
+              <div className="package-credits" data-testid={`package-credits-${pkg.id}`}>
+                <CreditCard size={24} className="credits-icon" />
+                <span className="credits-amount">{pkg.credits} Credits</span>
               </div>
-              <ul className=\"package-features\">
+              <ul className="package-features">
                 <li><CheckCircle size={16} /> Generate {pkg.credits} websites</li>
                 <li><CheckCircle size={16} /> Download all projects</li>
                 <li><CheckCircle size={16} /> Live preview</li>
@@ -135,7 +135,7 @@ const CreditsPage = () => {
               </ul>
               <Button
                 data-testid={`buy-package-btn-${pkg.id}`}
-                className=\"w-full package-buy-btn\"
+                className="w-full package-buy-btn"
                 onClick={() => handlePurchase(pkg)}
               >
                 Buy Now
