@@ -129,6 +129,17 @@ const Workspace = () => {
     }
   };
 
+  const openInNewTab = () => {
+    if (!project.generated_code) {
+      toast.error('No code generated yet');
+      return;
+    }
+    
+    const blob = new Blob([project.generated_code], { type: 'text/html' });
+    const url = window.URL.createObjectURL(blob);
+    window.open(url, '_blank');
+  };
+
   if (!project) {
     return <div className="loading-screen">Loading workspace...</div>;
   }
