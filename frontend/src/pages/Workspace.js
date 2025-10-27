@@ -94,6 +94,15 @@ const Workspace = () => {
   const sendMessage = async () => {
     if (!input.trim() || loading) return;
     
+    const modelCost = models[selectedModel]?.cost || 5;
+    
+    // Check credits
+    if (userCredits < modelCost) {
+      toast.error(`Insufficient credits! Need ${modelCost} credits. Buy more credits.`);
+      navigate('/credits');
+      return;
+    }
+    
     const userMessage = {
       role: 'user',
       content: input,
@@ -122,10 +131,18 @@ const Workspace = () => {
         setProject(prev => ({ ...prev, generated_code: res.data.code }));
       }
       
-      toast.success('Generated!');
+      // Update credits
+      setUserCredits(prev => prev - modelCost);
+      
+      toast.success(`Generated! Used ${modelCost} credits`);
     } catch (error) {
-      toast.error(error.response?.data?.detail || 'Failed to generate');
+      const errorMsg = error.response?.data?.detail || 'Failed to generate';
+      toast.error(errorMsg);
       setMessages(prev => prev.slice(0, -1));
+      
+      if (error.response?.status === 402) {
+        navigate('/credits');
+      }
     } finally {
       setLoading(false);
     }
