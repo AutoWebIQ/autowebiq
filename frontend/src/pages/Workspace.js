@@ -151,8 +151,8 @@ const Workspace = () => {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
+              <SelectItem value="gpt-4o">GPT-4o</SelectItem>
               <SelectItem value="claude-4-sonnet-20250514">Claude Sonnet 4</SelectItem>
-              <SelectItem value="gpt-5">GPT-5</SelectItem>
             </SelectContent>
           </Select>
           <Button onClick={downloadProject} data-testid="download-btn">
