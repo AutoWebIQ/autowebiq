@@ -19,8 +19,10 @@ const Workspace = () => {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
-  const [selectedModel, setSelectedModel] = useState('claude-4-sonnet-20250514');
+  const [selectedModel, setSelectedModel] = useState('claude-4.5-sonnet-200k');
   const [previewMode, setPreviewMode] = useState('preview');
+  const [userCredits, setUserCredits] = useState(0);
+  const [models, setModels] = useState({});
   const messagesEndRef = useRef(null);
   const iframeRef = useRef(null);
 
