@@ -196,13 +196,27 @@ const Workspace = () => {
           </div>
         </div>
         <div className="header-right">
+          <div className="credits-display" data-testid="credits-display">
+            <CreditCard size={16} />
+            <span>{userCredits} Credits</span>
+          </div>
           <Select value={selectedModel} onValueChange={setSelectedModel}>
             <SelectTrigger className="model-selector" data-testid="model-selector">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="claude-4-sonnet-20250514">Claude Sonnet 4</SelectItem>
-              <SelectItem value="gpt-4o">GPT-4o</SelectItem>
+              <SelectItem value="claude-4.5-sonnet-200k">
+                Claude 4.5 Sonnet (200k) - {models['claude-4.5-sonnet-200k']?.cost || 5} credits
+              </SelectItem>
+              <SelectItem value="claude-4.5-sonnet-1m">
+                Claude 4.5 Sonnet - 1M (PRO) - {models['claude-4.5-sonnet-1m']?.cost || 10} credits
+              </SelectItem>
+              <SelectItem value="gpt-5">
+                GPT-5 (Beta) - {models['gpt-5']?.cost || 8} credits
+              </SelectItem>
+              <SelectItem value="claude-4-sonnet-20250514">
+                Claude 4.0 Sonnet - {models['claude-4-sonnet-20250514']?.cost || 4} credits
+              </SelectItem>
             </SelectContent>
           </Select>
           <Button onClick={downloadProject} data-testid="download-btn">
