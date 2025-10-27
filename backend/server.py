@@ -374,16 +374,38 @@ async def download_project(project_id: str, user_id: str = Depends(get_current_u
 # Chat endpoint using HTTP POST instead of WebSocket
 @api_router.post("/chat")
 async def chat(request: ChatRequest, user_id: str = Depends(get_current_user)):
+    # Check if model is valid and get cost
+    if request.model not in MODEL_COSTS:
+        raise HTTPException(status_code=400, detail="Invalid model selected")
+    
+    model_info = MODEL_COSTS[request.model]
+    credits_needed = model_info["cost"]
+    
+    # Check user has enough credits
+    user_doc = await db.users.find_one({"id": user_id})
+    if user_doc['credits'] < credits_needed:
+        raise HTTPException(
+            status_code=402, 
+            detail=f"Insufficient credits. Need {credits_needed} credits. You have {user_doc['credits']}."
+        )
+    
     # Verify project
     project = await db.projects.find_one({"id": request.project_id, "user_id": user_id})
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
     
+    # Deduct credits BEFORE generation
+    await db.users.update_one(
+        {"id": user_id},
+        {"$inc": {"credits": -credits_needed}}
+    )
+    
     # Save user message
     user_msg = ChatMessage(
         project_id=request.project_id,
         role="user",
-        content=request.message
+        content=request.message,
+        credits_used=credits_needed
     )
     user_dict = user_msg.model_dump()
     user_dict['created_at'] = user_dict['created_at'].isoformat()
@@ -391,8 +413,14 @@ async def chat(request: ChatRequest, user_id: str = Depends(get_current_user)):
     
     # Get AI response
     try:
-        # Use OpenAI directly for GPT models
-        if request.model.startswith('gpt') or request.model == 'gpt-4o':
+        # Map models to actual API models
+        if request.model in ["claude-4.5-sonnet-200k", "claude-4.5-sonnet-1m"]:
+            actual_model = "claude-4-sonnet-20250514"  # Use Claude 4 Sonnet API
+        else:
+            actual_model = request.model
+        
+        # Use OpenAI for GPT models
+        if actual_model.startswith('gpt'):
             prompt = f"{request.message}\n\nProject: {project['name']}\nDescription: {project['description']}"
             if project['generated_code']:
                 prompt += f"\n\nCurrent code:\n{project['generated_code'][:2000]}"
@@ -403,7 +431,7 @@ async def chat(request: ChatRequest, user_id: str = Depends(get_current_user)):
             ]
             
             completion = await openai_client.chat.completions.create(
-                model=request.model,
+                model=actual_model,
                 messages=messages,
                 temperature=0.7
             )
@@ -412,19 +440,19 @@ async def chat(request: ChatRequest, user_id: str = Depends(get_current_user)):
         else:
             # Use emergentintegrations for Claude
             api_key = os.environ.get('EMERGENT_LLM_KEY')
-            chat = LlmChat(
+            chat_client = LlmChat(
                 api_key=api_key,
                 session_id=request.project_id,
                 system_message="You are an expert web developer. Generate complete, production-ready websites. Provide ONLY the HTML code with inline CSS and JavaScript. Make it modern, responsive, and beautiful."
             )
-            chat.with_model("anthropic", request.model)
+            chat_client.with_model("anthropic", actual_model)
             
             prompt = f"{request.message}\n\nProject: {project['name']}\nDescription: {project['description']}"
             if project['generated_code']:
                 prompt += f"\n\nCurrent code:\n{project['generated_code'][:2000]}"
             
             user_message = UserMessage(text=prompt)
-            ai_response = await chat.send_message(user_message)
+            ai_response = await chat_client.send_message(user_message)
         
         # Extract HTML
         html_code = ai_response.strip()
