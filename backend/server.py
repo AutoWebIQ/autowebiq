@@ -277,9 +277,7 @@ async def verify_payment(request: VerifyPaymentRequest, user_id: str = Depends(g
 # Projects
 @api_router.post("/projects/create")
 async def create_project(project_data: ProjectCreate, user_id: str = Depends(get_current_user)):
-    user_doc = await db.users.find_one({"id": user_id})
-    if user_doc['credits'] < 1:
-        raise HTTPException(status_code=402, detail="Insufficient credits")
+    # No credit deduction for creating project
     
     project = Project(
         user_id=user_id,
@@ -293,19 +291,18 @@ async def create_project(project_data: ProjectCreate, user_id: str = Depends(get
     proj_dict['updated_at'] = proj_dict['updated_at'].isoformat()
     await db.projects.insert_one(proj_dict)
     
-    await db.users.update_one({"id": user_id}, {"$inc": {"credits": -1}})
-    
     # Initial system message
     system_msg = ChatMessage(
         project_id=project.id,
         role="system",
-        content=f"Project created: {project.name}. {project.description}"
+        content=f"Project created: {project.name}. {project.description}",
+        credits_used=0
     )
     sys_dict = system_msg.model_dump()
     sys_dict['created_at'] = sys_dict['created_at'].isoformat()
     await db.messages.insert_one(sys_dict)
     
-    # Return clean project data without MongoDB _id
+    # Return clean project data
     return {
         "id": project.id,
         "user_id": project.user_id,
