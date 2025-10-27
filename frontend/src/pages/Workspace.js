@@ -19,7 +19,7 @@ const Workspace = () => {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
-  const [selectedModel, setSelectedModel] = useState('claude-4-sonnet-20250514');
+  const [selectedModel, setSelectedModel] = useState('gpt-4o');
   const [previewMode, setPreviewMode] = useState('preview');
   const messagesEndRef = useRef(null);
   const iframeRef = useRef(null);
