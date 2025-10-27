@@ -161,7 +161,7 @@ const Workspace = () => {
   };
 
   if (!project) {
-    return <div className=\"loading-screen\">Loading workspace...</div>;
+    return <div className="loading-screen">Loading workspace...</div>;
   }
 
   return (
