@@ -42,7 +42,7 @@ const LandingPage = () => {
           <p data-testid="hero-subtitle">Transform your ideas into beautiful, functional websites using the power of GPT-5. No coding required.</p>
           <div className="hero-buttons">
             <Button data-testid="hero-cta-btn" size="lg" onClick={() => navigate('/auth?mode=register')}>
-              <Rocket className="mr-2" />Start Building - 10 Free Credits
+              <Rocket className="mr-2" />Start Building - 50 Free Credits
             </Button>
           </div>
           <div className="hero-features">
