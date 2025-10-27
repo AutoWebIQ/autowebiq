@@ -89,12 +89,12 @@ class ChatMessage(BaseModel):
 class ProjectCreate(BaseModel):
     name: str
     description: str
-    model: str = "claude-4-sonnet-20250514"
+    model: str = "gpt-4o"
 
 class ChatRequest(BaseModel):
     project_id: str
     message: str
-    model: str = "claude-4-sonnet-20250514"
+    model: str = "gpt-4o"
 
 class CreateOrderRequest(BaseModel):
     package_id: str
