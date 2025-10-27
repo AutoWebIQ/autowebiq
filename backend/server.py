@@ -383,24 +383,40 @@ async def chat(request: ChatRequest, user_id: str = Depends(get_current_user)):
     
     # Get AI response
     try:
-        api_key = os.environ.get('EMERGENT_LLM_KEY')
-        chat = LlmChat(
-            api_key=api_key,
-            session_id=request.project_id,
-            system_message="You are an expert web developer. Generate complete, production-ready websites. Provide ONLY the HTML code with inline CSS and JavaScript. Make it modern, responsive, and beautiful."
-        )
-        
-        if request.model.startswith('claude'):
-            chat.with_model("anthropic", request.model)
+        # Use OpenAI directly for GPT models
+        if request.model.startswith('gpt') or request.model == 'gpt-4o':
+            prompt = f"{request.message}\n\nProject: {project['name']}\nDescription: {project['description']}"
+            if project['generated_code']:
+                prompt += f"\n\nCurrent code:\n{project['generated_code'][:2000]}"
+            
+            messages = [
+                {"role": "system", "content": "You are an expert web developer. Generate complete, production-ready websites. Provide ONLY the HTML code with inline CSS and JavaScript. Make it modern, responsive, and beautiful."},
+                {"role": "user", "content": prompt}
+            ]
+            
+            completion = await openai_client.chat.completions.create(
+                model=request.model,
+                messages=messages,
+                temperature=0.7
+            )
+            
+            ai_response = completion.choices[0].message.content
         else:
-            chat.with_model("openai", request.model)
-        
-        prompt = f"{request.message}\n\nProject: {project['name']}\nDescription: {project['description']}"
-        if project['generated_code']:
-            prompt += f"\n\nCurrent code:\n{project['generated_code'][:2000]}"
-        
-        user_message = UserMessage(text=prompt)
-        ai_response = await chat.send_message(user_message)
+            # Use emergentintegrations for Claude
+            api_key = os.environ.get('EMERGENT_LLM_KEY')
+            chat = LlmChat(
+                api_key=api_key,
+                session_id=request.project_id,
+                system_message="You are an expert web developer. Generate complete, production-ready websites. Provide ONLY the HTML code with inline CSS and JavaScript. Make it modern, responsive, and beautiful."
+            )
+            chat.with_model("anthropic", request.model)
+            
+            prompt = f"{request.message}\n\nProject: {project['name']}\nDescription: {project['description']}"
+            if project['generated_code']:
+                prompt += f"\n\nCurrent code:\n{project['generated_code'][:2000]}"
+            
+            user_message = UserMessage(text=prompt)
+            ai_response = await chat.send_message(user_message)
         
         # Extract HTML
         html_code = ai_response.strip()
