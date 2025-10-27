@@ -137,10 +137,10 @@ const CreditsPage = () => {
                 <span className="credits-amount">{pkg.credits} Credits</span>
               </div>
               <ul className="package-features">
-                <li><CheckCircle size={16} /> Generate {pkg.credits} websites</li>
-                <li><CheckCircle size={16} /> Download all projects</li>
-                <li><CheckCircle size={16} /> Live preview</li>
-                <li><CheckCircle size={16} /> Export as ZIP</li>
+                <li><CheckCircle size={16} /> {pkg.credits} AI credits</li>
+                <li><CheckCircle size={16} /> ~{Math.floor(pkg.credits / 5)} websites (avg)</li>
+                <li><CheckCircle size={16} /> All AI models supported</li>
+                <li><CheckCircle size={16} /> Download & preview</li>
               </ul>
               <Button
                 data-testid={`buy-package-btn-${pkg.id}`}
