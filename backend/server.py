@@ -90,7 +90,7 @@ class ProjectCreate(BaseModel):
 class ChatRequest(BaseModel):
     project_id: str
     message: str
-    model: str = "gpt-5"
+    model: str = "claude-4-sonnet-20250514"
 
 class CreateOrderRequest(BaseModel):
     package_id: str
