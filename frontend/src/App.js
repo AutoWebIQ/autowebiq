@@ -219,14 +219,15 @@ const Dashboard = () => {
     try {
       const res = await axios.post(`${API}/projects/create`, {
         name: projectName,
-        prompt: projectPrompt
+        description: projectPrompt,
+        model: 'gpt-5'
       }, axiosConfig);
       
-      toast.success('Website generated successfully!');
+      toast.success('Project created! Opening workspace...');
       setShowCreateDialog(false);
       setProjectName('');
       setProjectPrompt('');
-      navigate(`/project/${res.data.id}`);
+      navigate(`/workspace/${res.data.id}`);
     } catch (error) {
       toast.error(error.response?.data?.detail || 'Failed to create project');
     } finally {
