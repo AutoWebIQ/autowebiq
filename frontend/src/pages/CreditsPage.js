@@ -82,7 +82,7 @@ const CreditsPage = () => {
   };
 
   if (loading) {
-    return <div className=\"loading-screen\">Loading...</div>;
+    return <div className="loading-screen">Loading...</div>;
   }
 
   return (
