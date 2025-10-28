@@ -98,7 +98,7 @@ const CreditsPage = () => {
           </Button>
           <div className="logo">
             <Sparkles className="logo-icon" />
-            <span>Optra AI</span>
+            <span>AutoWebIQ</span>
           </div>
           <div className="credits-badge" data-testid="current-credits">
             <CreditCard size={16} />
