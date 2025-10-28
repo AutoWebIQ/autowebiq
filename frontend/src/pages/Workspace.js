@@ -351,20 +351,36 @@ const Workspace = () => {
             <div className="preview-tabs">
               <button
                 className={previewMode === 'preview' ? 'active' : ''}
-                onClick={() => setPreviewMode('preview')}
+                onClick={() => {setPreviewMode('preview'); setEditMode(false);}}
                 data-testid="preview-tab"
               >
                 <Eye size={16} /> Preview
               </button>
               <button
                 className={previewMode === 'code' ? 'active' : ''}
-                onClick={() => setPreviewMode('code')}
+                onClick={() => {setPreviewMode('code'); setEditMode(false);}}
                 data-testid="code-tab"
               >
                 <Code size={16} /> Code
               </button>
+              <button
+                className={editMode ? 'active' : ''}
+                onClick={() => {setEditMode(!editMode); setPreviewMode('code');}}
+                data-testid="edit-tab"
+              >
+                <Edit3 size={16} /> Edit
+              </button>
             </div>
             <div className="preview-actions">
+              {editMode && (
+                <Button 
+                  size="sm" 
+                  onClick={saveEditedCode}
+                  data-testid="save-code-btn"
+                >
+                  <Save size={16} className="mr-1" /> Save Changes
+                </Button>
+              )}
               <Button 
                 size="sm" 
                 variant="outline" 
@@ -377,7 +393,23 @@ const Workspace = () => {
             </div>
           </div>
           
-          {previewMode === 'preview' ? (
+          {editMode ? (
+            <div className="code-editor" data-testid="code-editor">
+              <Editor
+                height="100%"
+                defaultLanguage="html"
+                value={editedCode}
+                onChange={(value) => setEditedCode(value || '')}
+                theme="vs-dark"
+                options={{
+                  minimap: { enabled: false },
+                  fontSize: 14,
+                  wordWrap: 'on',
+                  scrollBeyondLastLine: false,
+                }}
+              />
+            </div>
+          ) : previewMode === 'preview' ? (
             <iframe
               ref={iframeRef}
               className="preview-iframe"
