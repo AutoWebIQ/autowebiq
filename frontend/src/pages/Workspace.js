@@ -264,8 +264,9 @@ const Workspace = () => {
 
   const downloadProject = async () => {
     try {
+      const config = getAxiosConfig();
       const res = await axios.get(`${API}/projects/${id}/download`, {
-        ...axiosConfig,
+        ...config,
         responseType: 'blob'
       });
       
