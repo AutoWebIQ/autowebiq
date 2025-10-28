@@ -23,10 +23,14 @@ const Workspace = () => {
   const [loading, setLoading] = useState(false);
   const [selectedModel, setSelectedModel] = useState('claude-4.5-sonnet-200k');
   const [previewMode, setPreviewMode] = useState('preview');
+  const [editMode, setEditMode] = useState(false);
+  const [editedCode, setEditedCode] = useState('');
+  const [isRecording, setIsRecording] = useState(false);
   const [userCredits, setUserCredits] = useState(0);
   const [models, setModels] = useState({});
   const messagesEndRef = useRef(null);
   const iframeRef = useRef(null);
+  const recognitionRef = useRef(null);
 
   const axiosConfig = {
     headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
