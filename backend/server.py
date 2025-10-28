@@ -342,6 +342,94 @@ async def reset_password(request: ResetPasswordRequest):
     
     return {"message": "Password reset successful"}
 
+# Firebase Auth sync endpoint
+class FirebaseUserSync(BaseModel):
+    firebase_uid: str
+    email: str
+    display_name: Optional[str] = None
+    photo_url: Optional[str] = None
+    provider_id: str  # google.com, github.com, password
+
+@api_router.post("/auth/firebase/sync")
+async def firebase_user_sync(user_data: FirebaseUserSync):
+    """Sync Firebase user with backend database"""
+    try:
+        # Check if user already exists by Firebase UID or email
+        existing_user = await db.users.find_one({
+            "$or": [
+                {"firebase_uid": user_data.firebase_uid},
+                {"email": user_data.email}
+            ]
+        })
+        
+        if existing_user:
+            # Update existing user
+            update_data = {
+                "firebase_uid": user_data.firebase_uid,
+                "email": user_data.email
+            }
+            
+            if user_data.photo_url:
+                update_data["picture"] = user_data.photo_url
+            
+            # Update provider if changed
+            if user_data.provider_id:
+                provider_map = {
+                    "google.com": "google",
+                    "github.com": "github",
+                    "password": "email"
+                }
+                update_data["auth_provider"] = provider_map.get(user_data.provider_id, "email")
+            
+            await db.users.update_one(
+                {"id": existing_user["id"]},
+                {"$set": update_data}
+            )
+            
+            user = await db.users.find_one({"id": existing_user["id"]})
+        else:
+            # Create new user
+            provider_map = {
+                "google.com": "google",
+                "github.com": "github",
+                "password": "email"
+            }
+            
+            user_id = str(uuid.uuid4())
+            new_user = {
+                "id": user_id,
+                "firebase_uid": user_data.firebase_uid,
+                "username": user_data.display_name or user_data.email.split('@')[0],
+                "email": user_data.email,
+                "password_hash": "",  # No password for Firebase users
+                "credits": 50,  # Free credits
+                "picture": user_data.photo_url,
+                "auth_provider": provider_map.get(user_data.provider_id, "email"),
+                "created_at": datetime.now(timezone.utc).isoformat()
+            }
+            
+            await db.users.insert_one(new_user)
+            user = new_user
+        
+        # Create JWT token for backward compatibility
+        token = create_access_token({"user_id": user["id"]})
+        
+        return {
+            "access_token": token,
+            "token_type": "bearer",
+            "user": {
+                "id": user["id"],
+                "username": user["username"],
+                "email": user["email"],
+                "credits": user["credits"],
+                "picture": user.get("picture")
+            }
+        }
+    
+    except Exception as e:
+        logging.error(f"Firebase sync error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Sync failed: {str(e)}")
+
 # Google OAuth endpoints
 @api_router.post("/auth/google/session")
 async def google_auth_session(request: Request, response: Response):
