@@ -393,6 +393,49 @@ h1, h2, h3, h4, h5, h6 {
   cursor: not-allowed;
 }
 
+.auth-divider {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  margin: 1.5rem 0;
+  color: #94a3b8;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.auth-divider::before,
+.auth-divider::after {
+  content: '';
+  flex: 1;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.auth-divider span {
+  padding: 0 1rem;
+}
+
+.google-login-btn {
+  padding: 1rem;
+  border: 2px solid #e5e7eb;
+  background: white;
+  color: #1e293b;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.google-login-btn:hover {
+  border-color: #d1d5db;
+  background: #f9fafb;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
 .auth-footer {
   margin-top: 2rem;
   text-align: center;
