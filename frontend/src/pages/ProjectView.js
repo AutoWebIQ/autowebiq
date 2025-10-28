@@ -20,9 +20,10 @@ const ProjectView = () => {
   const [activeTab, setActiveTab] = useState('preview');
   const iframeRef = useRef(null);
 
-  const axiosConfig = {
-    headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-  };
+  const getAxiosConfig = () => ({
+    headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+    withCredentials: true
+  });
 
   useEffect(() => {
     fetchProject();
@@ -36,7 +37,7 @@ const ProjectView = () => {
 
   const fetchProject = async () => {
     try {
-      const res = await axios.get(`${API}/projects/${id}`, axiosConfig);
+      const res = await axios.get(`${API}/projects/${id}`, getAxiosConfig());
       setProject(res.data);
     } catch (error) {
       toast.error('Failed to load project');
@@ -48,8 +49,9 @@ const ProjectView = () => {
 
   const downloadProject = async () => {
     try {
+      const config = getAxiosConfig();
       const res = await axios.get(`${API}/projects/${id}/download`, {
-        ...axiosConfig,
+        ...config,
         responseType: 'blob'
       });
       
