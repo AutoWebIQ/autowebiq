@@ -27,7 +27,7 @@ const LandingPage = () => {
         <div className="nav-content">
           <div className="logo" data-testid="logo">
             <Sparkles className="logo-icon" />
-            <span>Optra AI</span>
+            <span>AutoWebIQ</span>
           </div>
           <div className="nav-buttons">
             <Button data-testid="nav-login-btn" variant="ghost" onClick={() => navigate('/auth?mode=login')}>Login</Button>
