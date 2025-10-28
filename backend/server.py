@@ -426,23 +426,6 @@ async def google_auth_session(request: Request, response: Response):
         "session_token": session_token
     }
 
-@api_router.get("/auth/me")
-async def get_me(request: Request):
-    """Get current user data from session"""
-    user_id = await get_current_user_flexible(request)
-    
-    user = await db.users.find_one({"id": user_id})
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-    
-    return {
-        "id": user["id"],
-        "username": user["username"],
-        "email": user["email"],
-        "credits": user["credits"],
-        "picture": user.get("picture")
-    }
-
 @api_router.post("/auth/logout")
 async def logout(request: Request, response: Response):
     """Logout user by deleting session"""
