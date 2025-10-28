@@ -366,14 +366,51 @@ const Dashboard = () => {
   const [projectName, setProjectName] = useState('');
   const [projectPrompt, setProjectPrompt] = useState('');
   const [creating, setCreating] = useState(false);
+  const [processingSession, setProcessingSession] = useState(false);
 
   const axiosConfig = {
     headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
   };
 
+  // Handle Google OAuth session_id
   useEffect(() => {
-    fetchData();
+    const handleGoogleSession = async () => {
+      const hash = window.location.hash;
+      if (hash && hash.includes('session_id=')) {
+        setProcessingSession(true);
+        const sessionId = hash.split('session_id=')[1].split('&')[0];
+        
+        try {
+          const res = await axios.post(`${API}/auth/google/session`, {}, {
+            headers: { 'X-Session-ID': sessionId }
+          });
+          
+          // Store session token and user data
+          localStorage.setItem('token', res.data.session_token);
+          localStorage.setItem('user', JSON.stringify(res.data.user));
+          setUser(res.data.user);
+          
+          // Clean URL
+          window.history.replaceState({}, document.title, window.location.pathname);
+          
+          toast.success(`Welcome ${res.data.user.name}! You have ${res.data.user.credits} credits.`);
+        } catch (error) {
+          toast.error('Google authentication failed');
+          navigate('/auth?mode=login');
+        } finally {
+          setProcessingSession(false);
+        }
+      }
+    };
+    
+    handleGoogleSession();
   }, []);
+
+  useEffect(() => {
+    if (!processingSession) {
+      fetchData();
+    }
+  }, [processingSession]);
 
   const fetchData = async () => {
     try {
