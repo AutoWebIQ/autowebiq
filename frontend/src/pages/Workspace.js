@@ -310,7 +310,14 @@ const Workspace = () => {
               <div className="chat-message assistant" data-testid="loading-message">
                 <div className="message-avatar">🤖</div>
                 <div className="message-content">
-                  <Loader2 className="animate-spin" /> Generating...
+                  <div className="thinking-animation">
+                    <div className="thinking-dots">
+                      <span></span>
+                      <span></span>
+                      <span></span>
+                    </div>
+                    <p className="thinking-text">AI is thinking and generating your website...</p>
+                  </div>
                 </div>
               </div>
             )}
