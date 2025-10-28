@@ -655,6 +655,12 @@ h1, h2, h3, h4, h5, h6 {
   min-height: 0;
 }
 
+.code-editor {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
 .code-view pre {
   margin: 0;
   font-family: 'Courier New', monospace;
