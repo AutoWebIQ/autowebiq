@@ -706,40 +706,96 @@ async def chat(request: ChatRequest, user_id: str = Depends(get_current_user)):
     
     # Get AI response
     try:
+        # Get recent chat history for context (last 10 messages)
+        recent_messages = await db.messages.find(
+            {"project_id": request.project_id}
+        ).sort("created_at", -1).limit(10).to_list(length=10)
+        recent_messages.reverse()  # Put in chronological order
+        
         # Map models to actual API models
         if request.model in ["claude-4.5-sonnet-200k", "claude-4.5-sonnet-1m"]:
-            actual_model = "claude-4-sonnet-20250514"
+            actual_model = "claude-sonnet-4-20250514"
+        elif request.model == "gpt-5":
+            actual_model = "gpt-4o"  # Use latest GPT-4o
         else:
             actual_model = request.model
         
-        # Better system prompt for conversational AI
-        system_prompt = """You are AutoWebIQ, an expert web development AI assistant. You build beautiful, modern, responsive websites.
+        # ADVANCED system prompt - similar to my capabilities
+        system_prompt = """You are an EXPERT full-stack web developer AI that builds beautiful, modern, production-ready websites.
 
-IMPORTANT INSTRUCTIONS:
-1. If the user's request is vague, ask 2-3 clarifying questions to understand their needs better
-2. When you have enough info, generate complete HTML with inline CSS and JavaScript
-3. Make websites modern, responsive, and production-ready
-4. Use modern design trends: gradients, animations, clean layouts
-5. Always provide ONLY the HTML code when generating (no explanations before/after)
+CORE CAPABILITIES:
+- Build complete, responsive websites with HTML, CSS, and JavaScript
+- Create modern UIs with Tailwind CSS or custom CSS
+- Implement interactive features with vanilla JavaScript
+- Design with best practices: accessibility, performance, SEO
+- Use modern design trends: glassmorphism, gradients, micro-interactions
 
-If user asks to "build a website for X", first ask:
-- What's the main purpose? (e.g., showcase, sell, inform)
-- Who's the target audience?
-- Any specific colors or style preferences?
+CONVERSATION STYLE:
+- Be conversational and helpful like a senior developer
+- Ask clarifying questions when requirements are vague
+- Suggest improvements and best practices
+- Explain your design decisions briefly
 
-Then generate the complete website."""
+WHEN USER ASKS TO BUILD A WEBSITE:
+1. If requirements are clear, build immediately
+2. If vague (e.g., "build a website"), ask 2-3 focused questions:
+   - What's the purpose? (portfolio, business, landing page, blog, etc.)
+   - Target audience? (professionals, consumers, specific niche)
+   - Style preference? (modern, minimal, colorful, professional, etc.)
+3. After clarification, generate complete code
+
+CODE GENERATION RULES:
+✅ ALWAYS output complete, self-contained HTML with inline CSS and JavaScript
+✅ Make it responsive (mobile, tablet, desktop)
+✅ Use modern design: gradients, shadows, animations, proper spacing
+✅ Include real content examples (not just placeholders)
+✅ Add hover effects, transitions, and interactivity
+✅ Ensure proper color contrast and typography
+✅ Structure: proper HTML5 semantic tags
+
+OUTPUT FORMAT:
+- When generating code, wrap in ```html ... ``` code blocks
+- Include brief explanation of key features BEFORE the code
+- Be concise but informative
+
+ITERATION & UPDATES:
+- When user asks to modify existing website, understand the change
+- Apply surgical updates - don't rebuild everything unless needed
+- Maintain consistency with existing design
+
+CURRENT PROJECT CONTEXT:
+- Project: {project_name}
+- Description: {project_description}
+- Has existing code: {has_code}"""
         
-        # Use OpenAI for GPT models
+        # Prepare context
+        has_code = bool(project.get('generated_code'))
+        system_prompt = system_prompt.format(
+            project_name=project['name'],
+            project_description=project['description'],
+            has_code="Yes - user wants modifications" if has_code else "No - first generation"
+        )
+        
+        # Build conversation messages with history
+        messages = [{"role": "system", "content": system_prompt}]
+        
+        # Add recent chat history (excluding current message)
+        for msg in recent_messages[:-1]:  # Exclude the message we just saved
+            if msg['role'] in ['user', 'assistant']:
+                messages.append({
+                    "role": msg['role'],
+                    "content": msg['content'][:1000]  # Limit length to save tokens
+                })
+        
+        # Add current user message
+        current_prompt = request.message
+        if has_code:
+            current_prompt += f"\n\n[Context: Website already exists. User wants: {request.message}]"
+        
+        messages.append({"role": "user", "content": current_prompt})
+        
+        # Use OpenAI for GPT models (best quality)
         if actual_model.startswith('gpt'):
-            prompt = f"{request.message}\n\nProject: {project['name']}\nDescription: {project['description']}"
-            if project['generated_code']:
-                prompt += f"\n\nCurrent website code exists. User wants modifications."
-            
-            messages = [
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": prompt}
-            ]
-            
             completion = await openai_client.chat.completions.create(
                 model=actual_model,
                 messages=messages,
@@ -758,19 +814,44 @@ Then generate the complete website."""
             )
             chat_client.with_model("anthropic", actual_model)
             
-            prompt = f"{request.message}\n\nProject: {project['name']}\nDescription: {project['description']}"
-            if project['generated_code']:
-                prompt += f"\n\nCurrent website exists. User wants: {request.message}"
-            
-            user_message = UserMessage(text=prompt)
+            # Send with context
+            user_message = UserMessage(text=current_prompt)
             ai_response = await chat_client.send_message(user_message)
         
-        # Extract HTML
+        # Extract HTML - improved extraction
         html_code = ai_response.strip()
-        if "```html" in html_code:
-            html_code = html_code.split("```html")[1].split("```")[0].strip()
+        
+        # Try multiple extraction patterns
+        if "```html" in html_code.lower():
+            # Extract between ```html and ```
+            parts = html_code.lower().split("```html")
+            if len(parts) > 1:
+                html_code = html_code.split("```html", 1)[1].split("```")[0].strip()
         elif "```" in html_code:
-            html_code = html_code.split("```")[1].split("```")[0].strip()
+            # Extract between ``` and ```
+            parts = html_code.split("```")
+            if len(parts) >= 3:
+                html_code = parts[1].strip()
+        
+        # If still has code blocks, try to clean
+        if html_code.startswith("```"):
+            html_code = html_code.split("```", 1)[1].split("```")[0].strip()
+        
+        # Ensure we have HTML
+        if not html_code.strip().lower().startswith("<!doctype") and not html_code.strip().lower().startswith("<html"):
+            # If no HTML structure, wrap content
+            if "<" in html_code and ">" in html_code:
+                html_code = f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{project['name']}</title>
+</head>
+<body>
+{html_code}
+</body>
+</html>"""
         
         # Save AI message
         ai_msg = ChatMessage(
