@@ -233,6 +233,9 @@ const AuthPage = () => {
     }
 
     try {
+      // Clear old data before new login
+      localStorage.clear();
+      
       const provider = new authMethods.GoogleAuthProvider();
       const result = await authMethods.signInWithPopup(firebaseAuth, provider);
       
@@ -264,6 +267,9 @@ const AuthPage = () => {
     }
 
     try {
+      // Clear old data before new login
+      localStorage.clear();
+      
       const provider = new authMethods.GithubAuthProvider();
       const result = await authMethods.signInWithPopup(firebaseAuth, provider);
       
