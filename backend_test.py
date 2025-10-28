@@ -327,7 +327,7 @@ print("User ID: {user_id}");
         print("\n🧹 Cleaning Up Test Data")
         
         mongo_script = f'''
-use autowebiq_db;
+use('autowebiq_db');
 db.users.deleteMany({{email: /test_.*@example\\.com/}});
 db.users.deleteMany({{email: /oauth_.*@gmail\\.com/}});
 db.user_sessions.deleteMany({{session_token: /test_session/}});
