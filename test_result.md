@@ -213,3 +213,5 @@ agent_communication:
       message: "Starting comprehensive frontend Google OAuth UI testing. Will verify login/register page UI, button functionality, redirect URLs, regular authentication flow, and responsive design."
     - agent: "testing"
       message: "✅ FRONTEND GOOGLE OAUTH TESTING COMPLETED SUCCESSFULLY: All UI components working perfectly. Google OAuth button properly implemented on both login and register pages with correct styling, Google logo, and redirect functionality. Regular authentication flow tested and working. Responsive design verified across all viewport sizes. No critical issues found - ready for production use."
+    - agent: "testing"
+      message: "✅ QUICK SANITY CHECK COMPLETED: Google OAuth session endpoint (/api/auth/google/session) is working correctly after frontend changes. Both test cases passed: (1) Missing session_id returns 400 with 'Session ID required' message, (2) Invalid session_id returns 400 with 'Invalid session ID' message. Backend endpoint is accessible and responding properly."
