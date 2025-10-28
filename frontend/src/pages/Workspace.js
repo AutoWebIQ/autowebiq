@@ -33,9 +33,10 @@ const Workspace = () => {
   const iframeRef = useRef(null);
   const recognitionRef = useRef(null);
 
-  const axiosConfig = {
-    headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-  };
+  const getAxiosConfig = () => ({
+    headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+    withCredentials: true
+  });
 
   useEffect(() => {
     fetchProject();
