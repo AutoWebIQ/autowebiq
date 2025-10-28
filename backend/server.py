@@ -402,7 +402,7 @@ async def firebase_user_sync(user_data: FirebaseUserSync):
                 "username": user_data.display_name or user_data.email.split('@')[0],
                 "email": user_data.email,
                 "password_hash": "",  # No password for Firebase users
-                "credits": 50,  # Free credits
+                "credits": 10,  # Free credits
                 "picture": user_data.photo_url,
                 "auth_provider": provider_map.get(user_data.provider_id, "email"),
                 "created_at": datetime.now(timezone.utc).isoformat()
