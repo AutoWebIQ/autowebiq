@@ -96,7 +96,7 @@ const Workspace = () => {
 
   const fetchUserCredits = async () => {
     try {
-      const res = await axios.get(`${API}/auth/me`, axiosConfig);
+      const res = await axios.get(`${API}/auth/me`, getAxiosConfig());
       setUserCredits(res.data.credits);
     } catch (error) {
       console.error('Failed to load credits');
