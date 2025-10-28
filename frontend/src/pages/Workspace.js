@@ -87,7 +87,7 @@ const Workspace = () => {
 
   const fetchMessages = async () => {
     try {
-      const res = await axios.get(`${API}/projects/${id}/messages`, axiosConfig);
+      const res = await axios.get(`${API}/projects/${id}/messages`, getAxiosConfig());
       setMessages(res.data.filter(m => m.role !== 'system'));
     } catch (error) {
       console.error('Failed to load messages');
