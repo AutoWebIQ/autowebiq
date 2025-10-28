@@ -177,6 +177,18 @@ backend:
           agent: "testing"
           comment: "Protected endpoints (e.g., /api/projects) work correctly with both JWT and session token authentication methods."
 
+  - task: "Firebase Sync Endpoint - User Switching Fix"
+    implemented: true
+    working: true
+    file: "backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "testing"
+          comment: "✅ FIREBASE SYNC USER SWITCHING VERIFIED: POST /api/auth/firebase/sync endpoint working perfectly for user switching scenario. Tested with two different Firebase users (test-firebase-uid-1 and test-firebase-uid-2). Each sync creates/updates correct user in database with proper data isolation. New users get 10 credits as expected (not 50). Response includes correct user-specific data with no caching issues. User 1 and User 2 have separate IDs and isolated data. Re-sync of existing user maintains same ID. /auth/me endpoint returns correct user data for each token. All 26 tests passed including comprehensive user switching validation."
+
 frontend:
   - task: "Google OAuth Login UI Integration"
     implemented: true
