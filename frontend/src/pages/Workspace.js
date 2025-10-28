@@ -369,15 +369,30 @@ const Workspace = () => {
           </ScrollArea>
           
           <div className="chat-input-area" data-testid="input-area">
-            <Button
-              data-testid="voice-btn"
-              size="sm"
-              variant={isRecording ? "destructive" : "ghost"}
-              onClick={toggleVoiceRecording}
-              disabled={loading}
-            >
-              {isRecording ? <MicOff size={18} /> : <Mic size={18} />}
-            </Button>
+            <div className="input-actions">
+              <Button
+                data-testid="voice-btn"
+                size="sm"
+                variant={isRecording ? "destructive" : "ghost"}
+                onClick={toggleVoiceRecording}
+                disabled={loading}
+                title="Voice input"
+              >
+                {isRecording ? <MicOff size={18} /> : <Mic size={18} />}
+              </Button>
+              <div {...getRootProps()}>
+                <input {...getInputProps()} />
+                <Button
+                  data-testid="upload-btn"
+                  size="sm"
+                  variant="ghost"
+                  disabled={loading || uploadingFile}
+                  title="Upload image/video/file"
+                >
+                  {uploadingFile ? <Loader2 className="animate-spin" size={18} /> : <ImageIcon size={18} />}
+                </Button>
+              </div>
+            </div>
             <Textarea
               data-testid="message-input"
               placeholder="Describe what you want to build or modify... (Press Enter to send, Shift+Enter for new line)"
