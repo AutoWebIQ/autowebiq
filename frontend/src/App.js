@@ -169,6 +169,9 @@ const AuthPage = () => {
     setLoading(true);
     
     try {
+      // Clear old data before new login
+      localStorage.clear();
+      
       let firebaseUser;
       
       if (mode === 'register') {
@@ -183,7 +186,7 @@ const AuthPage = () => {
         // Sync with backend
         await syncWithBackend(firebaseUser);
         
-        toast.success('🎉 Account created! You got 50 free credits!');
+        toast.success('🎉 Account created! You got 10 free credits!');
         navigate('/dashboard');
       } else {
         // Firebase login
