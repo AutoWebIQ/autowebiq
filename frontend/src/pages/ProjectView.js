@@ -89,7 +89,7 @@ const ProjectView = () => {
           </Button>
           <div className="logo">
             <Sparkles className="logo-icon" />
-            <span>Optra AI</span>
+            <span>AutoWebIQ</span>
           </div>
           <div className="project-actions">
             <Button data-testid="download-btn" onClick={downloadProject}>
