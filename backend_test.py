@@ -74,205 +74,281 @@ class AutoWebIQAPITester:
             self.log_test(name, False, f"Exception: {str(e)}")
             return False, {}, None
 
-    def test_user_registration(self):
-        """Test user registration"""
+    def test_jwt_auth_flow(self):
+        """Test existing JWT authentication flow"""
+        print("\n🔐 Testing JWT Authentication Flow")
+        
+        # Generate unique test user
         timestamp = int(time.time())
         test_username = f"testuser_{timestamp}"
+        test_email = f"test_{timestamp}@example.com"
         test_password = "TestPass123!"
+        self.test_user_email = test_email
         
-        success, response = self.run_test(
-            "User Registration",
+        # Test registration
+        success, response, _ = self.run_test(
+            "JWT Registration",
             "POST",
             "auth/register",
             200,
-            data={"username": test_username, "password": test_password}
+            data={
+                "username": test_username,
+                "email": test_email,
+                "password": test_password
+            }
         )
         
         if success and 'access_token' in response:
-            self.token = response['access_token']
-            self.user_id = response['user_id']
-            self.username = test_username
-            return True
-        return False
-
-    def test_user_login(self):
-        """Test user login with existing credentials"""
-        if not self.username:
-            return False
+            self.jwt_token = response['access_token']
+            self.user_id = response['user']['id']
+            print(f"   JWT Token: {self.jwt_token[:20]}...")
             
-        success, response = self.run_test(
-            "User Login",
-            "POST", 
-            "auth/login",
-            200,
-            data={"username": self.username, "password": "TestPass123!"}
-        )
+            # Test login
+            success, response, _ = self.run_test(
+                "JWT Login",
+                "POST",
+                "auth/login",
+                200,
+                data={
+                    "email": test_email,
+                    "password": test_password
+                }
+            )
+            
+            if success and 'access_token' in response:
+                # Test /auth/me with JWT
+                success, response, _ = self.run_test(
+                    "Get User Info (JWT)",
+                    "GET",
+                    "auth/me",
+                    200,
+                    headers={"Authorization": f"Bearer {self.jwt_token}"}
+                )
+                return success
         
-        if success and 'access_token' in response:
-            self.token = response['access_token']
-            return True
         return False
 
-    def test_get_user_profile(self):
-        """Test getting user profile"""
-        success, response = self.run_test(
-            "Get User Profile",
+    def create_test_session_in_db(self):
+        """Create test user and session directly in MongoDB using mongosh"""
+        print("\n🗄️ Creating Test Session in MongoDB")
+        
+        # Generate test data
+        user_id = f"oauth-user-{int(time.time())}"
+        session_token = f"test_session_{int(time.time())}"
+        test_email = f"oauth_{int(time.time())}@gmail.com"
+        
+        # MongoDB script to create test user and session
+        mongo_script = f'''
+use autowebiq_db;
+db.users.insertOne({{
+  id: "{user_id}",
+  username: "OAuth Test User",
+  email: "{test_email}",
+  password_hash: "",
+  credits: 50,
+  picture: "https://via.placeholder.com/150",
+  auth_provider: "google",
+  created_at: new Date().toISOString()
+}});
+db.user_sessions.insertOne({{
+  id: "{str(uuid.uuid4())}",
+  user_id: "{user_id}",
+  session_token: "{session_token}",
+  expires_at: new Date(Date.now() + 7*24*60*60*1000),
+  created_at: new Date().toISOString()
+}});
+print("Test session created successfully");
+print("Session token: {session_token}");
+print("User ID: {user_id}");
+'''
+        
+        try:
+            # Write script to temp file and execute
+            with open('/tmp/create_test_session.js', 'w') as f:
+                f.write(mongo_script)
+            
+            import subprocess
+            result = subprocess.run(['mongosh', '--file', '/tmp/create_test_session.js'], 
+                                  capture_output=True, text=True)
+            
+            if result.returncode == 0:
+                self.session_token = session_token
+                self.user_id = user_id
+                print(f"   ✅ Test session created: {session_token[:20]}...")
+                return True
+            else:
+                print(f"   ❌ MongoDB script failed: {result.stderr}")
+                return False
+                
+        except Exception as e:
+            print(f"   ❌ Failed to create test session: {str(e)}")
+            return False
+
+    def test_google_oauth_session_endpoint(self):
+        """Test POST /api/auth/google/session endpoint"""
+        print("\n🔗 Testing Google OAuth Session Endpoint")
+        
+        # This endpoint requires a real session_id from Google OAuth
+        # Since we can't get a real one, we'll test the error handling
+        success, response, _ = self.run_test(
+            "Google OAuth Session (No Session ID)",
+            "POST",
+            "auth/google/session",
+            400  # Should return 400 for missing session ID
+        )
+        
+        # Test with invalid session ID
+        success, response, _ = self.run_test(
+            "Google OAuth Session (Invalid Session ID)",
+            "POST",
+            "auth/google/session",
+            400,  # Should return 400 for invalid session ID
+            headers={"X-Session-ID": "invalid_session_id_123"}
+        )
+        
+        return True  # These tests are expected to fail with 400, which is correct behavior
+
+    def test_auth_me_with_session_token(self):
+        """Test GET /api/auth/me with session token"""
+        print("\n👤 Testing /auth/me with Session Token")
+        
+        if not self.session_token:
+            print("   ⚠️ No session token available, skipping test")
+            return False
+        
+        # Test with session token in Authorization header
+        success, response, _ = self.run_test(
+            "Get User Info (Session Token - Header)",
             "GET",
             "auth/me",
-            200
-        )
-        return success
-
-    def test_create_conversation(self):
-        """Test creating a new conversation"""
-        success, response = self.run_test(
-            "Create Conversation",
-            "POST",
-            "conversations",
             200,
-            data={"title": "Test Conversation"}
-        )
-        
-        if success and 'id' in response:
-            self.conversation_id = response['id']
-            return True
-        return False
-
-    def test_get_conversations(self):
-        """Test getting all conversations"""
-        success, response = self.run_test(
-            "Get Conversations",
-            "GET",
-            "conversations",
-            200
-        )
-        return success
-
-    def test_get_conversation_details(self):
-        """Test getting specific conversation details"""
-        if not hasattr(self, 'conversation_id'):
-            return False
-            
-        success, response = self.run_test(
-            "Get Conversation Details",
-            "GET",
-            f"conversations/{self.conversation_id}",
-            200
-        )
-        return success
-
-    def test_update_conversation_title(self):
-        """Test updating conversation title"""
-        if not hasattr(self, 'conversation_id'):
-            return False
-            
-        success, response = self.run_test(
-            "Update Conversation Title",
-            "PUT",
-            f"conversations/{self.conversation_id}",
-            200,
-            data={"title": "Updated Test Conversation"}
-        )
-        return success
-
-    def test_send_message(self):
-        """Test sending a message and getting AI response"""
-        if not hasattr(self, 'conversation_id'):
-            return False
-            
-        print("   Note: AI response may take a few seconds...")
-        success, response = self.run_test(
-            "Send Message (AI Response)",
-            "POST",
-            "messages",
-            200,
-            data={
-                "conversation_id": self.conversation_id,
-                "content": "Hello, this is a test message. Please respond briefly."
-            }
+            headers={"Authorization": f"Bearer {self.session_token}"}
         )
         
         if success:
-            # Check if we got both user and AI messages
-            if 'user_message' in response and 'ai_message' in response:
-                print("   ✅ Received both user and AI messages")
-                return True
-            else:
-                self.log_test("Send Message - Response Format", False, "Missing user_message or ai_message in response")
-                return False
-        return False
-
-    def test_image_generation(self):
-        """Test image generation"""
-        if not hasattr(self, 'conversation_id'):
-            return False
-            
-        print("   Note: Image generation may take several seconds...")
-        success, response = self.run_test(
-            "Generate Image",
-            "POST",
-            "generate-image",
-            200,
-            data={
-                "conversation_id": self.conversation_id,
-                "prompt": "A simple blue circle on white background"
-            }
-        )
+            # Test with session token in cookie
+            success, response, _ = self.run_test(
+                "Get User Info (Session Token - Cookie)",
+                "GET",
+                "auth/me",
+                200,
+                cookies={"session_token": self.session_token}
+            )
         
-        if success and 'image_base64' in response:
-            print("   ✅ Image generated successfully")
-            return True
-        return False
-
-    def test_file_upload(self):
-        """Test file upload and analysis"""
-        if not hasattr(self, 'conversation_id'):
-            return False
-            
-        # Create a test file
-        test_content = "This is a test file for AI analysis.\nIt contains some sample text for testing purposes."
-        
-        print("   Note: File analysis may take a few seconds...")
-        success, response = self.run_test(
-            "File Upload and Analysis",
-            "POST",
-            f"upload-file?conversation_id={self.conversation_id}",
-            200,
-            files={'file': ('test.txt', test_content, 'text/plain')}
-        )
-        
-        if success and 'analysis' in response:
-            print("   ✅ File uploaded and analyzed successfully")
-            return True
-        return False
-
-    def test_delete_conversation(self):
-        """Test deleting a conversation"""
-        if not hasattr(self, 'conversation_id'):
-            return False
-            
-        success, response = self.run_test(
-            "Delete Conversation",
-            "DELETE",
-            f"conversations/{self.conversation_id}",
-            200
-        )
         return success
 
-    def test_invalid_auth(self):
-        """Test API with invalid authentication"""
-        original_token = self.token
-        self.token = "invalid_token_123"
+    def test_logout_endpoint(self):
+        """Test POST /api/auth/logout endpoint"""
+        print("\n🚪 Testing Logout Endpoint")
         
-        success, response = self.run_test(
-            "Invalid Authentication",
+        if not self.session_token:
+            print("   ⚠️ No session token available, skipping test")
+            return False
+        
+        # Test logout with session token cookie
+        success, response, resp_obj = self.run_test(
+            "Logout (Session Token)",
+            "POST",
+            "auth/logout",
+            200,
+            cookies={"session_token": self.session_token}
+        )
+        
+        if success:
+            # Verify session is deleted by trying to use it again
+            success, response, _ = self.run_test(
+                "Verify Session Deleted",
+                "GET",
+                "auth/me",
+                401,  # Should return 401 after logout
+                cookies={"session_token": self.session_token}
+            )
+            return success
+        
+        return False
+
+    def test_flexible_auth_system(self):
+        """Test that the system supports both JWT and session tokens"""
+        print("\n🔄 Testing Flexible Authentication System")
+        
+        # Test JWT auth still works
+        if self.jwt_token:
+            success, response, _ = self.run_test(
+                "JWT Auth Still Works",
+                "GET",
+                "auth/me",
+                200,
+                headers={"Authorization": f"Bearer {self.jwt_token}"}
+            )
+            
+            if not success:
+                return False
+        
+        # Test invalid token handling
+        success, response, _ = self.run_test(
+            "Invalid JWT Token",
             "GET",
-            "conversations",
+            "auth/me",
+            401,
+            headers={"Authorization": "Bearer invalid_jwt_token"}
+        )
+        
+        # Test no auth
+        success, response, _ = self.run_test(
+            "No Authentication",
+            "GET",
+            "auth/me",
             401
         )
         
-        self.token = original_token
-        return success
+        return True
+
+    def test_protected_endpoints(self):
+        """Test that protected endpoints work with both auth methods"""
+        print("\n🛡️ Testing Protected Endpoints")
+        
+        # Test projects endpoint with JWT
+        if self.jwt_token:
+            success, response, _ = self.run_test(
+                "Get Projects (JWT)",
+                "GET",
+                "projects",
+                200,
+                headers={"Authorization": f"Bearer {self.jwt_token}"}
+            )
+            
+            if not success:
+                return False
+        
+        return True
+
+    def cleanup_test_data(self):
+        """Clean up test data from MongoDB"""
+        print("\n🧹 Cleaning Up Test Data")
+        
+        mongo_script = f'''
+use autowebiq_db;
+db.users.deleteMany({{email: /test_.*@example\\.com/}});
+db.users.deleteMany({{email: /oauth_.*@gmail\\.com/}});
+db.user_sessions.deleteMany({{session_token: /test_session/}});
+print("Test data cleaned up");
+'''
+        
+        try:
+            with open('/tmp/cleanup_test_data.js', 'w') as f:
+                f.write(mongo_script)
+            
+            import subprocess
+            result = subprocess.run(['mongosh', '--file', '/tmp/cleanup_test_data.js'], 
+                                  capture_output=True, text=True)
+            
+            if result.returncode == 0:
+                print("   ✅ Test data cleaned up successfully")
+            else:
+                print(f"   ⚠️ Cleanup warning: {result.stderr}")
+                
+        except Exception as e:
+            print(f"   ⚠️ Cleanup failed: {str(e)}")
 
     def run_all_tests(self):
         """Run all API tests in sequence"""
