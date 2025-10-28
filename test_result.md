@@ -213,7 +213,7 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Google OAuth Login UI Integration"
+    - "Firebase Sync Endpoint - User Switching Fix"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
