@@ -442,25 +442,43 @@ async def chat(request: ChatRequest, user_id: str = Depends(get_current_user)):
     try:
         # Map models to actual API models
         if request.model in ["claude-4.5-sonnet-200k", "claude-4.5-sonnet-1m"]:
-            actual_model = "claude-4-sonnet-20250514"  # Use Claude 4 Sonnet API
+            actual_model = "claude-4-sonnet-20250514"
         else:
             actual_model = request.model
+        
+        # Better system prompt for conversational AI
+        system_prompt = """You are AutoWebIQ, an expert web development AI assistant. You build beautiful, modern, responsive websites.
+
+IMPORTANT INSTRUCTIONS:
+1. If the user's request is vague, ask 2-3 clarifying questions to understand their needs better
+2. When you have enough info, generate complete HTML with inline CSS and JavaScript
+3. Make websites modern, responsive, and production-ready
+4. Use modern design trends: gradients, animations, clean layouts
+5. Always provide ONLY the HTML code when generating (no explanations before/after)
+
+If user asks to "build a website for X", first ask:
+- What's the main purpose? (e.g., showcase, sell, inform)
+- Who's the target audience?
+- Any specific colors or style preferences?
+
+Then generate the complete website."""
         
         # Use OpenAI for GPT models
         if actual_model.startswith('gpt'):
             prompt = f"{request.message}\n\nProject: {project['name']}\nDescription: {project['description']}"
             if project['generated_code']:
-                prompt += f"\n\nCurrent code:\n{project['generated_code'][:2000]}"
+                prompt += f"\n\nCurrent website code exists. User wants modifications."
             
             messages = [
-                {"role": "system", "content": "You are an expert web developer. Generate complete, production-ready websites. Provide ONLY the HTML code with inline CSS and JavaScript. Make it modern, responsive, and beautiful."},
+                {"role": "system", "content": system_prompt},
                 {"role": "user", "content": prompt}
             ]
             
             completion = await openai_client.chat.completions.create(
                 model=actual_model,
                 messages=messages,
-                temperature=0.7
+                temperature=0.7,
+                max_tokens=4000
             )
             
             ai_response = completion.choices[0].message.content
@@ -470,13 +488,13 @@ async def chat(request: ChatRequest, user_id: str = Depends(get_current_user)):
             chat_client = LlmChat(
                 api_key=api_key,
                 session_id=request.project_id,
-                system_message="You are an expert web developer. Generate complete, production-ready websites. Provide ONLY the HTML code with inline CSS and JavaScript. Make it modern, responsive, and beautiful."
+                system_message=system_prompt
             )
             chat_client.with_model("anthropic", actual_model)
             
             prompt = f"{request.message}\n\nProject: {project['name']}\nDescription: {project['description']}"
             if project['generated_code']:
-                prompt += f"\n\nCurrent code:\n{project['generated_code'][:2000]}"
+                prompt += f"\n\nCurrent website exists. User wants: {request.message}"
             
             user_message = UserMessage(text=prompt)
             ai_response = await chat_client.send_message(user_message)
