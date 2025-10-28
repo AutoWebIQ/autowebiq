@@ -357,6 +357,28 @@ async def delete_project(project_id: str, user_id: str = Depends(get_current_use
         raise HTTPException(status_code=404, detail="Project not found")
     return {"message": "Project deleted"}
 
+@api_router.put("/projects/{project_id}")
+async def update_project_code(project_id: str, user_id: str = Depends(get_current_user), generated_code: str = ""):
+    """Update project code manually"""
+    from pydantic import BaseModel
+    
+    class CodeUpdate(BaseModel):
+        generated_code: str
+    
+    # Parse request body
+    result = await db.projects.update_one(
+        {"id": project_id, "user_id": user_id},
+        {"$set": {
+            "generated_code": generated_code,
+            "updated_at": datetime.now(timezone.utc).isoformat()
+        }}
+    )
+    
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Project not found")
+    
+    return {"message": "Code updated successfully"}
+
 @api_router.get("/projects/{project_id}/download")
 async def download_project(project_id: str, user_id: str = Depends(get_current_user)):
     project = await db.projects.find_one({"id": project_id, "user_id": user_id}, {"_id": 0})
