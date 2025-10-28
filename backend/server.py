@@ -473,7 +473,7 @@ async def google_auth_session(request: Request, response: Response):
             "username": user_name,
             "email": user_email,
             "password_hash": "",  # No password for OAuth users
-            "credits": 50,  # Give 50 free credits
+            "credits": 10,  # Give 10 free credits
             "picture": user_picture,
             "auth_provider": "google",
             "created_at": datetime.now(timezone.utc).isoformat()
