@@ -368,9 +368,11 @@ const Dashboard = () => {
   const [creating, setCreating] = useState(false);
   const [processingSession, setProcessingSession] = useState(false);
 
-  const axiosConfig = {
-    headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-  };
+  // Helper to get current axios config with latest token
+  const getAxiosConfig = () => ({
+    headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+    withCredentials: true
+  });
 
   // Handle Google OAuth session_id
   useEffect(() => {
@@ -378,11 +380,13 @@ const Dashboard = () => {
       const hash = window.location.hash;
       if (hash && hash.includes('session_id=')) {
         setProcessingSession(true);
+        setLoading(true);
         const sessionId = hash.split('session_id=')[1].split('&')[0];
         
         try {
           const res = await axios.post(`${API}/auth/google/session`, {}, {
-            headers: { 'X-Session-ID': sessionId }
+            headers: { 'X-Session-ID': sessionId },
+            withCredentials: true
           });
           
           // Store session token and user data
@@ -393,12 +397,24 @@ const Dashboard = () => {
           // Clean URL
           window.history.replaceState({}, document.title, window.location.pathname);
           
-          toast.success(`Welcome ${res.data.user.name}! You have ${res.data.user.credits} credits.`);
+          toast.success(`Welcome ${res.data.user.username || res.data.user.name}! You have ${res.data.user.credits} credits.`);
+          
+          // Fetch data immediately after successful session
+          await fetchData();
         } catch (error) {
-          toast.error('Google authentication failed');
+          console.error('Google auth error:', error);
+          toast.error('Google authentication failed. Please try again.');
           navigate('/auth?mode=login');
         } finally {
           setProcessingSession(false);
+        }
+      } else {
+        // No session_id, check if user is already logged in
+        const token = localStorage.getItem('token');
+        if (!token) {
+          navigate('/auth?mode=login');
+        } else {
+          fetchData();
         }
       }
     };
@@ -406,24 +422,26 @@ const Dashboard = () => {
     handleGoogleSession();
   }, []);
 
-  useEffect(() => {
-    if (!processingSession) {
-      fetchData();
-    }
-  }, [processingSession]);
-
   const fetchData = async () => {
     try {
+      const config = getAxiosConfig();
       const [userRes, projectsRes] = await Promise.all([
-        axios.get(`${API}/auth/me`, axiosConfig),
-        axios.get(`${API}/projects`, axiosConfig)
+        axios.get(`${API}/auth/me`, config),
+        axios.get(`${API}/projects`, config)
       ]);
       setUser(userRes.data);
       localStorage.setItem('user', JSON.stringify(userRes.data));
       setProjects(projectsRes.data);
     } catch (error) {
-      toast.error('Failed to load data');
-      navigate('/auth?mode=login');
+      console.error('Failed to load data:', error);
+      if (error.response?.status === 401) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        toast.error('Session expired. Please login again.');
+        navigate('/auth?mode=login');
+      } else {
+        toast.error('Failed to load data');
+      }
     } finally {
       setLoading(false);
     }
