@@ -2,15 +2,19 @@ import requests
 import sys
 import json
 import time
-from datetime import datetime
+import uuid
+from datetime import datetime, timezone, timedelta
+import os
 
-class AIAssistantAPITester:
-    def __init__(self, base_url="https://webbuilder-ai-3.preview.emergentagent.com"):
-        self.base_url = base_url
-        self.api_url = f"{base_url}/api"
-        self.token = None
+class AutoWebIQAPITester:
+    def __init__(self):
+        # Get backend URL from frontend .env
+        self.base_url = "https://webbuilder-ai-3.preview.emergentagent.com"
+        self.api_url = f"{self.base_url}/api"
+        self.jwt_token = None
+        self.session_token = None
         self.user_id = None
-        self.username = None
+        self.test_user_email = None
         self.tests_run = 0
         self.tests_passed = 0
         self.test_results = []
