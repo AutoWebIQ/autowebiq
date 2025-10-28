@@ -102,7 +102,7 @@
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
 
-user_problem_statement: "Test the new Google OAuth authentication endpoints that were just added"
+user_problem_statement: "Test the Firebase sync endpoint to verify user switching works correctly after fixing the issue where signing in with different Google accounts showed old user data"
 
 backend:
   - task: "Google OAuth Session Exchange Endpoint"
