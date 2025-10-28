@@ -157,7 +157,7 @@ const Workspace = () => {
     try {
       await axios.put(`${API}/projects/${id}`, {
         generated_code: editedCode
-      }, axiosConfig);
+      }, getAxiosConfig());
       
       setProject(prev => ({ ...prev, generated_code: editedCode }));
       setEditMode(false);
@@ -232,7 +232,7 @@ const Workspace = () => {
         project_id: id,
         message: messageText,
         model: selectedModel
-      }, axiosConfig);
+      }, getAxiosConfig());
       
       setMessages(prev => [...prev, {
         role: 'assistant',
