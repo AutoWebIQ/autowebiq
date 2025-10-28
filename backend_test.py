@@ -322,6 +322,202 @@ print("User ID: {user_id}");
         
         return True
 
+    def test_firebase_sync_endpoint(self):
+        """Test Firebase sync endpoint for user switching functionality"""
+        print("\n🔥 Testing Firebase Sync Endpoint - User Switching")
+        
+        # Test data for two different Firebase users
+        user1_data = {
+            "firebase_uid": "test-firebase-uid-1",
+            "email": "user1@test.com",
+            "display_name": "User One",
+            "photo_url": "https://example.com/photo1.jpg",
+            "provider_id": "google.com"
+        }
+        
+        user2_data = {
+            "firebase_uid": "test-firebase-uid-2", 
+            "email": "user2@test.com",
+            "display_name": "User Two",
+            "photo_url": "https://example.com/photo2.jpg",
+            "provider_id": "google.com"
+        }
+        
+        # Test 1: Sync first Firebase user
+        print("\n   Testing User 1 Firebase Sync...")
+        success1, response1, _ = self.run_test(
+            "Firebase Sync - User 1 (First Time)",
+            "POST",
+            "auth/firebase/sync",
+            200,
+            data=user1_data
+        )
+        
+        if not success1:
+            return False
+            
+        # Verify User 1 response structure
+        if not all(key in response1 for key in ['access_token', 'token_type', 'user']):
+            self.log_test("Firebase Sync - User 1 Response Structure", False, "Missing required fields in response")
+            return False
+        
+        user1_response = response1['user']
+        user1_id = user1_response['id']
+        user1_token = response1['access_token']
+        
+        # Verify User 1 has 10 credits
+        if user1_response.get('credits') != 10:
+            self.log_test("Firebase Sync - User 1 Credits", False, f"Expected 10 credits, got {user1_response.get('credits')}")
+            return False
+        else:
+            self.log_test("Firebase Sync - User 1 Credits", True)
+        
+        # Verify User 1 data is correct
+        if (user1_response.get('email') != user1_data['email'] or 
+            user1_response.get('username') != user1_data['display_name']):
+            self.log_test("Firebase Sync - User 1 Data Accuracy", False, "User data doesn't match input")
+            return False
+        else:
+            self.log_test("Firebase Sync - User 1 Data Accuracy", True)
+        
+        print(f"   ✅ User 1 created with ID: {user1_id}")
+        
+        # Test 2: Sync second Firebase user
+        print("\n   Testing User 2 Firebase Sync...")
+        success2, response2, _ = self.run_test(
+            "Firebase Sync - User 2 (First Time)",
+            "POST", 
+            "auth/firebase/sync",
+            200,
+            data=user2_data
+        )
+        
+        if not success2:
+            return False
+            
+        # Verify User 2 response structure
+        if not all(key in response2 for key in ['access_token', 'token_type', 'user']):
+            self.log_test("Firebase Sync - User 2 Response Structure", False, "Missing required fields in response")
+            return False
+        
+        user2_response = response2['user']
+        user2_id = user2_response['id']
+        user2_token = response2['access_token']
+        
+        # Verify User 2 has 10 credits
+        if user2_response.get('credits') != 10:
+            self.log_test("Firebase Sync - User 2 Credits", False, f"Expected 10 credits, got {user2_response.get('credits')}")
+            return False
+        else:
+            self.log_test("Firebase Sync - User 2 Credits", True)
+        
+        # Verify User 2 data is correct
+        if (user2_response.get('email') != user2_data['email'] or 
+            user2_response.get('username') != user2_data['display_name']):
+            self.log_test("Firebase Sync - User 2 Data Accuracy", False, "User data doesn't match input")
+            return False
+        else:
+            self.log_test("Firebase Sync - User 2 Data Accuracy", True)
+        
+        print(f"   ✅ User 2 created with ID: {user2_id}")
+        
+        # Test 3: Verify users have different IDs (no data mixing)
+        if user1_id == user2_id:
+            self.log_test("Firebase Sync - User Separation", False, "Both users have same ID - data mixing detected")
+            return False
+        else:
+            self.log_test("Firebase Sync - User Separation", True)
+        
+        # Test 4: Test User 1 sync again (should update existing user)
+        print("\n   Testing User 1 Re-sync...")
+        success3, response3, _ = self.run_test(
+            "Firebase Sync - User 1 (Update Existing)",
+            "POST",
+            "auth/firebase/sync", 
+            200,
+            data=user1_data
+        )
+        
+        if success3:
+            user1_updated = response3['user']
+            # Should be same user ID
+            if user1_updated['id'] != user1_id:
+                self.log_test("Firebase Sync - User 1 Update Consistency", False, "User ID changed on re-sync")
+                return False
+            else:
+                self.log_test("Firebase Sync - User 1 Update Consistency", True)
+        
+        # Test 5: Verify each user gets correct data with /auth/me
+        print("\n   Testing User Data Isolation...")
+        
+        # Test User 1 /auth/me
+        success4, me_response1, _ = self.run_test(
+            "Auth Me - User 1 Data",
+            "GET",
+            "auth/me",
+            200,
+            headers={"Authorization": f"Bearer {user1_token}"}
+        )
+        
+        if success4:
+            if (me_response1.get('email') != user1_data['email'] or 
+                me_response1.get('id') != user1_id):
+                self.log_test("Auth Me - User 1 Data Isolation", False, "User 1 getting wrong data")
+                return False
+            else:
+                self.log_test("Auth Me - User 1 Data Isolation", True)
+        
+        # Test User 2 /auth/me  
+        success5, me_response2, _ = self.run_test(
+            "Auth Me - User 2 Data",
+            "GET", 
+            "auth/me",
+            200,
+            headers={"Authorization": f"Bearer {user2_token}"}
+        )
+        
+        if success5:
+            if (me_response2.get('email') != user2_data['email'] or 
+                me_response2.get('id') != user2_id):
+                self.log_test("Auth Me - User 2 Data Isolation", False, "User 2 getting wrong data")
+                return False
+            else:
+                self.log_test("Auth Me - User 2 Data Isolation", True)
+        
+        print(f"\n   🎉 Firebase Sync Testing Complete!")
+        print(f"   • User 1: {user1_data['email']} -> ID: {user1_id}")
+        print(f"   • User 2: {user2_data['email']} -> ID: {user2_id}")
+        print(f"   • Both users have 10 credits and correct data isolation")
+        
+        return True
+
+    def cleanup_firebase_test_data(self):
+        """Clean up Firebase test data from MongoDB"""
+        print("\n🧹 Cleaning Up Firebase Test Data")
+        
+        mongo_script = '''
+use('autowebiq_db');
+db.users.deleteMany({email: {$in: ["user1@test.com", "user2@test.com"]}});
+db.users.deleteMany({firebase_uid: {$in: ["test-firebase-uid-1", "test-firebase-uid-2"]}});
+print("Firebase test data cleaned up");
+'''
+        
+        try:
+            with open('/tmp/cleanup_firebase_test_data.js', 'w') as f:
+                f.write(mongo_script)
+            
+            import subprocess
+            result = subprocess.run(['mongosh', '--file', '/tmp/cleanup_firebase_test_data.js'], 
+                                  capture_output=True, text=True)
+            
+            if result.returncode == 0:
+                print("   ✅ Firebase test data cleaned up successfully")
+            else:
+                print(f"   ⚠️ Firebase cleanup warning: {result.stderr}")
+                
+        except Exception as e:
+            print(f"   ⚠️ Firebase cleanup failed: {str(e)}")
+
     def cleanup_test_data(self):
         """Clean up test data from MongoDB"""
         print("\n🧹 Cleaning Up Test Data")
