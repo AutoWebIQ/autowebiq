@@ -41,6 +41,7 @@ const Workspace = () => {
     fetchMessages();
     fetchUserCredits();
     fetchModels();
+    initVoiceRecognition();
   }, [id]);
 
   useEffect(() => {
@@ -48,12 +49,18 @@ const Workspace = () => {
   }, [messages]);
 
   useEffect(() => {
-    if (project && iframeRef.current && previewMode === 'preview') {
+    if (project && iframeRef.current && previewMode === 'preview' && !editMode) {
       const iframe = iframeRef.current;
       const defaultHTML = '<html><body><div style="display:flex;align-items:center;justify-content:center;height:100vh;font-family:sans-serif;color:#666;">Send a message to generate your website...</div></body></html>';
       iframe.srcdoc = project.generated_code || defaultHTML;
     }
-  }, [project, previewMode]);
+  }, [project, previewMode, editMode]);
+
+  useEffect(() => {
+    if (project && editMode) {
+      setEditedCode(project.generated_code || '');
+    }
+  }, [project, editMode]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
