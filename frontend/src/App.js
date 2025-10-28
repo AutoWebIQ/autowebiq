@@ -261,7 +261,7 @@ const Dashboard = () => {
         <div className="nav-content">
           <div className="logo" onClick={() => navigate('/dashboard')}>
             <Sparkles className="logo-icon" />
-            <span>Optra AI</span>
+            <span>AutoWebIQ</span>
           </div>
           <div className="nav-buttons">
             <div className="credits-badge" data-testid="credits-badge">
