@@ -359,7 +359,7 @@ const AuthPage = () => {
 
 const Dashboard = () => {
   const navigate = useNavigate();
-  const [user, setUser] = useState(JSON.parse(localStorage.getItem('user') || '{}'));
+  const [user, setUser] = useState({});  // Start with empty, fetch from API
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
