@@ -34,30 +34,26 @@ class AutoWebIQAPITester:
             "details": details
         })
 
-    def run_test(self, name, method, endpoint, expected_status, data=None, files=None):
+    def run_test(self, name, method, endpoint, expected_status, data=None, headers=None, cookies=None):
         """Run a single API test"""
         url = f"{self.api_url}/{endpoint}"
-        headers = {'Content-Type': 'application/json'}
-        if self.token:
-            headers['Authorization'] = f'Bearer {self.token}'
+        default_headers = {'Content-Type': 'application/json'}
+        
+        if headers:
+            default_headers.update(headers)
         
         print(f"\n🔍 Testing {name}...")
         print(f"   URL: {url}")
         
         try:
             if method == 'GET':
-                response = requests.get(url, headers=headers)
+                response = requests.get(url, headers=default_headers, cookies=cookies)
             elif method == 'POST':
-                if files:
-                    # Remove Content-Type for file uploads
-                    headers.pop('Content-Type', None)
-                    response = requests.post(url, files=files, headers=headers)
-                else:
-                    response = requests.post(url, json=data, headers=headers)
+                response = requests.post(url, json=data, headers=default_headers, cookies=cookies)
             elif method == 'PUT':
-                response = requests.put(url, json=data, headers=headers)
+                response = requests.put(url, json=data, headers=default_headers, cookies=cookies)
             elif method == 'DELETE':
-                response = requests.delete(url, headers=headers)
+                response = requests.delete(url, headers=default_headers, cookies=cookies)
 
             success = response.status_code == expected_status
             response_data = {}
@@ -69,14 +65,14 @@ class AutoWebIQAPITester:
 
             if success:
                 self.log_test(name, True)
-                return True, response_data
+                return True, response_data, response
             else:
                 self.log_test(name, False, f"Expected {expected_status}, got {response.status_code}. Response: {response_data}")
-                return False, response_data
+                return False, response_data, response
 
         except Exception as e:
             self.log_test(name, False, f"Exception: {str(e)}")
-            return False, {}
+            return False, {}, None
 
     def test_user_registration(self):
         """Test user registration"""
