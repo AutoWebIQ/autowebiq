@@ -198,10 +198,7 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Google OAuth Session Exchange Endpoint"
-    - "Flexible Authentication System (/auth/me)"
-    - "Session Token Authentication"
-    - "Logout and Session Management"
+    - "Google OAuth Login UI Integration"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
