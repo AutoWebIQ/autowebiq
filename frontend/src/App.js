@@ -124,7 +124,7 @@ const AuthPage = () => {
       <div className="auth-card">
         <div className="auth-header">
           <Sparkles className="auth-icon" />
-          <h1 data-testid="auth-title">Optra AI</h1>
+          <h1 data-testid="auth-title">AutoWebIQ</h1>
           <p data-testid="auth-subtitle">{isLogin ? 'Welcome back' : 'Get started with 50 free credits'}</p>
         </div>
         
