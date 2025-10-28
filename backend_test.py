@@ -139,7 +139,7 @@ class AutoWebIQAPITester:
         
         # MongoDB script to create test user and session
         mongo_script = f'''
-use autowebiq_db;
+use('autowebiq_db');
 db.users.insertOne({{
   id: "{user_id}",
   username: "OAuth Test User",
