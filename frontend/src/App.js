@@ -416,7 +416,7 @@ const AuthPage = () => {
               <button
                 type="button"
                 className="forgot-password-link"
-                onClick={() => setMode('forgot')}
+                onClick={handleForgotPassword}
               >
                 Forgot password?
               </button>
