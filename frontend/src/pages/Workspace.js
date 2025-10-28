@@ -185,10 +185,11 @@ const Workspace = () => {
         formData.append('file', file);
         formData.append('project_id', id);
         
+        const config = getAxiosConfig();
         const res = await axios.post(`${API}/upload`, formData, {
-          ...axiosConfig,
+          ...config,
           headers: {
-            ...axiosConfig.headers,
+            ...config.headers,
             'Content-Type': 'multipart/form-data'
           }
         });
