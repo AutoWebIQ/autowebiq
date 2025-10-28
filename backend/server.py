@@ -336,6 +336,124 @@ async def reset_password(request: ResetPasswordRequest):
     
     return {"message": "Password reset successful"}
 
+# Google OAuth endpoints
+@api_router.post("/auth/google/session")
+async def google_auth_session(request: Request, response: Response):
+    """Exchange session_id for session_token and user data"""
+    session_id = request.headers.get("X-Session-ID")
+    
+    if not session_id:
+        raise HTTPException(status_code=400, detail="Session ID required")
+    
+    # Call Emergent Auth API to get user data
+    async with httpx.AsyncClient() as client:
+        try:
+            auth_response = await client.get(
+                "https://demobackend.emergentagent.com/auth/v1/env/oauth/session-data",
+                headers={"X-Session-ID": session_id},
+                timeout=10.0
+            )
+            
+            if auth_response.status_code != 200:
+                raise HTTPException(status_code=400, detail="Invalid session ID")
+            
+            auth_data = auth_response.json()
+            
+        except httpx.RequestError:
+            raise HTTPException(status_code=500, detail="Failed to authenticate with Google")
+    
+    # Extract user data
+    user_email = auth_data["email"]
+    user_name = auth_data["name"]
+    user_picture = auth_data.get("picture")
+    session_token = auth_data["session_token"]
+    
+    # Check if user exists
+    existing_user = await db.users.find_one({"email": user_email})
+    
+    if not existing_user:
+        # Create new user (Google OAuth users don't have password)
+        user_id = str(uuid.uuid4())
+        user_data = {
+            "id": user_id,
+            "username": user_name,
+            "email": user_email,
+            "password_hash": "",  # No password for OAuth users
+            "credits": 50,  # Give 50 free credits
+            "picture": user_picture,
+            "auth_provider": "google",
+            "created_at": datetime.now(timezone.utc).isoformat()
+        }
+        await db.users.insert_one(user_data)
+    else:
+        user_id = existing_user["id"]
+    
+    # Store session in database
+    session_data = {
+        "id": str(uuid.uuid4()),
+        "user_id": user_id,
+        "session_token": session_token,
+        "expires_at": datetime.now(timezone.utc) + timedelta(days=7),
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    await db.user_sessions.insert_one(session_data)
+    
+    # Set httpOnly cookie
+    response.set_cookie(
+        key="session_token",
+        value=session_token,
+        httponly=True,
+        secure=True,
+        samesite="none",
+        path="/",
+        max_age=7 * 24 * 60 * 60  # 7 days
+    )
+    
+    # Get full user data
+    user = await db.users.find_one({"id": user_id})
+    
+    return {
+        "user": {
+            "id": user["id"],
+            "username": user["username"],
+            "email": user["email"],
+            "credits": user["credits"],
+            "picture": user.get("picture")
+        },
+        "session_token": session_token
+    }
+
+@api_router.get("/auth/me")
+async def get_me(request: Request):
+    """Get current user data from session"""
+    user_id = await get_current_user_flexible(request)
+    
+    user = await db.users.find_one({"id": user_id})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    return {
+        "id": user["id"],
+        "username": user["username"],
+        "email": user["email"],
+        "credits": user["credits"],
+        "picture": user.get("picture")
+    }
+
+@api_router.post("/auth/logout")
+async def logout(request: Request, response: Response):
+    """Logout user by deleting session"""
+    session_token = request.cookies.get("session_token")
+    
+    if session_token:
+        # Delete session from database
+        await db.user_sessions.delete_many({"session_token": session_token})
+    
+    # Clear cookie
+    response.delete_cookie(key="session_token", path="/")
+    
+    return {"message": "Logged out successfully"}
+
 # Credits
 @api_router.get("/credits/packages")
 async def get_packages():
