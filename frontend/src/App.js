@@ -92,29 +92,68 @@ const LandingPage = () => {
 const AuthPage = () => {
   const navigate = useNavigate();
   const [params] = React.useState(new URLSearchParams(window.location.search));
-  const [isLogin, setIsLogin] = useState(params.get('mode') === 'login');
+  const [mode, setMode] = useState(params.get('mode') === 'login' ? 'login' : 'register');
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [resetCode, setResetCode] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleAuth = async (e) => {
     e.preventDefault();
+    
+    // Validation
+    if (mode === 'register') {
+      if (password.length < 6) {
+        toast.error('Password must be at least 6 characters');
+        return;
+      }
+      if (password !== confirmPassword) {
+        toast.error('Passwords do not match');
+        return;
+      }
+    }
+    
     setLoading(true);
     
     try {
-      const endpoint = isLogin ? '/auth/login' : '/auth/register';
-      const payload = isLogin 
-        ? { email, password }
-        : { username, email, password };
-      
-      const res = await axios.post(`${API}${endpoint}`, payload);
-      localStorage.setItem('token', res.data.access_token);
-      localStorage.setItem('user', JSON.stringify(res.data.user));
-      toast.success(isLogin ? 'Welcome back!' : 'Account created! You got 10 free credits!');
-      navigate('/dashboard');
+      if (mode === 'forgot') {
+        const res = await axios.post(`${API}/auth/forgot-password`, { email });
+        toast.success('Reset code sent! Check the console (dev mode)');
+        console.log('Reset code:', res.data.code);
+        setMode('reset');
+      } else if (mode === 'reset') {
+        await axios.post(`${API}/auth/reset-password`, {
+          email,
+          reset_code: resetCode,
+          new_password: password
+        });
+        toast.success('Password reset successful! Please login');
+        setMode('login');
+        setPassword('');
+        setResetCode('');
+      } else {
+        const endpoint = mode === 'login' ? '/auth/login' : '/auth/register';
+        const payload = mode === 'login' 
+          ? { email, password }
+          : { username, email, password };
+        
+        const res = await axios.post(`${API}${endpoint}`, payload);
+        localStorage.setItem('token', res.data.access_token);
+        localStorage.setItem('user', JSON.stringify(res.data.user));
+        toast.success(mode === 'login' ? 'Welcome back!' : '🎉 Account created! You got 50 free credits!');
+        navigate('/dashboard');
+      }
     } catch (error) {
-      toast.error(error.response?.data?.detail || 'Authentication failed');
+      const errorMsg = error.response?.data?.detail || 'Something went wrong';
+      if (errorMsg.includes('already exists')) {
+        toast.error('This email is already registered. Please login instead.');
+        setMode('login');
+      } else {
+        toast.error(errorMsg);
+      }
     } finally {
       setLoading(false);
     }
@@ -124,50 +163,168 @@ const AuthPage = () => {
     <div className="auth-container" data-testid="auth-page">
       <div className="auth-card">
         <div className="auth-header">
-          <Sparkles className="auth-icon" />
-          <h1 data-testid="auth-title">AutoWebIQ</h1>
-          <p data-testid="auth-subtitle">{isLogin ? 'Welcome back' : 'Get started with 50 free credits'}</p>
+          <div className="auth-logo">
+            <Sparkles className="auth-icon" />
+          </div>
+          <h1 data-testid="auth-title">
+            {mode === 'login' ? 'Welcome Back!' : mode === 'register' ? 'Get Started' : mode === 'forgot' ? 'Forgot Password?' : 'Reset Password'}
+          </h1>
+          <p data-testid="auth-subtitle">
+            {mode === 'login' ? 'Login to continue building amazing websites' : 
+             mode === 'register' ? 'Create account and get 50 free credits instantly!' : 
+             mode === 'forgot' ? 'Enter your email to receive a reset code' :
+             'Enter the code and your new password'}
+          </p>
         </div>
         
         <form onSubmit={handleAuth} data-testid="auth-form">
-          {!isLogin && (
-            <Input
-              data-testid="username-input"
-              type="text"
-              placeholder="Username"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              required
-            />
+          {mode === 'register' && (
+            <div className="input-group">
+              <label>Username</label>
+              <Input
+                data-testid="username-input"
+                type="text"
+                placeholder="Choose a username"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                required
+              />
+            </div>
           )}
-          <Input
-            data-testid="email-input"
-            type="email"
-            placeholder="Email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-          />
-          <Input
-            data-testid="password-input"
-            type="password"
-            placeholder="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
-          <Button data-testid="auth-submit-btn" type="submit" className="w-full" disabled={loading}>
-            {loading ? 'Please wait...' : (isLogin ? 'Login' : 'Create Account')}
+          
+          {mode !== 'reset' && (
+            <div className="input-group">
+              <label>Email</label>
+              <Input
+                data-testid="email-input"
+                type="email"
+                placeholder="your@email.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
+            </div>
+          )}
+          
+          {mode === 'reset' && (
+            <div className="input-group">
+              <label>Reset Code</label>
+              <Input
+                data-testid="reset-code-input"
+                type="text"
+                placeholder="Enter 6-digit code"
+                value={resetCode}
+                onChange={(e) => setResetCode(e.target.value)}
+                maxLength={6}
+                required
+              />
+            </div>
+          )}
+          
+          {(mode === 'login' || mode === 'register' || mode === 'reset') && (
+            <div className="input-group">
+              <label>{mode === 'reset' ? 'New Password' : 'Password'}</label>
+              <div className="password-input">
+                <Input
+                  data-testid="password-input"
+                  type={showPassword ? "text" : "password"}
+                  placeholder={mode === 'register' ? 'Min. 6 characters' : 'Enter password'}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                />
+                <button
+                  type="button"
+                  className="password-toggle"
+                  onClick={() => setShowPassword(!showPassword)}
+                >
+                  {showPassword ? '👁️' : '👁️‍🗨️'}
+                </button>
+              </div>
+            </div>
+          )}
+          
+          {mode === 'register' && (
+            <div className="input-group">
+              <label>Confirm Password</label>
+              <Input
+                data-testid="confirm-password-input"
+                type={showPassword ? "text" : "password"}
+                placeholder="Confirm password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                required
+              />
+            </div>
+          )}
+          
+          {mode === 'login' && (
+            <div className="auth-options">
+              <button
+                type="button"
+                className="forgot-password-link"
+                onClick={() => setMode('forgot')}
+              >
+                Forgot password?
+              </button>
+            </div>
+          )}
+          
+          <Button 
+            data-testid="auth-submit-btn" 
+            type="submit" 
+            className="w-full auth-submit-btn" 
+            disabled={loading}
+          >
+            {loading ? (
+              <><Loader2 className="animate-spin mr-2" size={18} /> Processing...</>
+            ) : (
+              mode === 'login' ? 'Login' : 
+              mode === 'register' ? '🚀 Create Account' : 
+              mode === 'forgot' ? 'Send Reset Code' : 
+              'Reset Password'
+            )}
           </Button>
         </form>
         
-        <button
-          data-testid="toggle-auth-mode-btn"
-          className="auth-toggle"
-          onClick={() => setIsLogin(!isLogin)}
-        >
-          {isLogin ? "Don't have an account? Sign up for free" : 'Already have an account? Login'}
-        </button>
+        <div className="auth-footer">
+          {mode === 'login' ? (
+            <>
+              <p>Don't have an account?</p>
+              <button
+                data-testid="toggle-auth-mode-btn"
+                className="auth-toggle"
+                onClick={() => setMode('register')}
+              >
+                Sign up for free
+              </button>
+            </>
+          ) : mode === 'register' ? (
+            <>
+              <p>Already have an account?</p>
+              <button
+                data-testid="toggle-auth-mode-btn"
+                className="auth-toggle"
+                onClick={() => setMode('login')}
+              >
+                Login here
+              </button>
+            </>
+          ) : (
+            <button
+              className="auth-toggle"
+              onClick={() => setMode('login')}
+            >
+              ← Back to login
+            </button>
+          )}
+        </div>
+        
+        {mode === 'register' && (
+          <div className="auth-terms">
+            <p>By signing up, you agree to our Terms of Service and Privacy Policy</p>
+          </div>
+        )}
       </div>
     </div>
   );
