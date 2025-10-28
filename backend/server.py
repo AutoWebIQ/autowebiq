@@ -161,6 +161,34 @@ def create_access_token(data: dict) -> str:
     to_encode.update({"exp": expire})
     return jwt.encode(to_encode, JWT_SECRET, algorithm=JWT_ALGORITHM)
 
+async def get_current_user_from_session(request: Request) -> Optional[str]:
+    """Get user ID from session token (cookie or Authorization header)"""
+    # Try cookie first
+    session_token = request.cookies.get("session_token")
+    
+    # If not in cookie, try Authorization header
+    if not session_token:
+        auth_header = request.headers.get("Authorization")
+        if auth_header and auth_header.startswith("Bearer "):
+            token = auth_header.replace("Bearer ", "")
+            # Check if it's a session token (not JWT)
+            if not token.startswith("eyJ"):  # JWT tokens start with eyJ
+                session_token = token
+    
+    if not session_token:
+        return None
+    
+    # Find active session
+    session = await db.user_sessions.find_one({
+        "session_token": session_token,
+        "expires_at": {"$gt": datetime.now(timezone.utc)}
+    })
+    
+    if not session:
+        return None
+    
+    return session["user_id"]
+
 async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)) -> str:
     try:
         token = credentials.credentials
@@ -171,6 +199,28 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
         return user_id
     except:
         raise HTTPException(status_code=401, detail="Invalid token")
+
+async def get_current_user_flexible(request: Request) -> str:
+    """Get user from either session token or JWT"""
+    # Try session token first
+    user_id = await get_current_user_from_session(request)
+    if user_id:
+        return user_id
+    
+    # Try JWT
+    try:
+        auth_header = request.headers.get("Authorization")
+        if not auth_header or not auth_header.startswith("Bearer "):
+            raise HTTPException(status_code=401, detail="Not authenticated")
+        
+        token = auth_header.replace("Bearer ", "")
+        payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
+        user_id = payload.get("user_id")
+        if not user_id:
+            raise HTTPException(status_code=401, detail="Invalid authentication")
+        return user_id
+    except jwt.InvalidTokenError:
+        raise HTTPException(status_code=401, detail="Invalid or expired token")
 
 CREDIT_PACKAGES = [
     {"id": "pkg_100", "name": "Starter Pack", "credits": 100, "price": 170000, "currency": "INR"},
