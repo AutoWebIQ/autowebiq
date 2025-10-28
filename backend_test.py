@@ -351,49 +351,45 @@ print("Test data cleaned up");
             print(f"   ⚠️ Cleanup failed: {str(e)}")
 
     def run_all_tests(self):
-        """Run all API tests in sequence"""
-        print("🚀 Starting AI Assistant API Tests")
+        """Run all Google OAuth authentication tests"""
+        print("🚀 Starting AutoWebIQ Google OAuth API Tests")
         print(f"   Base URL: {self.base_url}")
-        print("=" * 60)
+        print("=" * 70)
 
-        # Authentication tests
-        if not self.test_user_registration():
-            print("❌ Registration failed, stopping tests")
+        # Test 1: Existing JWT auth flow
+        if not self.test_jwt_auth_flow():
+            print("❌ JWT authentication failed, but continuing with OAuth tests")
+
+        # Test 2: Create test session in MongoDB
+        if not self.create_test_session_in_db():
+            print("❌ Failed to create test session, skipping session-based tests")
             return False
 
-        if not self.test_user_login():
-            print("❌ Login failed, stopping tests")
-            return False
+        # Test 3: Google OAuth session endpoint (error handling)
+        self.test_google_oauth_session_endpoint()
 
-        self.test_get_user_profile()
+        # Test 4: /auth/me with session token
+        self.test_auth_me_with_session_token()
 
-        # Conversation tests
-        if not self.test_create_conversation():
-            print("❌ Conversation creation failed, stopping tests")
-            return False
+        # Test 5: Logout endpoint
+        self.test_logout_endpoint()
 
-        self.test_get_conversations()
-        self.test_get_conversation_details()
-        self.test_update_conversation_title()
+        # Test 6: Flexible auth system
+        self.test_flexible_auth_system()
 
-        # Message and AI tests
-        self.test_send_message()
-        
-        # AI feature tests (may take longer)
-        self.test_image_generation()
-        self.test_file_upload()
+        # Test 7: Protected endpoints
+        self.test_protected_endpoints()
 
-        # Cleanup and security tests
-        self.test_delete_conversation()
-        self.test_invalid_auth()
+        # Cleanup
+        self.cleanup_test_data()
 
         return True
 
     def print_summary(self):
         """Print test summary"""
-        print("\n" + "=" * 60)
-        print("📊 TEST SUMMARY")
-        print("=" * 60)
+        print("\n" + "=" * 70)
+        print("📊 GOOGLE OAUTH TEST SUMMARY")
+        print("=" * 70)
         print(f"Total Tests: {self.tests_run}")
         print(f"Passed: {self.tests_passed}")
         print(f"Failed: {self.tests_run - self.tests_passed}")
@@ -404,16 +400,18 @@ print("Test data cleaned up");
             for result in self.test_results:
                 if not result['success']:
                     print(f"   • {result['test']}: {result['details']}")
+        else:
+            print("\n🎉 ALL TESTS PASSED!")
         
         return self.tests_passed == self.tests_run
 
 def main():
-    tester = AIAssistantAPITester()
+    tester = AutoWebIQAPITester()
     
     try:
         success = tester.run_all_tests()
-        tester.print_summary()
-        return 0 if success else 1
+        all_passed = tester.print_summary()
+        return 0 if all_passed else 1
     except Exception as e:
         print(f"❌ Test execution failed: {str(e)}")
         return 1
