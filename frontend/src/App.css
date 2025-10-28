@@ -65,6 +65,13 @@ h1, h2, h3, h4, h5, h6 {
 .user-menu-trigger {
   display: flex !important;
   align-items: center !important;
+  color: #475569 !important;
+  font-weight: 500 !important;
+}
+
+.user-menu-trigger:hover {
+  color: #1e293b !important;
+  background: #f1f5f9 !important;
 }
 
 .nav-buttons button {
