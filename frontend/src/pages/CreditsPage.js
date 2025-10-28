@@ -15,9 +15,10 @@ const CreditsPage = () => {
   const [user, setUser] = useState(JSON.parse(localStorage.getItem('user') || '{}'));
   const [loading, setLoading] = useState(true);
 
-  const axiosConfig = {
-    headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-  };
+  const getAxiosConfig = () => ({
+    headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+    withCredentials: true
+  });
 
   useEffect(() => {
     fetchData();
@@ -27,7 +28,7 @@ const CreditsPage = () => {
     try {
       const [packagesRes, userRes] = await Promise.all([
         axios.get(`${API}/credits/packages`),
-        axios.get(`${API}/auth/me`, axiosConfig)
+        axios.get(`${API}/auth/me`, getAxiosConfig())
       ]);
       setPackages(packagesRes.data);
       setUser(userRes.data);
@@ -42,14 +43,14 @@ const CreditsPage = () => {
     try {
       const orderRes = await axios.post(`${API}/credits/create-order`, {
         package_id: packageData.id
-      }, axiosConfig);
+      }, getAxiosConfig());
 
       const options = {
         key: orderRes.data.key_id,
         amount: orderRes.data.amount,
         currency: orderRes.data.currency,
         order_id: orderRes.data.order_id,
-        name: 'Optra AI',
+        name: 'AutoWebIQ',
         description: packageData.name,
         handler: async function (response) {
           try {
@@ -57,7 +58,7 @@ const CreditsPage = () => {
               order_id: response.razorpay_order_id,
               payment_id: response.razorpay_payment_id,
               signature: response.razorpay_signature
-            }, axiosConfig);
+            }, getAxiosConfig());
             
             toast.success('Credits added successfully!');
             fetchData();
