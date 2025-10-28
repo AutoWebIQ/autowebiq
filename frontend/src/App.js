@@ -485,10 +485,23 @@ const Dashboard = () => {
     }
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    navigate('/');
+  const handleLogout = async () => {
+    try {
+      // Call backend logout to clear session
+      await axios.post(`${API}/auth/logout`, {}, { withCredentials: true });
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
+    
+    // Clear ALL localStorage
+    localStorage.clear();
+    
+    // Reset user state
+    setUser({});
+    setProjects([]);
+    
+    // Navigate to login
+    navigate('/auth?mode=login');
   };
 
   if (loading) {
