@@ -11,7 +11,7 @@ import { Card } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from 'sonner';
-import { Sparkles, Code, Zap, Download, Eye, Trash2, Plus, CreditCard, Rocket, Menu, X, LogOut, CheckCircle } from 'lucide-react';
+import { Sparkles, Code, Zap, Download, Eye, Trash2, Plus, CreditCard, Rocket, Menu, X, LogOut, CheckCircle, Loader2 } from 'lucide-react';
 import Prism from 'prismjs';
 import 'prismjs/themes/prism-tomorrow.css';
 import '@/App.css';
