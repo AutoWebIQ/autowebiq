@@ -56,10 +56,13 @@ api_router = APIRouter(prefix="/api")
 class User(BaseModel):
     model_config = ConfigDict(extra="ignore")
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    firebase_uid: Optional[str] = None  # Firebase UID for Firebase Auth users
     username: str
     email: str
-    password_hash: str
-    credits: int = 50  # Give 50 free credits (10 messages) on signup
+    password_hash: str = ""  # Empty for Firebase Auth users
+    credits: int = 50  # Give 50 free credits on signup
+    picture: Optional[str] = None  # Profile picture URL
+    auth_provider: str = "email"  # email, google, github
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 class UserRegister(BaseModel):
