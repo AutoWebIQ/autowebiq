@@ -21,7 +21,7 @@ const Workspace = () => {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
-  const [selectedModel, setSelectedModel] = useState('claude-4.5-sonnet-200k');
+  const [selectedModel, setSelectedModel] = useState('gpt-5');
   const [previewMode, setPreviewMode] = useState('preview');
   const [editMode, setEditMode] = useState(false);
   const [editedCode, setEditedCode] = useState('');
