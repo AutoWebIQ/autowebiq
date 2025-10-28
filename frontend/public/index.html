@@ -21,6 +21,29 @@
         <title>AutoWebIQ | AI-Powered Website Builder</title>
         <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
         <script src="https://assets.emergent.sh/scripts/emergent-main.js"></script>
+        
+        <!-- Firebase SDK (Modular) -->
+        <script type="module">
+            import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+            import { getAuth } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+            
+            const firebaseConfig = {
+                apiKey: "AIzaSyCa1l-1BtGTTga4K-1po3hzAPaBkSDIesg",
+                authDomain: "autowebiq.firebaseapp.com",
+                projectId: "autowebiq",
+                storageBucket: "autowebiq.firebasestorage.app",
+                messagingSenderId: "12840013593",
+                appId: "1:12840013593:web:1387ac9bbb9928473b3f88",
+                measurementId: "G-V5B7BJL8L4"
+            };
+            
+            const app = initializeApp(firebaseConfig);
+            const auth = getAuth(app);
+            
+            // Make available globally for React components
+            window.firebaseApp = app;
+            window.firebaseAuth = auth;
+        </script>
         <!--
         These two scripts have been added for the testing, please do not edit or remove them
         -->
