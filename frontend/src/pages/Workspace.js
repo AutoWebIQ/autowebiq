@@ -52,9 +52,15 @@ const Workspace = () => {
     if (project && iframeRef.current && previewMode === 'preview' && !editMode) {
       const iframe = iframeRef.current;
       const defaultHTML = '<html><body><div style="display:flex;align-items:center;justify-content:center;height:100vh;font-family:sans-serif;color:#666;">Send a message to generate your website...</div></body></html>';
-      iframe.srcdoc = project.generated_code || defaultHTML;
+      const codeToShow = project.generated_code || defaultHTML;
+      
+      // Force iframe refresh
+      iframe.srcdoc = '';
+      setTimeout(() => {
+        iframe.srcdoc = codeToShow;
+      }, 10);
     }
-  }, [project, previewMode, editMode]);
+  }, [project?.generated_code, previewMode, editMode]);
 
   useEffect(() => {
     if (project && editMode) {
