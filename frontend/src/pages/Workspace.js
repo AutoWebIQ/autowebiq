@@ -104,6 +104,61 @@ const Workspace = () => {
     }
   };
 
+  const initVoiceRecognition = () => {
+    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      recognitionRef.current = new SpeechRecognition();
+      recognitionRef.current.continuous = false;
+      recognitionRef.current.interimResults = false;
+      
+      recognitionRef.current.onresult = (event) => {
+        const transcript = event.results[0][0].transcript;
+        setInput(prev => prev + ' ' + transcript);
+        setIsRecording(false);
+        toast.success('Voice captured!');
+      };
+      
+      recognitionRef.current.onerror = () => {
+        setIsRecording(false);
+        toast.error('Voice recognition failed');
+      };
+      
+      recognitionRef.current.onend = () => {
+        setIsRecording(false);
+      };
+    }
+  };
+
+  const toggleVoiceRecording = () => {
+    if (!recognitionRef.current) {
+      toast.error('Voice recognition not supported in this browser');
+      return;
+    }
+    
+    if (isRecording) {
+      recognitionRef.current.stop();
+      setIsRecording(false);
+    } else {
+      recognitionRef.current.start();
+      setIsRecording(true);
+      toast.info('Listening...');
+    }
+  };
+
+  const saveEditedCode = async () => {
+    try {
+      await axios.put(`${API}/projects/${id}`, {
+        generated_code: editedCode
+      }, axiosConfig);
+      
+      setProject(prev => ({ ...prev, generated_code: editedCode }));
+      setEditMode(false);
+      toast.success('Code saved successfully!');
+    } catch (error) {
+      toast.error('Failed to save code');
+    }
+  };
+
   const sendMessage = async () => {
     if (!input.trim() || loading) return;
     
