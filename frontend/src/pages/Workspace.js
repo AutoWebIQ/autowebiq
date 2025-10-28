@@ -166,6 +166,43 @@ const Workspace = () => {
     }
   };
 
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    accept: {
+      'image/*': ['.png', '.jpg', '.jpeg', '.gif', '.webp'],
+      'video/*': ['.mp4', '.webm', '.mov'],
+      'application/*': ['.pdf', '.doc', '.docx']
+    },
+    maxSize: 10485760, // 10MB
+    onDrop: async (acceptedFiles) => {
+      if (acceptedFiles.length === 0) return;
+      
+      setUploadingFile(true);
+      const file = acceptedFiles[0];
+      
+      try {
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('project_id', id);
+        
+        const res = await axios.post(`${API}/upload`, formData, {
+          ...axiosConfig,
+          headers: {
+            ...axiosConfig.headers,
+            'Content-Type': 'multipart/form-data'
+          }
+        });
+        
+        // Add file info to chat
+        setInput(prev => prev + `\n[Uploaded: ${file.name} - ${res.data.url}]`);
+        toast.success('File uploaded!');
+      } catch (error) {
+        toast.error('Upload failed');
+      } finally {
+        setUploadingFile(false);
+      }
+    }
+  });
+
   const sendMessage = async () => {
     if (!input.trim() || loading) return;
     
