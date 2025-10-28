@@ -218,6 +218,59 @@ async def get_me(user_id: str = Depends(get_current_user)):
         raise HTTPException(status_code=404, detail="User not found")
     return user_doc
 
+@api_router.post("/auth/forgot-password")
+async def forgot_password(request: ForgotPasswordRequest):
+    """Generate password reset code"""
+    user_doc = await db.users.find_one({"email": request.email})
+    if not user_doc:
+        # Don't reveal if email exists for security
+        return {"message": "If the email exists, a reset code has been sent"}
+    
+    # Generate 6-digit code
+    import random
+    reset_code = ''.join([str(random.randint(0, 9)) for _ in range(6)])
+    
+    # Store reset code with expiry (5 minutes)
+    await db.password_resets.insert_one({
+        "email": request.email,
+        "code": reset_code,
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "expires_at": (datetime.now(timezone.utc) + timedelta(minutes=5)).isoformat()
+    })
+    
+    # In production, send email here
+    # For now, return code (ONLY FOR DEVELOPMENT)
+    return {"message": "Reset code generated", "code": reset_code}
+
+@api_router.post("/auth/reset-password")
+async def reset_password(request: ResetPasswordRequest):
+    """Reset password with code"""
+    # Find valid reset code
+    reset_doc = await db.password_resets.find_one({
+        "email": request.email,
+        "code": request.reset_code
+    })
+    
+    if not reset_doc:
+        raise HTTPException(status_code=400, detail="Invalid reset code")
+    
+    # Check expiry
+    expires_at = datetime.fromisoformat(reset_doc['expires_at'])
+    if datetime.now(timezone.utc) > expires_at:
+        raise HTTPException(status_code=400, detail="Reset code expired")
+    
+    # Update password
+    new_hash = hash_password(request.new_password)
+    await db.users.update_one(
+        {"email": request.email},
+        {"$set": {"password_hash": new_hash}}
+    )
+    
+    # Delete used reset code
+    await db.password_resets.delete_many({"email": request.email})
+    
+    return {"message": "Password reset successful"}
+
 # Credits
 @api_router.get("/credits/packages")
 async def get_packages():
