@@ -461,7 +461,7 @@ const Dashboard = () => {
         name: projectName,
         description: projectPrompt,
         model: 'claude-4.5-sonnet-200k'
-      }, axiosConfig);
+      }, getAxiosConfig());
       
       toast.success('Project created! Opening workspace...');
       setShowCreateDialog(false);
@@ -477,7 +477,7 @@ const Dashboard = () => {
 
   const deleteProject = async (projectId) => {
     try {
-      await axios.delete(`${API}/projects/${projectId}`, axiosConfig);
+      await axios.delete(`${API}/projects/${projectId}`, getAxiosConfig());
       setProjects(projects.filter(p => p.id !== projectId));
       toast.success('Project deleted');
     } catch (error) {
