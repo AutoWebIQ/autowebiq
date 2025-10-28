@@ -269,12 +269,10 @@ const Dashboard = () => {
               <CreditCard size={16} />
               <span>{user.credits} Credits</span>
             </div>
-            <Button data-testid="buy-credits-btn" variant="ghost" onClick={() => navigate('/credits')}>
+            <Button data-testid="buy-credits-btn" onClick={() => navigate('/credits')}>
               Buy Credits
             </Button>
-            <Button data-testid="logout-btn" variant="ghost" onClick={handleLogout}>
-              <LogOut size={18} />
-            </Button>
+            <UserMenu user={user} onLogout={handleLogout} />
           </div>
         </div>
       </nav>
