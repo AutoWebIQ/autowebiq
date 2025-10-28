@@ -97,12 +97,62 @@ const AuthPage = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [resetCode, setResetCode] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [firebaseAuth, setFirebaseAuth] = useState(null);
+  const [authMethods, setAuthMethods] = useState(null);
 
+  // Initialize Firebase Auth
+  useEffect(() => {
+    const initFirebase = async () => {
+      try {
+        const { loadFirebaseAuthMethods, getFirebaseAuth } = await import('./firebaseAuth.js');
+        const auth = getFirebaseAuth();
+        const methods = await loadFirebaseAuthMethods();
+        setFirebaseAuth(auth);
+        setAuthMethods(methods);
+      } catch (error) {
+        console.error('Firebase initialization error:', error);
+        toast.error('Authentication system failed to load');
+      }
+    };
+    
+    initFirebase();
+  }, []);
+
+  // Sync Firebase user with backend
+  const syncWithBackend = async (firebaseUser) => {
+    try {
+      const providerData = firebaseUser.providerData[0] || {};
+      const payload = {
+        firebase_uid: firebaseUser.uid,
+        email: firebaseUser.email,
+        display_name: firebaseUser.displayName || username || firebaseUser.email.split('@')[0],
+        photo_url: firebaseUser.photoURL,
+        provider_id: providerData.providerId || 'password'
+      };
+
+      const res = await axios.post(`${API}/auth/firebase/sync`, payload);
+      
+      // Store backend token and user data
+      localStorage.setItem('token', res.data.access_token);
+      localStorage.setItem('user', JSON.stringify(res.data.user));
+      
+      return res.data;
+    } catch (error) {
+      console.error('Backend sync error:', error);
+      throw error;
+    }
+  };
+
+  // Handle Email/Password Auth
   const handleAuth = async (e) => {
     e.preventDefault();
+    
+    if (!firebaseAuth || !authMethods) {
+      toast.error('Authentication not ready. Please refresh.');
+      return;
+    }
     
     // Validation
     if (mode === 'register') {
@@ -119,43 +169,146 @@ const AuthPage = () => {
     setLoading(true);
     
     try {
-      if (mode === 'forgot') {
-        const res = await axios.post(`${API}/auth/forgot-password`, { email });
-        toast.success('Reset code sent! Check the console (dev mode)');
-        console.log('Reset code:', res.data.code);
-        setMode('reset');
-      } else if (mode === 'reset') {
-        await axios.post(`${API}/auth/reset-password`, {
+      let firebaseUser;
+      
+      if (mode === 'register') {
+        // Firebase signup
+        const userCredential = await authMethods.createUserWithEmailAndPassword(
+          firebaseAuth,
           email,
-          reset_code: resetCode,
-          new_password: password
-        });
-        toast.success('Password reset successful! Please login');
-        setMode('login');
-        setPassword('');
-        setResetCode('');
-      } else {
-        const endpoint = mode === 'login' ? '/auth/login' : '/auth/register';
-        const payload = mode === 'login' 
-          ? { email, password }
-          : { username, email, password };
+          password
+        );
+        firebaseUser = userCredential.user;
         
-        const res = await axios.post(`${API}${endpoint}`, payload);
-        localStorage.setItem('token', res.data.access_token);
-        localStorage.setItem('user', JSON.stringify(res.data.user));
-        toast.success(mode === 'login' ? 'Welcome back!' : '🎉 Account created! You got 50 free credits!');
+        // Sync with backend
+        await syncWithBackend(firebaseUser);
+        
+        toast.success('🎉 Account created! You got 50 free credits!');
+        navigate('/dashboard');
+      } else {
+        // Firebase login
+        const userCredential = await authMethods.signInWithEmailAndPassword(
+          firebaseAuth,
+          email,
+          password
+        );
+        firebaseUser = userCredential.user;
+        
+        // Sync with backend
+        await syncWithBackend(firebaseUser);
+        
+        toast.success('Welcome back!');
         navigate('/dashboard');
       }
     } catch (error) {
-      const errorMsg = error.response?.data?.detail || 'Something went wrong';
-      if (errorMsg.includes('already exists')) {
+      console.error('Auth error:', error);
+      
+      if (error.code === 'auth/email-already-in-use') {
         toast.error('This email is already registered. Please login instead.');
         setMode('login');
+      } else if (error.code === 'auth/user-not-found') {
+        toast.error('No account found with this email');
+      } else if (error.code === 'auth/wrong-password') {
+        toast.error('Incorrect password');
+      } else if (error.code === 'auth/invalid-email') {
+        toast.error('Invalid email address');
+      } else if (error.code === 'auth/weak-password') {
+        toast.error('Password is too weak. Use at least 6 characters.');
       } else {
-        toast.error(errorMsg);
+        toast.error(error.message || 'Authentication failed');
       }
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Handle Google Sign-In
+  const handleGoogleSignIn = async () => {
+    if (!firebaseAuth || !authMethods) {
+      toast.error('Authentication not ready. Please refresh.');
+      return;
+    }
+
+    try {
+      const provider = new authMethods.GoogleAuthProvider();
+      const result = await authMethods.signInWithPopup(firebaseAuth, provider);
+      
+      // Sync with backend
+      await syncWithBackend(result.user);
+      
+      toast.success('Google login successful!');
+      navigate('/dashboard');
+    } catch (error) {
+      console.error('Google sign-in error:', error);
+      
+      if (error.code === 'auth/popup-closed-by-user') {
+        toast.error('Login cancelled');
+      } else if (error.code === 'auth/popup-blocked') {
+        toast.error('Popup blocked. Please allow popups and try again.');
+      } else if (error.code === 'auth/unauthorized-domain') {
+        toast.error('This domain is not authorized. Please contact support.');
+      } else {
+        toast.error(error.message || 'Google login failed');
+      }
+    }
+  };
+
+  // Handle GitHub Sign-In
+  const handleGitHubSignIn = async () => {
+    if (!firebaseAuth || !authMethods) {
+      toast.error('Authentication not ready. Please refresh.');
+      return;
+    }
+
+    try {
+      const provider = new authMethods.GithubAuthProvider();
+      const result = await authMethods.signInWithPopup(firebaseAuth, provider);
+      
+      // Sync with backend
+      await syncWithBackend(result.user);
+      
+      toast.success('GitHub login successful!');
+      navigate('/dashboard');
+    } catch (error) {
+      console.error('GitHub sign-in error:', error);
+      
+      if (error.code === 'auth/popup-closed-by-user') {
+        toast.error('Login cancelled');
+      } else if (error.code === 'auth/popup-blocked') {
+        toast.error('Popup blocked. Please allow popups and try again.');
+      } else if (error.code === 'auth/account-exists-with-different-credential') {
+        toast.error('An account already exists with this email using a different login method');
+      } else if (error.code === 'auth/unauthorized-domain') {
+        toast.error('This domain is not authorized. Please contact support.');
+      } else {
+        toast.error(error.message || 'GitHub login failed');
+      }
+    }
+  };
+
+  // Handle Forgot Password
+  const handleForgotPassword = async () => {
+    if (!email) {
+      toast.error('Please enter your email address');
+      return;
+    }
+
+    if (!firebaseAuth || !authMethods) {
+      toast.error('Authentication not ready. Please refresh.');
+      return;
+    }
+
+    try {
+      await authMethods.sendPasswordResetEmail(firebaseAuth, email);
+      toast.success('Password reset email sent! Check your inbox.');
+    } catch (error) {
+      console.error('Password reset error:', error);
+      
+      if (error.code === 'auth/user-not-found') {
+        toast.error('No account found with this email');
+      } else {
+        toast.error(error.message || 'Failed to send reset email');
+      }
     }
   };
 
