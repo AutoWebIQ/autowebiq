@@ -76,7 +76,7 @@ const Workspace = () => {
 
   const fetchProject = async () => {
     try {
-      const res = await axios.get(`${API}/projects/${id}`, axiosConfig);
+      const res = await axios.get(`${API}/projects/${id}`, getAxiosConfig());
       setProject(res.data);
       setSelectedModel(res.data.model);
     } catch (error) {
