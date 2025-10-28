@@ -547,8 +547,8 @@ print("Test data cleaned up");
             print(f"   ⚠️ Cleanup failed: {str(e)}")
 
     def run_all_tests(self):
-        """Run all Google OAuth authentication tests"""
-        print("🚀 Starting AutoWebIQ Google OAuth API Tests")
+        """Run all authentication tests including Firebase sync"""
+        print("🚀 Starting AutoWebIQ Authentication API Tests")
         print(f"   Base URL: {self.base_url}")
         print("=" * 70)
 
@@ -559,7 +559,6 @@ print("Test data cleaned up");
         # Test 2: Create test session in MongoDB
         if not self.create_test_session_in_db():
             print("❌ Failed to create test session, skipping session-based tests")
-            return False
 
         # Test 3: Google OAuth session endpoint (error handling)
         self.test_google_oauth_session_endpoint()
@@ -576,10 +575,14 @@ print("Test data cleaned up");
         # Test 7: Protected endpoints
         self.test_protected_endpoints()
 
+        # Test 8: Firebase sync endpoint (NEW - User Switching Test)
+        firebase_success = self.test_firebase_sync_endpoint()
+
         # Cleanup
         self.cleanup_test_data()
+        self.cleanup_firebase_test_data()
 
-        return True
+        return firebase_success
 
     def print_summary(self):
         """Print test summary"""
