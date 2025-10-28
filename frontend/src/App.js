@@ -61,7 +61,7 @@ const LandingPage = () => {
       </section>
       
       <section className="features-section" data-testid="features-section">
-        <h2 data-testid="features-title">Why Choose Optra AI?</h2>
+        <h2 data-testid="features-title">Why Choose AutoWebIQ?</h2>
         <div className="features-grid">
           <Card className="feature-card" data-testid="feature-card-1">
             <Sparkles className="feature-icon" />
