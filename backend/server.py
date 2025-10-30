@@ -237,6 +237,9 @@ async def get_current_user_flexible(request: Request) -> str:
     except jwt.InvalidTokenError:
         raise HTTPException(status_code=401, detail="Invalid or expired token")
 
+from constants import INITIAL_FREE_CREDITS
+
+# Constants
 CREDIT_PACKAGES = [
     {"id": "pkg_100", "name": "Starter Pack", "credits": 100, "price": 170000, "currency": "INR"},
     {"id": "pkg_250", "name": "Professional Pack", "credits": 250, "price": 425000, "currency": "INR"},
