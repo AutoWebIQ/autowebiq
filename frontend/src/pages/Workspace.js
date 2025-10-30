@@ -77,7 +77,6 @@ const Workspace = () => {
     try {
       const res = await axios.get(`${API}/projects/${id}`, getAxiosConfig());
       setProject(res.data);
-      setSelectedModel(res.data.model);
     } catch (error) {
       toast.error('Failed to load project');
       navigate('/dashboard');
