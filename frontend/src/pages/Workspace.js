@@ -530,9 +530,26 @@ const Workspace = () => {
               }}
               disabled={loading}
             />
-            <Button onClick={sendMessage} disabled={loading || !input.trim()} data-testid="send-btn">
-              {loading ? <Loader2 className="animate-spin" size={18} /> : <Send size={18} />}
-            </Button>
+            <div className="flex gap-2">
+              <Button 
+                onClick={sendMessage} 
+                disabled={loading || !input.trim()} 
+                data-testid="send-btn"
+                variant="outline"
+              >
+                {loading ? <Loader2 className="animate-spin" size={18} /> : <Send size={18} />}
+                <span className="ml-2">Chat</span>
+              </Button>
+              <Button 
+                onClick={buildWithAgents} 
+                disabled={loading || !input.trim()} 
+                data-testid="build-agents-btn"
+                className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
+              >
+                {loading ? <Loader2 className="animate-spin" size={18} /> : '🤖'}
+                <span className="ml-2">Build with AI Agents</span>
+              </Button>
+            </div>
           </div>
         </div>
 
