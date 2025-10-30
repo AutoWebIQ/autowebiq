@@ -697,16 +697,41 @@ const Dashboard = () => {
     <div className="dashboard-container" data-testid="dashboard">
       <nav className="dashboard-nav">
         <div className="nav-content">
-          <div className="logo" onClick={() => navigate('/dashboard')}>
+          <div className="logo" onClick={() => navigate('/dashboard')} style={{cursor: 'pointer'}}>
             <Sparkles className="logo-icon" />
             <span>AutoWebIQ</span>
           </div>
           <div className="nav-buttons">
-            <div className="credits-badge" data-testid="credits-badge">
+            <div className="user-info-badge" style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '12px',
+              padding: '8px 16px',
+              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+              borderRadius: '8px',
+              color: 'white',
+              fontSize: '14px',
+              fontWeight: '500'
+            }}>
+              <div style={{display: 'flex', flexDirection: 'column', alignItems: 'flex-start'}}>
+                <span style={{fontSize: '13px', opacity: 0.9}}>👤 {user.username || user.email?.split('@')[0]}</span>
+                <span style={{fontSize: '11px', opacity: 0.8}}>{user.email}</span>
+              </div>
+            </div>
+            <div className="credits-badge" data-testid="credits-badge" style={{
+              padding: '8px 16px',
+              background: '#10b981',
+              borderRadius: '8px',
+              color: 'white',
+              fontWeight: 'bold',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px'
+            }}>
               <CreditCard size={16} />
               <span>{user.credits} Credits</span>
             </div>
-            <Button data-testid="buy-credits-btn" onClick={() => navigate('/credits')}>
+            <Button data-testid="buy-credits-btn" onClick={() => navigate('/credits')} style={{background: '#f59e0b'}}>
               Buy Credits
             </Button>
             <UserMenu user={user} onLogout={handleLogout} />
