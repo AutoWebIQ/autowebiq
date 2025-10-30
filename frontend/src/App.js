@@ -107,7 +107,6 @@ const AuthPage = () => {
   useEffect(() => {
     const initFirebase = () => {
       try {
-        const { loadFirebaseAuthMethods, getFirebaseAuth } = require('./firebaseAuth.js');
         const auth = getFirebaseAuth();
         const methods = loadFirebaseAuthMethods();
         setFirebaseAuth(auth);
