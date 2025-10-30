@@ -15,6 +15,7 @@ class AutoWebIQAPITester:
         self.session_token = None
         self.user_id = None
         self.test_user_email = None
+        self.test_project_id = None
         self.tests_run = 0
         self.tests_passed = 0
         self.test_results = []
