@@ -262,6 +262,127 @@ const Workspace = () => {
     }
   };
 
+  // NEW: Multi-Agent Website Builder
+  const buildWithAgents = async () => {
+    if (!input.trim() || loading) return;
+    
+    const agentCost = 20; // Multi-agent build costs 20 credits
+    
+    // Check credits
+    if (userCredits < agentCost) {
+      toast.error(`Insufficient credits! Multi-agent build needs ${agentCost} credits. Buy more credits.`);
+      navigate('/credits');
+      return;
+    }
+    
+    // Add user message
+    const userMessage = {
+      role: 'user',
+      content: input,
+      created_at: new Date().toISOString()
+    };
+    
+    const messageText = input;
+    setMessages(prev => [...prev, userMessage]);
+    setInput('');
+    setLoading(true);
+    
+    // Add agent status message
+    const agentStatusMsg = {
+      role: 'system',
+      content: '🤖 **Multi-Agent System Activated**\n\nDeploying AI agents to build your website...',
+      created_at: new Date().toISOString()
+    };
+    setMessages(prev => [...prev, agentStatusMsg]);
+    
+    try {
+      // Add planner agent message
+      setMessages(prev => [...prev, {
+        role: 'system',
+        content: '🧠 **Planner Agent**: Analyzing your requirements...',
+        created_at: new Date().toISOString()
+      }]);
+      
+      const res = await axios.post(`${API}/build-with-agents`, {
+        project_id: id,
+        prompt: messageText
+      }, getAxiosConfig());
+      
+      // Add success messages with plan details
+      const plan = res.data.plan;
+      
+      setMessages(prev => [...prev, {
+        role: 'system',
+        content: `✅ **Planner Agent**: Project plan created!\n\n**Project**: ${plan.project_name}\n**Type**: ${plan.type}\n**Pages**: ${plan.pages.join(', ')}\n**Features**: ${plan.features.join(', ')}`,
+        created_at: new Date().toISOString()
+      }]);
+      
+      setMessages(prev => [...prev, {
+        role: 'system',
+        content: '🎨 **Frontend Agent**: Building user interface...',
+        created_at: new Date().toISOString()
+      }]);
+      
+      setMessages(prev => [...prev, {
+        role: 'system',
+        content: '✅ **Frontend Agent**: UI code generated successfully!',
+        created_at: new Date().toISOString()
+      }]);
+      
+      if (res.data.backend_code) {
+        setMessages(prev => [...prev, {
+          role: 'system',
+          content: '⚙️ **Backend Agent**: Creating API endpoints...',
+          created_at: new Date().toISOString()
+        }]);
+        
+        setMessages(prev => [...prev, {
+          role: 'system',
+          content: '✅ **Backend Agent**: Backend API generated successfully!',
+          created_at: new Date().toISOString()
+        }]);
+      }
+      
+      // Final success message
+      setMessages(prev => [...prev, {
+        role: 'assistant',
+        content: `🎉 **Complete!** Your ${plan.project_name} is ready!\n\n**What was built:**\n- ${plan.pages.length} pages\n- ${plan.features.length} features\n- ${res.data.backend_code ? 'Backend API included' : 'Frontend only'}\n\nCheck the preview on the right! →`,
+        created_at: new Date().toISOString()
+      }]);
+      
+      // Update preview with generated code
+      if (res.data.frontend_code) {
+        setProject(prev => ({ 
+          ...prev, 
+          generated_code: res.data.frontend_code,
+          backend_code: res.data.backend_code || '',
+          project_plan: plan
+        }));
+      }
+      
+      // Update credits
+      setUserCredits(prev => prev - agentCost);
+      
+      toast.success(`Website built! Used ${agentCost} credits`);
+      
+    } catch (error) {
+      const errorMsg = error.response?.data?.detail || 'Multi-agent build failed';
+      toast.error(errorMsg);
+      
+      setMessages(prev => [...prev, {
+        role: 'system',
+        content: `❌ **Build Failed**: ${errorMsg}`,
+        created_at: new Date().toISOString()
+      }]);
+      
+      if (error.response?.status === 402) {
+        navigate('/credits');
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const downloadProject = async () => {
     try {
       const config = getAxiosConfig();
