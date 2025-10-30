@@ -345,7 +345,7 @@ const AuthPage = () => {
           </h1>
           <p data-testid="auth-subtitle">
             {mode === 'login' ? 'Login to continue building amazing websites' : 
-             mode === 'register' ? 'Create account and get 50 free credits instantly!' : 
+             mode === 'register' ? `Create account and get ${INITIAL_FREE_CREDITS} free credits instantly!` : 
              mode === 'forgot' ? 'Enter your email to receive a reset code' :
              'Enter the code and your new password'}
           </p>
