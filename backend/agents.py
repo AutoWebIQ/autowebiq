@@ -413,7 +413,7 @@ class AgentOrchestrator:
         """Set callback for real-time agent messages"""
         self.message_callback = callback
     
-    async def build_website(self, user_prompt: str, project_id: str) -> Dict:
+    async def build_website(self, user_prompt: str, project_id: str, uploaded_images: List[str] = []) -> Dict:
         """Main orchestration method - builds complete website"""
         
         try:
@@ -431,8 +431,11 @@ class AgentOrchestrator:
                 for msg in self.image.messages:
                     await self.message_callback(project_id, msg.to_dict())
             
-            # Phase 3: Frontend Generation
-            frontend_code = await self.frontend.think(plan, {"images": images})
+            # Phase 3: Frontend Generation (pass both generated and uploaded images)
+            frontend_code = await self.frontend.think(plan, {
+                "images": images,
+                "uploaded_images": uploaded_images
+            })
             
             # Insert generated images into code if available
             if images and images[0].get('url'):
