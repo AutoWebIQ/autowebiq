@@ -16,12 +16,24 @@ import Prism from 'prismjs';
 import 'prismjs/themes/prism-tomorrow.css';
 import '@/App.css';
 import { loadFirebaseAuthMethods, getFirebaseAuth } from './firebaseAuth';
+import { INITIAL_FREE_CREDITS } from './constants';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
 const LandingPage = () => {
   const navigate = useNavigate();
+  
+  // Auto-redirect logged-in users to dashboard
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    const user = localStorage.getItem('user');
+    
+    if (token && user) {
+      // User is logged in, redirect to dashboard
+      navigate('/dashboard');
+    }
+  }, [navigate]);
   
   return (
     <div className="landing-page" data-testid="landing-page">
@@ -44,12 +56,12 @@ const LandingPage = () => {
           <p data-testid="hero-subtitle">Transform your ideas into beautiful, functional websites using the power of GPT-5. No coding required.</p>
           <div className="hero-buttons">
             <Button data-testid="hero-cta-btn" size="lg" onClick={() => navigate('/auth?mode=register')}>
-              <Rocket className="mr-2" />Start Building - 50 Free Credits
+              <Rocket className="mr-2" />Start Building - {INITIAL_FREE_CREDITS} Free Credits
             </Button>
           </div>
           <div className="hero-features">
             <div className="feature-badge" data-testid="feature-1">
-              <CheckCircle size={16} /> 50 Free Credits
+              <CheckCircle size={16} /> {INITIAL_FREE_CREDITS} Free Credits
             </div>
             <div className="feature-badge" data-testid="feature-2">
               <CheckCircle size={16} /> GPT-5 Powered
