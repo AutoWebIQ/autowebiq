@@ -333,6 +333,30 @@ backend:
           comment: "✅ FIREBASE SYNC USER SWITCHING VERIFIED: POST /api/auth/firebase/sync endpoint working perfectly for user switching scenario. Tested with two different Firebase users (test-firebase-uid-1 and test-firebase-uid-2). Each sync creates/updates correct user in database with proper data isolation. New users get 10 credits as expected (not 50). Response includes correct user-specific data with no caching issues. User 1 and User 2 have separate IDs and isolated data. Re-sync of existing user maintains same ID. /auth/me endpoint returns correct user data for each token. All 26 tests passed including comprehensive user switching validation."
 
 frontend:
+  - task: "Image Upload with Visual Preview"
+    implemented: true
+    working: "NA"
+    file: "frontend/src/pages/Workspace.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: "NA"
+          agent: "main"
+          comment: "Enhanced image upload functionality with visual thumbnail gallery above chat input. Uploaded images tracked in uploadedImages state array. Images automatically passed to build-with-agents endpoint. Includes remove button for each uploaded image. Requires UI testing with actual image uploads."
+  
+  - task: "Multi-Agent Builder Image Integration"
+    implemented: true
+    working: "NA"
+    file: "frontend/src/pages/Workspace.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: "NA"
+          agent: "main"
+          comment: "Updated buildWithAgents function to pass uploaded image URLs to backend. Images sent as array in uploaded_images field of build request. Seamless integration with existing multi-agent workflow."
+  
   - task: "Google OAuth Login UI Integration"
     implemented: true
     working: true
