@@ -278,13 +278,13 @@
   font-size: 0.875rem;
 }
 
-/* Hero Right - Video Container */
+/* Hero Right - Showcase Container */
 .hero-right {
   position: relative;
 }
 
-.video-container {
-  background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(16, 185, 129, 0.1) 100%);
+.showcase-container {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.05) 0%, rgba(16, 185, 129, 0.05) 100%);
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 24px;
   padding: 2rem;
@@ -295,16 +295,21 @@
 .badge-top {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  margin-bottom: 1.5rem;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.user-avatars {
+  display: flex;
+  align-items: center;
 }
 
 .user-avatar {
-  width: 32px;
-  height: 32px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
-  border: 2px solid #000;
-  margin-left: -8px;
+  border: 3px solid #000;
+  margin-left: -12px;
 }
 
 .user-avatar:first-child {
@@ -312,9 +317,36 @@
 }
 
 .badge-text {
-  font-size: 0.875rem;
+  font-size: 0.95rem;
   color: rgba(255, 255, 255, 0.8);
-  margin-left: 0.5rem;
+  font-weight: 500;
+}
+
+.showcase-carousel {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-bottom: 2rem;
+  max-height: 400px;
+  overflow: hidden;
+}
+
+.showcase-image-wrapper {
+  border-radius: 12px;
+  overflow: hidden;
+  position: relative;
+  transition: transform 0.3s;
+}
+
+.showcase-image-wrapper:hover {
+  transform: scale(1.05);
+}
+
+.showcase-image {
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+  border-radius: 12px;
 }
 
 .emergent-badge {
