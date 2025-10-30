@@ -161,11 +161,6 @@ const AuthPage = () => {
   const handleAuth = async (e) => {
     e.preventDefault();
     
-    if (!firebaseAuth || !authMethods) {
-      toast.error('Authentication not ready. Please refresh.');
-      return;
-    }
-    
     // Validation
     if (mode === 'register') {
       if (password.length < 6) {
@@ -184,33 +179,74 @@ const AuthPage = () => {
       // Clear old data before new login
       localStorage.clear();
       
-      let firebaseUser;
-      
       if (mode === 'register') {
-        // Firebase signup
-        const userCredential = await authMethods.createUserWithEmailAndPassword(
-          firebaseAuth,
+        // Try Firebase first, fallback to JWT
+        if (firebaseAuth && authMethods) {
+          try {
+            // Firebase signup
+            const userCredential = await authMethods.createUserWithEmailAndPassword(
+              firebaseAuth,
+              email,
+              password
+            );
+            const firebaseUser = userCredential.user;
+            
+            // Sync with backend
+            await syncWithBackend(firebaseUser);
+            
+            toast.success(`🎉 Account created! You got ${INITIAL_FREE_CREDITS} free credits!`);
+            navigate('/dashboard');
+            return;
+          } catch (firebaseError) {
+            console.warn('Firebase registration failed, trying direct backend registration:', firebaseError);
+            // Fallback to direct backend registration below
+          }
+        }
+        
+        // Direct backend registration (JWT)
+        const response = await axios.post(`${API}/auth/register`, {
+          username: email.split('@')[0], // Use email prefix as username
           email,
           password
-        );
-        firebaseUser = userCredential.user;
+        });
         
-        // Sync with backend
-        await syncWithBackend(firebaseUser);
+        localStorage.setItem('token', response.data.access_token);
+        localStorage.setItem('user', JSON.stringify(response.data.user));
         
-        toast.success('🎉 Account created! You got 10 free credits!');
+        toast.success(`🎉 Account created! You got ${INITIAL_FREE_CREDITS} free credits!`);
         navigate('/dashboard');
       } else {
-        // Firebase login
-        const userCredential = await authMethods.signInWithEmailAndPassword(
-          firebaseAuth,
+        // Try Firebase first, fallback to JWT
+        if (firebaseAuth && authMethods) {
+          try {
+            // Firebase login
+            const userCredential = await authMethods.signInWithEmailAndPassword(
+              firebaseAuth,
+              email,
+              password
+            );
+            const firebaseUser = userCredential.user;
+            
+            // Sync with backend
+            await syncWithBackend(firebaseUser);
+            
+            toast.success('Welcome back!');
+            navigate('/dashboard');
+            return;
+          } catch (firebaseError) {
+            console.warn('Firebase login failed, trying direct backend login:', firebaseError);
+            // Fallback to direct backend login below
+          }
+        }
+        
+        // Direct backend login (JWT)
+        const response = await axios.post(`${API}/auth/login`, {
           email,
           password
-        );
-        firebaseUser = userCredential.user;
+        });
         
-        // Sync with backend
-        await syncWithBackend(firebaseUser);
+        localStorage.setItem('token', response.data.access_token);
+        localStorage.setItem('user', JSON.stringify(response.data.user));
         
         toast.success('Welcome back!');
         navigate('/dashboard');
@@ -218,7 +254,9 @@ const AuthPage = () => {
     } catch (error) {
       console.error('Auth error:', error);
       
-      if (error.code === 'auth/email-already-in-use') {
+      if (error.response?.data?.detail) {
+        toast.error(error.response.data.detail);
+      } else if (error.code === 'auth/email-already-in-use') {
         toast.error('This email is already registered. Please login instead.');
         setMode('login');
       } else if (error.code === 'auth/user-not-found') {
