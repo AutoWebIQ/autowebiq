@@ -553,8 +553,8 @@ print("Test data cleaned up");
         
         # Generate unique test user as requested
         timestamp = int(time.time())
-        test_username = "testuser123"
-        test_email = "test@autowebiq.com"
+        test_username = f"testuser123_{timestamp}"
+        test_email = f"test_{timestamp}@autowebiq.com"
         test_password = "TestPass123!"
         self.test_user_email = test_email
         
