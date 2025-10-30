@@ -859,7 +859,13 @@ print("Test data cleaned up");
         # Test 4: Core Features
         core_success = self.test_core_features()
         
-        # Test 5: Additional OAuth tests (existing)
+        # Test 5: GitHub Integration Error Handling
+        github_success = self.test_github_integration_error_handling()
+        
+        # Test 6: GKE Workspace Error Handling
+        gke_success = self.test_gke_workspace_error_handling()
+        
+        # Test 7: Additional OAuth tests (existing)
         self.test_google_oauth_session_endpoint()
         
         # Cleanup
