@@ -102,7 +102,7 @@
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
 
-user_problem_statement: "Complete Kubernetes infrastructure for AutoWebIQ with subdomain-based previews, image upload in chat, and GitHub fork integration"
+user_problem_statement: "Implement Emergent's dynamic credit system with auto-deduction based on agents used, models, and complexity. Include refund mechanism, transaction ledger, and real-time balance updates. Starting credits: 20 for new users."
 
 backend:
   - task: "GKE Workspace Manager"
