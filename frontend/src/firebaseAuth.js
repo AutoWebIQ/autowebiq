@@ -26,11 +26,21 @@ let app;
 let auth;
 
 export function getFirebaseAuth() {
-  if (!app) {
-    app = initializeApp(firebaseConfig);
-    auth = getAuth(app);
+  try {
+    if (!app) {
+      // Check if Firebase config is available
+      if (!firebaseConfig.apiKey || !firebaseConfig.projectId) {
+        console.warn('Firebase configuration is incomplete. Firebase Auth will not be available.');
+        return null;
+      }
+      app = initializeApp(firebaseConfig);
+      auth = getAuth(app);
+    }
+    return auth;
+  } catch (error) {
+    console.error('Failed to initialize Firebase Auth:', error);
+    return null;
   }
-  return auth;
 }
 
 export function loadFirebaseAuthMethods() {
