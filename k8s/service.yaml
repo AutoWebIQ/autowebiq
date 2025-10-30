@@ -1,0 +1,29 @@
+# Service for dynamic workspace routing
+apiVersion: v1
+kind: Service
+metadata:
+  name: workspace-template-service
+  namespace: autowebiq-workspaces
+  labels:
+    app: autowebiq-workspace
+spec:
+  type: ClusterIP
+  selector:
+    app: autowebiq-workspace
+  ports:
+  - name: http
+    port: 80
+    targetPort: 80
+    protocol: TCP
+  - name: frontend
+    port: 3000
+    targetPort: 3000
+    protocol: TCP
+  - name: backend
+    port: 8001
+    targetPort: 8001
+    protocol: TCP
+  sessionAffinity: ClientIP
+  sessionAffinityConfig:
+    clientIP:
+      timeoutSeconds: 10800  # 3 hours
