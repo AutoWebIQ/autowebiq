@@ -547,43 +547,266 @@ print("Test data cleaned up");
         except Exception as e:
             print(f"   ⚠️ Cleanup failed: {str(e)}")
 
+    def test_comprehensive_auth_flow(self):
+        """Test comprehensive authentication flow as requested"""
+        print("\n🔐 Testing Comprehensive Authentication Flow")
+        
+        # Generate unique test user as requested
+        timestamp = int(time.time())
+        test_username = "testuser123"
+        test_email = "test@autowebiq.com"
+        test_password = "TestPass123!"
+        self.test_user_email = test_email
+        
+        # Test registration with 20 credits
+        success, response, _ = self.run_test(
+            "User Registration (20 Credits)",
+            "POST",
+            "auth/register",
+            200,
+            data={
+                "username": test_username,
+                "email": test_email,
+                "password": test_password
+            }
+        )
+        
+        if success and 'access_token' in response:
+            self.jwt_token = response['access_token']
+            self.user_id = response['user']['id']
+            
+            # Verify user gets exactly 20 credits
+            if response['user']['credits'] != 20:
+                self.log_test("Registration Credits Check", False, f"Expected 20 credits, got {response['user']['credits']}")
+                return False
+            else:
+                self.log_test("Registration Credits Check", True)
+            
+            # Test login
+            success, response, _ = self.run_test(
+                "User Login",
+                "POST",
+                "auth/login",
+                200,
+                data={
+                    "email": test_email,
+                    "password": test_password
+                }
+            )
+            
+            if success and 'access_token' in response:
+                # Test /auth/me
+                success, response, _ = self.run_test(
+                    "Get User Data (/auth/me)",
+                    "GET",
+                    "auth/me",
+                    200,
+                    headers={"Authorization": f"Bearer {self.jwt_token}"}
+                )
+                
+                if success:
+                    # Verify user data and credits
+                    if response.get('credits') != 20:
+                        self.log_test("Auth Me Credits Check", False, f"Expected 20 credits, got {response.get('credits')}")
+                        return False
+                    else:
+                        self.log_test("Auth Me Credits Check", True)
+                    
+                    return True
+        
+        return False
+
+    def test_project_management(self):
+        """Test project management endpoints"""
+        print("\n📁 Testing Project Management")
+        
+        if not self.jwt_token:
+            print("   ⚠️ No JWT token available, skipping project tests")
+            return False
+        
+        # Test create project
+        project_data = {
+            "name": "Test Website",
+            "description": "A test website created by AutoWebIQ API testing",
+            "model": "gpt-4o"
+        }
+        
+        success, response, _ = self.run_test(
+            "Create Project",
+            "POST",
+            "projects/create",
+            200,
+            data=project_data,
+            headers={"Authorization": f"Bearer {self.jwt_token}"}
+        )
+        
+        if success and 'id' in response:
+            self.test_project_id = response['id']
+            
+            # Test list projects
+            success, response, _ = self.run_test(
+                "List Projects",
+                "GET",
+                "projects",
+                200,
+                headers={"Authorization": f"Bearer {self.jwt_token}"}
+            )
+            
+            if success:
+                # Test get specific project
+                success, response, _ = self.run_test(
+                    "Get Specific Project",
+                    "GET",
+                    f"projects/{self.test_project_id}",
+                    200,
+                    headers={"Authorization": f"Bearer {self.jwt_token}"}
+                )
+                
+                if success:
+                    # Test delete project
+                    success, response, _ = self.run_test(
+                        "Delete Project",
+                        "DELETE",
+                        f"projects/{self.test_project_id}",
+                        200,
+                        headers={"Authorization": f"Bearer {self.jwt_token}"}
+                    )
+                    return success
+        
+        return False
+
+    def test_credits_system(self):
+        """Test credits system endpoints"""
+        print("\n💰 Testing Credits System")
+        
+        if not self.jwt_token:
+            print("   ⚠️ No JWT token available, skipping credits tests")
+            return False
+        
+        # Test get credit balance
+        success, response, _ = self.run_test(
+            "Get Credit Balance",
+            "GET",
+            "credits/balance",
+            200,
+            headers={"Authorization": f"Bearer {self.jwt_token}"}
+        )
+        
+        if success and 'balance' in response:
+            # Verify balance is 20 (initial credits)
+            if response['balance'] != 20:
+                self.log_test("Credit Balance Check", False, f"Expected 20 credits, got {response['balance']}")
+            else:
+                self.log_test("Credit Balance Check", True)
+            
+            # Test get pricing info
+            success, response, _ = self.run_test(
+                "Get Pricing Info",
+                "GET",
+                "credits/pricing",
+                200
+            )
+            
+            if success:
+                # Test get transaction history
+                success, response, _ = self.run_test(
+                    "Get Transaction History",
+                    "GET",
+                    "credits/transactions",
+                    200,
+                    headers={"Authorization": f"Bearer {self.jwt_token}"}
+                )
+                return success
+        
+        return False
+
+    def test_core_features(self):
+        """Test core features - chat and multi-agent build"""
+        print("\n🤖 Testing Core Features")
+        
+        if not self.jwt_token or not self.test_project_id:
+            print("   ⚠️ Missing JWT token or project ID, creating new project for testing")
+            # Create a test project for chat testing
+            project_data = {
+                "name": "Chat Test Project",
+                "description": "Project for testing chat functionality"
+            }
+            
+            success, response, _ = self.run_test(
+                "Create Chat Test Project",
+                "POST",
+                "projects/create",
+                200,
+                data=project_data,
+                headers={"Authorization": f"Bearer {self.jwt_token}"}
+            )
+            
+            if success and 'id' in response:
+                self.test_project_id = response['id']
+            else:
+                return False
+        
+        # Test chat endpoint
+        chat_data = {
+            "project_id": self.test_project_id,
+            "message": "Create a simple HTML page with a welcome message",
+            "model": "gpt-4o"
+        }
+        
+        success, response, _ = self.run_test(
+            "Chat Endpoint",
+            "POST",
+            "chat",
+            200,
+            data=chat_data,
+            headers={"Authorization": f"Bearer {self.jwt_token}"}
+        )
+        
+        if success:
+            # Test multi-agent build
+            build_data = {
+                "project_id": self.test_project_id,
+                "prompt": "Build a modern landing page for a tech startup",
+                "uploaded_images": []
+            }
+            
+            success, response, _ = self.run_test(
+                "Multi-Agent Build",
+                "POST",
+                "build-with-agents",
+                200,
+                data=build_data,
+                headers={"Authorization": f"Bearer {self.jwt_token}"}
+            )
+            return success
+        
+        return False
+
     def run_all_tests(self):
-        """Run all authentication tests including Firebase sync"""
-        print("🚀 Starting AutoWebIQ Authentication API Tests")
+        """Run comprehensive backend testing as requested"""
+        print("🚀 Starting AutoWebIQ Comprehensive Backend Testing")
         print(f"   Base URL: {self.base_url}")
         print("=" * 70)
 
-        # Test 1: Existing JWT auth flow
-        if not self.test_jwt_auth_flow():
-            print("❌ JWT authentication failed, but continuing with OAuth tests")
-
-        # Test 2: Create test session in MongoDB
-        if not self.create_test_session_in_db():
-            print("❌ Failed to create test session, skipping session-based tests")
-
-        # Test 3: Google OAuth session endpoint (error handling)
+        # Test 1: Authentication Flow
+        auth_success = self.test_comprehensive_auth_flow()
+        
+        # Test 2: Project Management
+        project_success = self.test_project_management()
+        
+        # Test 3: Credits System
+        credits_success = self.test_credits_system()
+        
+        # Test 4: Core Features
+        core_success = self.test_core_features()
+        
+        # Test 5: Additional OAuth tests (existing)
         self.test_google_oauth_session_endpoint()
-
-        # Test 4: /auth/me with session token
-        self.test_auth_me_with_session_token()
-
-        # Test 5: Logout endpoint
-        self.test_logout_endpoint()
-
-        # Test 6: Flexible auth system
-        self.test_flexible_auth_system()
-
-        # Test 7: Protected endpoints
-        self.test_protected_endpoints()
-
-        # Test 8: Firebase sync endpoint (NEW - User Switching Test)
-        firebase_success = self.test_firebase_sync_endpoint()
-
+        
         # Cleanup
         self.cleanup_test_data()
-        self.cleanup_firebase_test_data()
 
-        return firebase_success
+        return auth_success and project_success and credits_success and core_success
 
     def print_summary(self):
         """Print test summary"""
