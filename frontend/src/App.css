@@ -704,6 +704,22 @@ h1, h2, h3, h4, h5, h6 {
   background: linear-gradient(135deg, #10b981 0%, #059669 100%);
 }
 
+.chat-message.system {
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+  border-left: 4px solid #667eea;
+  padding: 1rem;
+  border-radius: 12px;
+  margin-bottom: 1rem;
+}
+
+.chat-message.system .message-avatar {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.chat-message.system .message-content {
+  font-weight: 500;
+}
+
 .message-content {
   flex: 1;
   line-height: 1.6;
