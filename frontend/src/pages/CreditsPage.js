@@ -14,6 +14,10 @@ const CreditsPage = () => {
   const [packages, setPackages] = useState([]);
   const [user, setUser] = useState(JSON.parse(localStorage.getItem('user') || '{}'));
   const [loading, setLoading] = useState(true);
+  const [transactions, setTransactions] = useState([]);
+  const [creditSummary, setCreditSummary] = useState(null);
+  const [pricing, setPricing] = useState(null);
+  const [activeTab, setActiveTab] = useState('buy'); // 'buy', 'history', 'pricing'
 
   const getAxiosConfig = () => ({
     headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
@@ -26,14 +30,20 @@ const CreditsPage = () => {
 
   const fetchData = async () => {
     try {
-      const [packagesRes, userRes] = await Promise.all([
+      const [packagesRes, userRes, transactionsRes, summaryRes, pricingRes] = await Promise.all([
         axios.get(`${API}/credits/packages`),
-        axios.get(`${API}/auth/me`, getAxiosConfig())
+        axios.get(`${API}/auth/me`, getAxiosConfig()),
+        axios.get(`${API}/credits/transactions?limit=20`, getAxiosConfig()),
+        axios.get(`${API}/credits/summary`, getAxiosConfig()),
+        axios.get(`${API}/credits/pricing`)
       ]);
       setPackages(packagesRes.data);
       setUser(userRes.data);
+      setTransactions(transactionsRes.data.transactions || []);
+      setCreditSummary(summaryRes.data);
+      setPricing(pricingRes.data);
     } catch (error) {
-      toast.error('Failed to load packages');
+      toast.error('Failed to load data');
     } finally {
       setLoading(false);
     }
