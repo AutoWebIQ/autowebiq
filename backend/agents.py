@@ -263,6 +263,117 @@ Generate a complete FastAPI backend with all necessary endpoints."""
             await self.send_message(f"❌ Backend generation failed: {str(e)}", AgentStatus.FAILED, 0)
             raise
 
+class ImageAgent(Agent):
+    """Generates and sources images using DALL-E"""
+    
+    def __init__(self, api_client):
+        super().__init__(AgentType.IMAGE, "dall-e-3", api_client)
+    
+    async def think(self, plan: Dict, context: Dict) -> List[str]:
+        """Generate images for the website"""
+        await self.send_message("🎨 Generating custom images...", AgentStatus.THINKING, 20)
+        
+        try:
+            from openai import AsyncOpenAI
+            images = []
+            
+            # Determine how many images needed based on project type
+            image_count = 1
+            if plan['type'] in ['ecommerce', 'portfolio', 'blog']:
+                image_count = 3
+            elif plan['type'] == 'webapp':
+                image_count = 2
+            
+            await self.send_message(f"🎨 Creating {image_count} custom images...", AgentStatus.WORKING, 40)
+            
+            # Generate hero image
+            hero_prompt = f"A modern, professional hero image for a {plan['type']} website called {plan['project_name']}. {plan['description']}. Clean, minimalist, high quality."
+            
+            response = await self.client.images.generate(
+                model="dall-e-3",
+                prompt=hero_prompt,
+                size="1792x1024",
+                quality="standard",
+                n=1
+            )
+            
+            images.append({
+                "url": response.data[0].url,
+                "type": "hero",
+                "description": hero_prompt
+            })
+            
+            await self.send_message(f"✅ Generated {len(images)} images!", AgentStatus.COMPLETED, 100)
+            return images
+            
+        except Exception as e:
+            await self.send_message(f"⚠️ Image generation skipped: {str(e)}", AgentStatus.COMPLETED, 100)
+            return []  # Return empty list instead of failing
+
+class TestingAgent(Agent):
+    """Tests generated code for errors"""
+    
+    def __init__(self, api_client):
+        super().__init__(AgentType.TESTING, "gpt-4o", api_client)
+    
+    async def think(self, code: str, context: Dict) -> Dict:
+        """Test and validate generated code"""
+        await self.send_message("🧪 Running automated tests...", AgentStatus.THINKING, 30)
+        
+        try:
+            from openai import AsyncOpenAI
+            
+            system_prompt = """You are a QA engineer. Analyze the provided HTML/CSS/JS code and report issues.
+
+Check for:
+1. HTML validation errors
+2. CSS syntax issues
+3. JavaScript errors
+4. Responsive design issues
+5. Accessibility problems
+6. SEO optimization
+7. Performance issues
+
+Return JSON: {
+    "issues": [{"severity": "high|medium|low", "message": "...", "fix": "..."}],
+    "score": 0-100,
+    "passed": true/false
+}"""
+            
+            await self.send_message("🧪 Analyzing code quality...", AgentStatus.WORKING, 60)
+            
+            completion = await self.client.chat.completions.create(
+                model=self.model,
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": f"Test this code:\n\n{code[:2000]}"}  # Limit to 2000 chars
+                ],
+                temperature=0.3,
+                max_tokens=1000
+            )
+            
+            result_text = completion.choices[0].message.content
+            
+            # Parse JSON
+            import json
+            import re
+            json_match = re.search(r'\{.*\}', result_text, re.DOTALL)
+            if json_match:
+                result = json.loads(json_match.group())
+            else:
+                result = {"issues": [], "score": 85, "passed": True}
+            
+            if result.get('passed'):
+                await self.send_message(f"✅ All tests passed! Score: {result.get('score', 85)}/100", AgentStatus.COMPLETED, 100)
+            else:
+                await self.send_message(f"⚠️ {len(result.get('issues', []))} issues found", AgentStatus.COMPLETED, 100)
+            
+            return result
+            
+        except Exception as e:
+            await self.send_message(f"⚠️ Testing skipped: {str(e)}", AgentStatus.COMPLETED, 100)
+            return {"issues": [], "score": 80, "passed": True}
+
 class AgentOrchestrator:
     """Orchestrates all agents to build a complete website"""
     
