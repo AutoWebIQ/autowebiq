@@ -1505,6 +1505,42 @@ async def list_gke_workspaces(user_id: str = Depends(get_current_user)):
     workspaces = await gke_manager.list_user_workspaces(user_id)
     return {"workspaces": workspaces}
 
+# Credit System Endpoints
+@api_router.get("/credits/balance")
+async def get_credit_balance(user_id: str = Depends(get_current_user)):
+    """Get current credit balance"""
+    credit_manager = get_credit_manager(db)
+    balance = await credit_manager.get_user_balance(user_id)
+    return {"balance": balance, "user_id": user_id}
+
+@api_router.get("/credits/transactions")
+async def get_credit_transactions(
+    user_id: str = Depends(get_current_user),
+    limit: int = 50
+):
+    """Get credit transaction history"""
+    credit_manager = get_credit_manager(db)
+    transactions = await credit_manager.get_transaction_history(user_id, limit)
+    return {"transactions": transactions}
+
+@api_router.get("/credits/summary")
+async def get_credit_summary(user_id: str = Depends(get_current_user)):
+    """Get credit usage summary"""
+    credit_manager = get_credit_manager(db)
+    summary = await credit_manager.get_transaction_summary(user_id)
+    return summary
+
+@api_router.get("/credits/pricing")
+async def get_credit_pricing():
+    """Get credit costs for agents and models"""
+    from credit_system import AGENT_CREDIT_COSTS, MODEL_BASE_COSTS
+    
+    return {
+        "agent_costs": {agent.value: cost for agent, cost in AGENT_CREDIT_COSTS.items()},
+        "model_costs": {model.value: cost for model, cost in MODEL_BASE_COSTS.items()},
+        "note": "Actual costs may vary based on complexity, tokens used, and multi-agent discounts"
+    }
+
 app.include_router(api_router)
 
 app.add_middleware(
