@@ -102,7 +102,7 @@
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
 
-user_problem_statement: "Test the Firebase sync endpoint to verify user switching works correctly after fixing the issue where signing in with different Google accounts showed old user data"
+user_problem_statement: "Complete Kubernetes infrastructure for AutoWebIQ with subdomain-based previews, image upload in chat, and GitHub fork integration"
 
 backend:
   - task: "Google OAuth Session Exchange Endpoint"
