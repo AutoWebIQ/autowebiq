@@ -371,7 +371,8 @@ class CreditManager:
     ) -> List[Dict]:
         """Get credit transaction history for user"""
         transactions = await self.db.credit_transactions.find(
-            {"user_id": user_id}
+            {"user_id": user_id},
+            {"_id": 0}  # Exclude MongoDB ObjectId
         ).sort("created_at", -1).limit(limit).to_list(length=limit)
         
         return transactions
