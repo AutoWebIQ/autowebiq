@@ -344,9 +344,12 @@ const EmergentLanding = () => {
       <footer className="emergent-footer">
         <div className="footer-container">
           <div className="footer-content">
-            <div className="logo">emergent</div>
+            <div className="logo">
+              <Sparkles className="logo-icon-footer" />
+              autowebiq
+            </div>
             <p className="footer-text">
-              © 2025 Emergent. All rights reserved.
+              © 2025 AutoWebIQ. All rights reserved.
             </p>
           </div>
         </div>
