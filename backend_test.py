@@ -750,7 +750,7 @@ print("Test data cleaned up");
         chat_data = {
             "project_id": self.test_project_id,
             "message": "Create a simple HTML page with a welcome message",
-            "model": "gpt-4o"
+            "model": "claude-4.5-sonnet-200k"
         }
         
         success, response, _ = self.run_test(
