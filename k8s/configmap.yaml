@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: autowebiq-config
+  namespace: autowebiq-workspaces
+data:
+  DOMAIN: "autowebiq.com"
+  PREVIEW_HOST: "preview.autowebiq.com"
+  GCP_PROJECT_ID: "autowebiq-476616"
+  GKE_CLUSTER_REGION: "asia-south1"
