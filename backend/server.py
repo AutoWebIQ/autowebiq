@@ -987,6 +987,7 @@ CURRENT PROJECT CONTEXT:
 class MultiAgentBuildRequest(BaseModel):
     project_id: str
     prompt: str
+    uploaded_images: Optional[List[str]] = []  # List of Cloudinary URLs
 
 @api_router.post("/build-with-agents")
 async def build_with_agents(request: MultiAgentBuildRequest, user_id: str = Depends(get_current_user)):
