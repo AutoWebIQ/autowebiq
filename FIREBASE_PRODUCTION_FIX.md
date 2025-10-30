@@ -12,7 +12,7 @@
 ### 1. Incorrect Backend URL ❌
 **Problem:** Frontend `.env` had hardcoded preview URL
 ```
-REACT_APP_BACKEND_URL=https://devtopia-app.preview.emergentagent.com
+REACT_APP_BACKEND_URL=https://autowebiq-ai.preview.emergentagent.com
 ```
 
 **Issue:** When Firebase auth succeeds, frontend tries to sync with backend at preview URL, which doesn't exist in production.
@@ -31,7 +31,7 @@ REACT_APP_BACKEND_URL=https://devtopia-app.preview.emergentagent.com
 **File:** `/app/frontend/.env`
 
 ```diff
-- REACT_APP_BACKEND_URL=https://devtopia-app.preview.emergentagent.com
+- REACT_APP_BACKEND_URL=https://autowebiq-ai.preview.emergentagent.com
 + REACT_APP_BACKEND_URL=https://autowebiq.com
 ```
 
@@ -174,7 +174,7 @@ Firebase: Error (auth/network-request-failed)
 - Open browser DevTools > Network tab
 - Look for API calls
 - Should go to: `https://autowebiq.com/api/*`
-- NOT: `https://devtopia-app.preview.emergentagent.com/api/*`
+- NOT: `https://autowebiq-ai.preview.emergentagent.com/api/*`
 
 #### 3. Check Firebase Console
 - Verify `autowebiq.com` is in authorized domains

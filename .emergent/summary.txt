@@ -1,22 +1,17 @@
 <analysis>
-The AI engineer's trajectory details the ambitious transformation of AutoWebIQ from a basic AI assistant into a full-scale, multi-agent AI website generation platform, mirroring the Emergent platform itself. Initially, the focus was on fixing login issues, integrating Google OAuth, and improving the core AI builder's reliability by upgrading to  and enhancing prompts. A significant pivot occurred when the user explicitly requested building a comprehensive, self-hosted platform with multi-AI agents, live previews, full-stack generation, inline editing, deployment capabilities, a credit system, and an admin dashboard. The engineer meticulously outlined the extensive infrastructure (GCP, Kubernetes, Docker, Cloudflare) and services required, categorizing tasks and requesting all necessary credentials. The current work involves setting up the foundational multi-agent architecture in the backend and frontend, integrating various AI models, and crucially, building out the Kubernetes deployment manifests and Docker workspace templates, leveraging the newly provided cloud and Docker credentials to establish the production-grade infrastructure. The project is advancing towards a complete, self-hosted solution.
+The AI engineer's work involved transforming AutoWebIQ from an MVP AI assistant into a full-scale multi-agent AI website generation platform akin to Emergent. Initial tasks focused on fixing login, Google OAuth, and upgrading LLMs. A major pivot occurred to implement a self-hosted platform with multi-AI agents, live previews, full-stack generation, inline editing, and a robust credit system. The engineer meticulously set up Kubernetes/Docker infrastructure, integrated image uploads, and added GitHub fork functionality. Significant effort was dedicated to debugging Firebase authentication, resolving React build issues related to dynamic imports, and persistently addressing MongoDB SSL connection problems in the development environment. The credit system was also fully overhauled to mirror Emergent's dynamic logic. The work culminated in fixing core platform functionalities, including project creation and a detailed credit system.
 </analysis>
 
 <product_requirements>
-The user's initial goal was an AI assistant (Optra AI, later AutoWebIQ) offering text chat, code generation, file analysis, and image generation, primarily with OpenAI GPT-5, including chat history, multiple threads, and JWT authentication. This expanded to replicate the Emergent platform: robust Firebase Auth (Email/Password, Google, GitHub), a credit system with Razorpay, multiple LLM models (Claude Sonnet, GPT-5/4o, Gemini), AI-powered website generation with real-time preview (split-screen), voice commands, file uploads via Cloudinary, Monaco code editor for manual edits, and a polished UI/UX. The ultimate vision evolved into a full-scale AI website generation platform for AutoWebIQ, encompassing: a prompt-based builder spawning multi-AI agents (frontend, backend, DB, testing, deployment), live progress logs, real-time website preview, full-stack generation (code, images, backend API, DB schema), inline editing, project saving/exporting, one-click custom domain deployment (Cloudflare), rebuild capabilities, an enhanced credit system with Razorpay, and an admin dashboard for user/project management.
+The initial goal for AutoWebIQ was an AI assistant offering text chat, code generation, and image generation with OpenAI GPT-5, including chat history and JWT authentication. This evolved into replicating the Emergent platform, requiring robust Firebase Auth (Email/Password, Google, GitHub), a dynamic credit system with Razorpay (20 initial credits for new users, auto-deduction, refund on failure, real-time display matching Emergent's logic), multiple LLMs (Claude, GPT-4o, Gemini), and AI-powered website generation with real-time split-screen preview. Additional features included voice commands, file uploads via Cloudinary, Monaco code editor, and a polished UI/UX. The ultimate vision encompassed a multi-AI agent builder (frontend, backend, DB, testing, deployment), live progress logs, full-stack generation, inline editing, project saving/exporting, one-click custom domain deployment (Cloudflare), rebuild capabilities, and an admin dashboard. Recent requirements focused on a unified UI (single chat, live preview, project list), shareable/persistent preview URLs, image uploads in chat, GitHub forking, and specific backend API expectations for user, project, and credit management.
 </product_requirements>
 
 <key_technical_concepts>
-- **FastAPI**: Python backend.
-- **React**: Frontend framework.
-- **MongoDB Atlas**: Primary database.
-- **Firebase Auth**: User authentication (Email/Pass, Google, GitHub).
-- **OpenAI, Anthropic (Claude), Google Gemini**: LLM integrations.
-- **Cloudinary**: File/image storage.
-- **Docker/Kubernetes (GKE)**: Containerization and orchestration for live previews/deployments.
-- **Nginx**: Reverse proxy.
-- **Cloudflare**: DNS, custom domains.
-- **GitHub Actions**: CI/CD.
+- **Full-Stack**: React (frontend), FastAPI (backend), MongoDB (database).
+- **Cloud Infrastructure**: Kubernetes (GKE), Docker, Cloudflare (DNS, custom domains).
+- **Authentication**: Firebase Auth, Google OAuth.
+- **AI**: OpenAI, Anthropic, Google Gemini (LLMs), Multi-agent Orchestration.
+- **Utilities**: Nginx, Supervisor, yarn, pip.
 </key_technical_concepts>
 
 <code_architecture>
@@ -24,61 +19,54 @@ The application uses a standard full-stack setup: React frontend and FastAPI bac
 
 
 
-- ****:
-    - **Importance**: Main FastAPI app.
-    - **Changes**: Fixed  import. Integrated Google OAuth. Refactored . Added Firebase user sync endpoint (). Updated LLM models to GPT-4o, Claude Sonnet 4, Gemini 2.5 Pro. Updated credits to 10 on signup. Integrated  and added  endpoint. Updated  credentials. Integrated Docker container management endpoints.
-- ****:
-    - **Importance**: New file for multi-agent system logic (e.g., ).
-    - **Changes**: Newly created to encapsulate AI agent logic and orchestration.
-- ****:
-    - **Importance**: New file for Docker container management.
-    - **Changes**: Newly created to abstract Docker SDK interactions.
-- ****:
-    - **Importance**: React entry, global state, auth, routing.
-    - **Changes**: Integrated Google login button and logic. Dynamic . Implemented  before Firebase logins. AuthPage rewritten to use Firebase SDK.
-- ****:
-    - **Importance**: New utility file for Firebase SDK initialization and authentication methods.
-    - **Changes**: Newly created to centralize Firebase logic.
-- ****:
-    - **Importance**: Core AI interaction workspace.
-    - **Changes**: Updated to use dynamic . Changed default AI model to GPT-4o. Added  function and corresponding UI button.
-- ****:
-    - **Importance**: Global styling.
-    - **Changes**: Added styles for Google button, auth divider, and system messages for agents.
-- ****:
-    - **Importance**: Main HTML.
-    - **Changes**: Added Firebase SDK scripts.
-- ****:
-    - **Importance**: Standalone demo of Firebase authentication.
-    - **Changes**: Newly created.
-- ****: Stores all API keys, database URLs, and other environment variables. Continuously updated with user-provided credentials.
-- ** (new directory)**:
-    - **Importance**: Contains templates for Docker workspaces.
-    - **Changes**: , , ,  created to define the isolated environment for each user's generated application.
-- ** (new directory)**:
-    - **Importance**: Contains Kubernetes deployment manifests.
-    - **Changes**: , ,  created to define Kubernetes resources for the multi-tenant platform.
-- ****:
-    - **Importance**: Stores GCP Service Account JSON key for Kubernetes deployments.
-    - **Changes**: Newly created with user-provided key.
+- ****: Main FastAPI application.
+    - **Changes**: Integrated Google OAuth, Firebase user sync, LLM models (GPT-4o, Claude Sonnet 4, Gemini 2.5 Pro), new multi-agent build endpoint , Docker/GKE container management endpoints. Added GitHub integration endpoints. Integrated dynamic credit system (reservation, deduction, refund, new endpoints for , , ). Implemented project management endpoints (, , update, delete). Added  endpoint. Modified MongoDB client initialization to handle SSL (later removed for local dev). Updated user model for  flag.
+- ****: Handles AI agent logic and orchestration.
+    - **Changes**: Updated  to pass uploaded image URLs to the frontend agent.
+- ** (New)**: Manages Google Kubernetes Engine workspaces.
+    - **Changes**: Created to abstract GKE SDK interactions, replacing  for production.
+- ** (New)**: Manages GitHub integration.
+    - **Changes**: Newly created to encapsulate GitHub API interactions for forking projects.
+- ** (New)**: Encapsulates dynamic credit system logic.
+    - **Changes**: Newly created with methods for , , , , , .
+- ** (New)**: Stores shared backend constants.
+    - **Changes**: Created to hold .
+- ** (New)**: A script to add  flag to existing users.
+- ****: React application entry point.
+    - **Changes**: Integrated Google login, Firebase SDK initialization, dynamic ,  for Firebase logins, auth page rewrite, auto-redirect logic for logged-in users to dashboard. Updated landing page text and login/signup UI to reflect 20 Free Credits.
+- ****: Utility for Firebase SDK.
+    - **Changes**: Centralized Firebase logic, replaced dynamic CDN imports with static Firebase SDK imports, configured using environment variables.
+- ****: Core AI interaction workspace.
+    - **Changes**: Updated to use dynamic , changed default AI model to GPT-4o, added  function and UI for image uploads, removed AI model dropdown and download project button.
+- ****: Displays credit information.
+    - **Changes**: Enhanced to include transaction history and detailed pricing tables.
+- ** (New)**: Stores shared frontend constants.
+    - **Changes**: Created to hold .
+- ****: Frontend environment variables.
+    - **Changes**: Updated  to production URL, added Firebase environment variables (API Key, Auth Domain, Project ID, etc.).
+- ****: Backend environment variables.
+    - **Changes**: Updated with GCP, Docker Hub, Cloudflare, GitHub credentials. Modified  to include SSL parameters (later temporarily changed for local dev).
+- ****: New directory for Kubernetes manifests.
+    - **Changes**: Created , , , , ,  for a complete GKE deployment.  script for deployment automation.
+- ****: Webpack configuration for React.
+    - **Changes**: Fixed an issue with dynamic  calls to prevent build failures.
 </code_architecture>
 
 <pending_tasks>
-- **Advanced GitHub Integration**: Beyond receiving credentials, the full save to GitHub fork functionality is pending.
-- **Help Center / Discord Integration**: User requested help center, join discord, which is not yet implemented.
-- **Voice Command Implementation**: While UI for mic is present, actual voice command processing is pending.
-- **Complete Kubernetes/GKE Infrastructure**: Creation of deployments, services, ingress, CI/CD pipeline, and full integration of Docker workspaces.
-- **Inline Editing and Admin Dashboard**: These core features for the full platform are yet to be implemented.
+- **GitHub Integration**: Complete save to GitHub fork beyond initial module creation.
+- **Help Center / Discord Integration**: Implement user requested features for support.
+- **Voice Command Implementation**: Implement actual voice command processing.
+- **Kubernetes/GKE Infrastructure**: Complete CI/CD pipeline and full integration of Docker workspaces.
+- **Inline Editing and Admin Dashboard**: Implement these core platform features.
+- **Shareable/Persistent Preview URLs**: Implement Open in new tab and Share functionalities for project previews.
+- **Buy Credits Flow**: Implement the full credit purchase and auto-refill mechanism.
+- **Admin Agent Log Modal**: Optional feature to expose internal agent activity for admin users.
 </pending_tasks>
 
 <current_work>
-Immediately before this summary request, the AI engineer was actively setting up the production-grade infrastructure for AutoWebIQ on Google Kubernetes Engine (GKE). This follows the user's explicit request to build a full-scale AI website generation platform like Emergent.
-
-The current work involves:
-1.  **Securing Cloud Credentials**: The user provided extensive GCP, Docker Hub, Cloudflare, and GitHub credentials, including a GCP Service Account JSON key. The engineer updated  with these details and created  to store the service account key.
-2.  **Creating Kubernetes Manifests**: The engineer is now generating the foundational Kubernetes YAML files in the newly created  directory. So far, , , and  have been created. These files are essential for defining the structure and configuration of the GKE cluster that will host AutoWebIQ's multi-tenant workspaces. This is a critical step towards enabling live preview subdomains and full-stack deployment capabilities as requested by the user.
+Immediately before this summary request, the AI engineer was focused on resolving persistent MongoDB connection issues and ensuring the application's core functionalities, especially credit management and project creation, were robust. The trajectory detailed debugging a MongoDB SSL issue in the development environment, leading to a temporary switch to a local MongoDB instance to allow for testing. This involved modifying  and  to adapt the MongoDB client initialization with and without SSL parameters. A health check with the local MongoDB successfully reported a healthy database connection. Subsequently, the testing agent identified an issue with the  endpoint. The current work is precisely addressing this issue: the  method in  is incorrectly retrieving transactions because it's not excluding MongoDB's  from the response, causing serialization problems.
 </current_work>
 
 <optional_next_step>
-The next step is to continue creating the remaining Kubernetes manifests (e.g., deployments, services, ingress) based on the user's provided GCP and Cloudflare credentials.
+Fix the  method in  to correctly retrieve transactions by excluding MongoDB's .
 </optional_next_step>
