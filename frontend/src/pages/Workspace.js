@@ -170,7 +170,7 @@ const Workspace = () => {
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     accept: {
-      'image/*': ['.png', '.jpg', '.jpeg', '.gif', '.webp'],
+      'image/*': ['.png', '.jpg', '.jpeg', '.gif', '.webp', '.svg'],
       'video/*': ['.mp4', '.webm', '.mov'],
       'application/*': ['.pdf', '.doc', '.docx']
     },
@@ -195,9 +195,22 @@ const Workspace = () => {
           }
         });
         
-        // Add file info to chat
-        setInput(prev => prev + `\n[Uploaded: ${file.name} - ${res.data.url}]`);
-        toast.success('File uploaded!');
+        // Check if it's an image
+        const isImage = file.type.startsWith('image/');
+        
+        if (isImage) {
+          // Add to uploaded images array
+          setUploadedImages(prev => [...prev, {
+            url: res.data.url,
+            filename: file.name,
+            format: res.data.format
+          }]);
+          toast.success(`Image uploaded: ${file.name}`);
+        } else {
+          // Add file info to chat for non-images
+          setInput(prev => prev + `\n[Uploaded: ${file.name} - ${res.data.url}]`);
+          toast.success('File uploaded!');
+        }
       } catch (error) {
         toast.error('Upload failed');
       } finally {
