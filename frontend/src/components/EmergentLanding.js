@@ -197,11 +197,11 @@ const EmergentLanding = () => {
       <section className="features-section" id="features">
         <div className="features-container">
           <h2 className="features-title">
-            What can Emergent<br />
+            What can AutoWebIQ<br />
             do for you?
           </h2>
           <p className="features-subtitle">
-            From concept to deployment, Emergent handles every aspect of software<br />
+            From concept to deployment, AutoWebIQ handles every aspect of software<br />
             development so you can focus on what matters most - your vision!
           </p>
 
@@ -232,7 +232,13 @@ const EmergentLanding = () => {
           </div>
 
           <div className="app-showcase">
-            <img src="https://via.placeholder.com/800x600" alt="App showcase" className="showcase-image" />
+            <div className="showcase-grid">
+              <img src="https://images.unsplash.com/photo-1551650975-87deedd944c3?w=800" alt="App showcase" className="showcase-main-image" />
+              <div className="showcase-small-grid">
+                <img src="https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=400" alt="Feature 1" />
+                <img src="https://images.unsplash.com/photo-1559028012-481c04fa702d?w=400" alt="Feature 2" />
+              </div>
+            </div>
           </div>
         </div>
       </section>
