@@ -105,6 +105,66 @@
 user_problem_statement: "Implement Emergent's dynamic credit system with auto-deduction based on agents used, models, and complexity. Include refund mechanism, transaction ledger, and real-time balance updates. Starting credits: 20 for new users."
 
 backend:
+  - task: "Dynamic Credit System Core"
+    implemented: true
+    working: true
+    file: "backend/credit_system.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "main"
+          comment: "Complete credit system implemented with CreditManager class. Includes per-agent costs (5-12 credits), per-model costs (4-12 credits), complexity multipliers, multi-agent discounts (10% for 4+ agents). Supports reserve→execute→complete/refund flow. Transaction ledger with full audit trail. Tested successfully - pricing endpoint returns correct cost tables."
+  
+  - task: "Credit Transaction Ledger"
+    implemented: true
+    working: true
+    file: "backend/credit_system.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "main"
+          comment: "Transaction system with 5 types (deduction, refund, purchase, signup_bonus, monthly_reset) and 4 statuses (pending, completed, refunded, failed). Full MongoDB integration with credit_transactions collection. Includes get_transaction_history, get_transaction_summary methods."
+  
+  - task: "Signup Credits Update to 20"
+    implemented: true
+    working: true
+    file: "backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "main"
+          comment: "Updated all registration endpoints (regular register, Firebase sync, Google OAuth) to give 20 credits instead of 10. Added signup bonus transaction logging via credit_manager.add_signup_bonus(). Backward compatible - existing users unaffected."
+  
+  - task: "Dynamic Multi-Agent Build Costs"
+    implemented: true
+    working: "NA"
+    file: "backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: "NA"
+          agent: "main"
+          comment: "Replaced fixed 20-credit cost with dynamic calculation. Determines agents needed from prompt (Planner, Frontend, Backend, Image, Testing). Calculates cost breakdown per agent and model. Reserves credits upfront, completes with actual cost, refunds difference. Returns detailed breakdown with credits_used, credits_refunded, remaining_balance, cost_breakdown. Full refund on failure/exception."
+  
+  - task: "Credit API Endpoints"
+    implemented: true
+    working: true
+    file: "backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "main"
+          comment: "Added 4 credit endpoints: GET /credits/balance (current balance), GET /credits/transactions (history with limit), GET /credits/summary (total spent/refunded/purchased), GET /credits/pricing (agent & model costs). Pricing endpoint tested successfully - returns correct cost tables."
+
   - task: "GKE Workspace Manager"
     implemented: true
     working: "NA"
