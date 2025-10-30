@@ -278,7 +278,7 @@ const AuthPage = () => {
   // Handle Google Sign-In
   const handleGoogleSignIn = async () => {
     if (!firebaseAuth || !authMethods) {
-      toast.error('Authentication not ready. Please refresh.');
+      toast.error('Google Sign-In not available. Please use email/password login.');
       return;
     }
 
@@ -304,7 +304,7 @@ const AuthPage = () => {
       } else if (error.code === 'auth/unauthorized-domain') {
         toast.error('This domain is not authorized. Please contact support.');
       } else {
-        toast.error(error.message || 'Google login failed');
+        toast.error('Google login failed. Please use email/password login.');
       }
     }
   };
