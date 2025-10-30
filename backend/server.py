@@ -264,12 +264,16 @@ async def register(user_data: UserRegister):
         username=user_data.username,
         email=user_data.email,
         password_hash=hash_password(user_data.password),
-        credits=10
+        credits=20  # Emergent standard
     )
     
     user_dict = user.model_dump()
     user_dict['created_at'] = user_dict['created_at'].isoformat()
     await db.users.insert_one(user_dict)
+    
+    # Add signup bonus transaction
+    credit_manager = get_credit_manager(db)
+    await credit_manager.add_signup_bonus(user.id, 20)
     
     token = create_access_token({"user_id": user.id})
     
