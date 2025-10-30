@@ -164,11 +164,11 @@ backend:
   
   - task: "Credit API Endpoints"
     implemented: true
-    working: false
+    working: true
     file: "backend/server.py"
     stuck_count: 1
     priority: "high"
-    needs_retesting: false
+    needs_retesting: true
     status_history:
         - working: true
           agent: "main"
@@ -176,6 +176,9 @@ backend:
         - working: false
           agent: "testing"
           comment: "❌ CRITICAL ISSUE FOUND: GET /credits/transactions endpoint returns 500 Internal Server Error due to MongoDB ObjectId serialization issue. Error: 'ObjectId' object is not iterable. Other credit endpoints work correctly: /credits/balance (✅), /credits/pricing (✅). The transaction history endpoint needs ObjectId to string conversion fix in credit_system.py or server.py."
+        - working: true
+          agent: "main"
+          comment: "✅ FIXED: MongoDB ObjectId serialization issue in credit_system.py. Updated get_transaction_history method to exclude _id field from query results using projection {'_id': 0}. This prevents ObjectId serialization errors in JSON responses."
 
   - task: "GKE Workspace Manager"
     implemented: true
