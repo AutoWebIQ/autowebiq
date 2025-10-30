@@ -811,7 +811,7 @@ print("Test data cleaned up");
     def print_summary(self):
         """Print test summary"""
         print("\n" + "=" * 70)
-        print("📊 GOOGLE OAUTH TEST SUMMARY")
+        print("📊 AUTOWEBIQ BACKEND TEST SUMMARY")
         print("=" * 70)
         print(f"Total Tests: {self.tests_run}")
         print(f"Passed: {self.tests_passed}")
@@ -825,6 +825,13 @@ print("Test data cleaned up");
                     print(f"   • {result['test']}: {result['details']}")
         else:
             print("\n🎉 ALL TESTS PASSED!")
+        
+        print("\n📋 TEST CATEGORIES COVERED:")
+        print("   ✅ Authentication Flow (register, login, /auth/me)")
+        print("   ✅ Project Management (create, list, get, delete)")
+        print("   ✅ Credits System (balance, pricing, transactions)")
+        print("   ✅ Core Features (chat, multi-agent build)")
+        print("   ✅ OAuth Integration (error handling)")
         
         return self.tests_passed == self.tests_run
 
