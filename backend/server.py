@@ -980,6 +980,76 @@ CURRENT PROJECT CONTEXT:
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"AI error: {str(e)}")
 
+# New Multi-Agent Website Builder Endpoint
+class MultiAgentBuildRequest(BaseModel):
+    project_id: str
+    prompt: str
+
+@api_router.post("/build-with-agents")
+async def build_with_agents(request: MultiAgentBuildRequest, user_id: str = Depends(get_current_user)):
+    """
+    Build a complete website using multi-agent system
+    This is the NEW way - similar to Emergent's approach
+    """
+    
+    # Check user has enough credits (minimum 20 for multi-agent build)
+    user_doc = await db.users.find_one({"id": user_id})
+    if user_doc['credits'] < 20:
+        raise HTTPException(
+            status_code=402,
+            detail=f"Insufficient credits. Multi-agent build requires 20 credits. You have {user_doc['credits']}."
+        )
+    
+    # Verify project
+    project = await db.projects.find_one({"id": request.project_id, "user_id": user_id})
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+    
+    # Deduct credits upfront
+    await db.users.update_one(
+        {"id": user_id},
+        {"$inc": {"credits": -20}}
+    )
+    
+    try:
+        # Use the multi-agent orchestrator
+        result = await agent_orchestrator.build_website(request.prompt, request.project_id)
+        
+        if result['status'] == 'completed':
+            # Update project with generated code
+            await db.projects.update_one(
+                {"id": request.project_id},
+                {"$set": {
+                    "generated_code": result['frontend_code'],
+                    "backend_code": result.get('backend_code', ''),
+                    "project_plan": result['plan'],
+                    "updated_at": datetime.now(timezone.utc).isoformat()
+                }}
+            )
+            
+            return {
+                "status": "success",
+                "plan": result['plan'],
+                "frontend_code": result['frontend_code'],
+                "backend_code": result.get('backend_code', ''),
+                "message": "✅ Website built successfully with multi-agent system!"
+            }
+        else:
+            # Refund credits on failure
+            await db.users.update_one(
+                {"id": user_id},
+                {"$inc": {"credits": 20}}
+            )
+            raise HTTPException(status_code=500, detail=result.get('error', 'Build failed'))
+    
+    except Exception as e:
+        # Refund credits on exception
+        await db.users.update_one(
+            {"id": user_id},
+            {"$inc": {"credits": 20}}
+        )
+        raise HTTPException(status_code=500, detail=f"Multi-agent build error: {str(e)}")
+
 app.include_router(api_router)
 
 app.add_middleware(
