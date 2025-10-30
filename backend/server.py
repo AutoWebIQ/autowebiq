@@ -1017,7 +1017,11 @@ async def build_with_agents(request: MultiAgentBuildRequest, user_id: str = Depe
     
     try:
         # Use the multi-agent orchestrator
-        result = await agent_orchestrator.build_website(request.prompt, request.project_id)
+        result = await agent_orchestrator.build_website(
+            request.prompt, 
+            request.project_id,
+            request.uploaded_images  # Pass uploaded images
+        )
         
         if result['status'] == 'completed':
             # Update project with generated code
