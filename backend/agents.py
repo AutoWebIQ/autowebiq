@@ -390,8 +390,10 @@ class AgentOrchestrator:
         self.planner = PlannerAgent(self.anthropic_client)
         self.frontend = FrontendAgent(self.openai_client)
         self.backend = BackendAgent(self.openai_client)
+        self.image = ImageAgent(self.openai_client)
+        self.testing = TestingAgent(self.openai_client)
         
-        self.all_agents = [self.planner, self.frontend, self.backend]
+        self.all_agents = [self.planner, self.frontend, self.backend, self.image, self.testing]
         self.message_callback: Optional[Callable] = None
     
     def set_message_callback(self, callback: Callable):
@@ -409,14 +411,29 @@ class AgentOrchestrator:
                 for msg in self.planner.messages:
                     await self.message_callback(project_id, msg.to_dict())
             
-            # Phase 2: Frontend Generation
-            frontend_code = await self.frontend.think(plan, {})
+            # Phase 2: Image Generation (parallel with frontend)
+            images = await self.image.think(plan, {})
+            
+            if self.message_callback:
+                for msg in self.image.messages:
+                    await self.message_callback(project_id, msg.to_dict())
+            
+            # Phase 3: Frontend Generation
+            frontend_code = await self.frontend.think(plan, {"images": images})
+            
+            # Insert generated images into code if available
+            if images and images[0].get('url'):
+                hero_image_url = images[0]['url']
+                # Replace placeholder images with generated ones
+                if 'https://via.placeholder.com' in frontend_code or 'https://placehold.co' in frontend_code:
+                    frontend_code = frontend_code.replace('https://via.placeholder.com/1200x600', hero_image_url)
+                    frontend_code = frontend_code.replace('https://placehold.co/1200x600', hero_image_url)
             
             if self.message_callback:
                 for msg in self.frontend.messages:
                     await self.message_callback(project_id, msg.to_dict())
             
-            # Phase 3: Backend Generation (if needed)
+            # Phase 4: Backend Generation (if needed)
             backend_code = ""
             if plan.get('needs_backend'):
                 backend_code = await self.backend.think(plan, {})
@@ -425,11 +442,20 @@ class AgentOrchestrator:
                     for msg in self.backend.messages:
                         await self.message_callback(project_id, msg.to_dict())
             
+            # Phase 5: Testing
+            test_results = await self.testing.think(frontend_code, {})
+            
+            if self.message_callback:
+                for msg in self.testing.messages:
+                    await self.message_callback(project_id, msg.to_dict())
+            
             # Return complete project
             return {
                 "plan": plan,
                 "frontend_code": frontend_code,
                 "backend_code": backend_code,
+                "images": images,
+                "test_results": test_results,
                 "status": "completed"
             }
             
@@ -438,6 +464,8 @@ class AgentOrchestrator:
                 "plan": {},
                 "frontend_code": "",
                 "backend_code": "",
+                "images": [],
+                "test_results": {},
                 "status": "failed",
                 "error": str(e)
             }
