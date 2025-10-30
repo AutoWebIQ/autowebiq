@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Sparkles, ArrowRight } from 'lucide-react';
+import { Sparkles, ArrowRight, Users, Globe, Zap } from 'lucide-react';
 import '../styles/EmergentLanding.css';
 
 const EmergentLanding = () => {
@@ -11,6 +11,16 @@ const EmergentLanding = () => {
   const [pricingTab, setPricingTab] = useState('individual');
   const [billingCycle, setBillingCycle] = useState('annual');
 
+  // Auto-redirect logged-in users to dashboard
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    const user = localStorage.getItem('user');
+    
+    if (token && user) {
+      navigate('/dashboard');
+    }
+  }, [navigate]);
+
   const exampleApps = [
     { icon: '📺', text: 'Clone Netflix' },
     { icon: '💰', text: 'Budget Planner' },
@@ -18,12 +28,23 @@ const EmergentLanding = () => {
     { icon: '✨', text: 'Surprise Me' }
   ];
 
+  const showcaseImages = [
+    'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=400',
+    'https://images.unsplash.com/photo-1551650975-87deedd944c3?w=400',
+    'https://images.unsplash.com/photo-1559028012-481c04fa702d?w=400',
+    'https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?w=400',
+    'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=400'
+  ];
+
   return (
     <div className="emergent-landing">
       {/* Navigation */}
       <nav className="emergent-nav">
         <div className="nav-container">
-          <div className="logo">emergent</div>
+          <div className="logo">
+            <Sparkles className="logo-icon-nav" />
+            autowebiq
+          </div>
           <div className="nav-links">
             <a href="#features">Features</a>
             <a href="#pricing">Pricing</a>
