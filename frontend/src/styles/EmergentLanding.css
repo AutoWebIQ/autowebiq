@@ -451,21 +451,19 @@
 }
 
 .emergent-icon {
-  width: 80px;
-  height: 80px;
-  background: white;
-  border-radius: 20px;
+  width: 100px;
+  height: 100px;
+  background: linear-gradient(135deg, #10b981 0%, #3b82f6 100%);
+  border-radius: 24px;
   display: flex;
   align-items: center;
   justify-content: center;
   margin: 0 auto 2rem;
+  box-shadow: 0 10px 40px rgba(16, 185, 129, 0.3);
 }
 
-.icon-e {
-  font-size: 3rem;
-  font-weight: 700;
-  color: black;
-  font-family: 'Space Grotesk', sans-serif;
+.icon-sparkle {
+  color: white;
 }
 
 .meet-title {
