@@ -41,7 +41,6 @@ const Workspace = () => {
     fetchProject();
     fetchMessages();
     fetchUserCredits();
-    fetchModels();
     initVoiceRecognition();
   }, [id]);
 
