@@ -8,18 +8,20 @@
 
 body {
   font-family: 'Inter', sans-serif;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #000000;
   min-height: 100vh;
+  color: white;
 }
 
 h1, h2, h3, h4, h5, h6 {
   font-family: 'Space Grotesk', sans-serif;
 }
 
-/* Landing Page */
+/* Landing Page - Emergent Style */
 .landing-page {
   min-height: 100vh;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+  background: #000000;
+  color: white;
 }
 
 .landing-nav {
