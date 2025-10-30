@@ -5,10 +5,9 @@ import Editor from '@monaco-editor/react';
 import { useDropzone } from 'react-dropzone';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from 'sonner';
-import { Send, Download, ArrowLeft, Loader2, Code, Eye, ExternalLink, CreditCard, Mic, MicOff, Image as ImageIcon, Edit3, Save } from 'lucide-react';
+import { Send, ArrowLeft, Loader2, Code, Eye, ExternalLink, CreditCard, Mic, MicOff, Image as ImageIcon, Edit3, Save } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
@@ -21,7 +20,6 @@ const Workspace = () => {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
-  const [selectedModel, setSelectedModel] = useState('gpt-5');
   const [previewMode, setPreviewMode] = useState('preview');
   const [editMode, setEditMode] = useState(false);
   const [editedCode, setEditedCode] = useState('');
