@@ -154,15 +154,15 @@ const EmergentLanding = () => {
         </div>
       </section>
 
-      {/* Meet Emergent Section */}
+      {/* Meet AutoWebIQ Section */}
       <section className="meet-section">
         <div className="meet-container">
           <div className="emergent-icon">
-            <div className="icon-e">e</div>
+            <Sparkles className="icon-sparkle" size={48} />
           </div>
-          <h2 className="meet-title">Meet Emergent</h2>
+          <h2 className="meet-title">Meet AutoWebIQ</h2>
           <p className="meet-subtitle">
-            Emergent turns concepts into production-ready applications, saving<br />
+            AutoWebIQ turns concepts into production-ready applications, saving<br />
             time and eliminating technical barriers.
           </p>
 
@@ -173,21 +173,21 @@ const EmergentLanding = () => {
               onChange={(e) => setBuildPrompt(e.target.value)}
               className="build-input"
             />
-            <button className="submit-icon">
+            <button className="submit-icon" onClick={() => navigate('/auth?mode=register')}>
               <ArrowRight />
             </button>
           </div>
 
           <div className="example-apps">
             {exampleApps.map((app, idx) => (
-              <button key={idx} className="example-app-btn">
+              <button key={idx} className="example-app-btn" onClick={() => navigate('/auth?mode=register')}>
                 <span className="app-icon">{app.icon}</span>
                 {app.text}
               </button>
             ))}
           </div>
 
-          <Button className="start-building-btn" size="lg">
+          <Button className="start-building-btn" size="lg" onClick={() => navigate('/auth?mode=register')}>
             Start Building <ArrowRight size={20} />
           </Button>
         </div>
