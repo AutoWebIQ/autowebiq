@@ -280,14 +280,8 @@ const Workspace = () => {
   const buildWithAgents = async () => {
     if (!input.trim() || loading) return;
     
-    const agentCost = 20; // Multi-agent build costs 20 credits
-    
-    // Check credits
-    if (userCredits < agentCost) {
-      toast.error(`Insufficient credits! Multi-agent build needs ${agentCost} credits. Buy more credits.`);
-      navigate('/credits');
-      return;
-    }
+    // Note: We'll get the actual cost from the backend response
+    // Backend calculates dynamically based on agents used
     
     // Add user message
     const userMessage = {
@@ -301,10 +295,10 @@ const Workspace = () => {
     setInput('');
     setLoading(true);
     
-    // Add agent status message
+    // Add agent status message with credit info
     const agentStatusMsg = {
       role: 'system',
-      content: '🤖 **Multi-Agent System Activated**\n\nDeploying AI agents to build your website...',
+      content: '🤖 **Multi-Agent System Activated**\n\nDeploying AI agents to build your website...\n\n💳 **Dynamic Pricing**: Credits will be deducted based on agents used (Estimated: 17-35 credits)',
       created_at: new Date().toISOString()
     };
     setMessages(prev => [...prev, agentStatusMsg]);
@@ -313,7 +307,7 @@ const Workspace = () => {
       // Add planner agent message
       setMessages(prev => [...prev, {
         role: 'system',
-        content: '🧠 **Planner Agent**: Analyzing your requirements...',
+        content: '🧠 **Planner Agent**: Analyzing your requirements... (5 credits)',
         created_at: new Date().toISOString()
       }]);
       
@@ -334,7 +328,7 @@ const Workspace = () => {
       
       setMessages(prev => [...prev, {
         role: 'system',
-        content: '🎨 **Image Agent**: Generating custom images...',
+        content: '🎨 **Image Agent**: Generating custom images... (12 credits)',
         created_at: new Date().toISOString()
       }]);
       
@@ -346,7 +340,7 @@ const Workspace = () => {
       
       setMessages(prev => [...prev, {
         role: 'system',
-        content: '🎨 **Frontend Agent**: Building user interface...',
+        content: '🎨 **Frontend Agent**: Building user interface... (8 credits)',
         created_at: new Date().toISOString()
       }]);
       
@@ -359,7 +353,7 @@ const Workspace = () => {
       if (res.data.backend_code) {
         setMessages(prev => [...prev, {
           role: 'system',
-          content: '⚙️ **Backend Agent**: Creating API endpoints...',
+          content: '⚙️ **Backend Agent**: Creating API endpoints... (6 credits)',
           created_at: new Date().toISOString()
         }]);
         
@@ -373,7 +367,7 @@ const Workspace = () => {
       // Testing agent message
       setMessages(prev => [...prev, {
         role: 'system',
-        content: '🧪 **Testing Agent**: Running quality checks...',
+        content: '🧪 **Testing Agent**: Running quality checks... (4 credits)',
         created_at: new Date().toISOString()
       }]);
       
