@@ -866,7 +866,7 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<LandingPage />} />
+        <Route path="/" element={<EmergentLanding />} />
         <Route path="/auth" element={<AuthPage />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/workspace/:id" element={<Workspace />} />
