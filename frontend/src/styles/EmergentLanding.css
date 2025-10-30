@@ -636,9 +636,33 @@
   margin-top: 4rem;
 }
 
-.showcase-image {
-  max-width: 100%;
+.showcase-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 1.5rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.showcase-main-image {
+  width: 100%;
+  height: 400px;
+  object-fit: cover;
   border-radius: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.showcase-small-grid {
+  display: grid;
+  grid-template-rows: 1fr 1fr;
+  gap: 1.5rem;
+}
+
+.showcase-small-grid img {
+  width: 100%;
+  height: 190px;
+  object-fit: cover;
+  border-radius: 16px;
   border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
