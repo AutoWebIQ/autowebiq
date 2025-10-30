@@ -490,12 +490,16 @@ async def google_auth_session(request: Request, response: Response):
             "username": user_name,
             "email": user_email,
             "password_hash": "",  # No password for OAuth users
-            "credits": 10,  # Give 10 free credits
+            "credits": 20,  # Give 20 free credits (Emergent standard)
             "picture": user_picture,
             "auth_provider": "google",
             "created_at": datetime.now(timezone.utc).isoformat()
         }
         await db.users.insert_one(user_data)
+        
+        # Add signup bonus transaction
+        credit_manager = get_credit_manager(db)
+        await credit_manager.add_signup_bonus(user_id, 20)
     else:
         user_id = existing_user["id"]
     
