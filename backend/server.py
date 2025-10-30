@@ -1051,6 +1051,110 @@ async def build_with_agents(request: MultiAgentBuildRequest, user_id: str = Depe
         )
         raise HTTPException(status_code=500, detail=f"Multi-agent build error: {str(e)}")
 
+# Docker Container Management Endpoints
+@api_router.post("/projects/{project_id}/container/create")
+async def create_project_container(project_id: str, user_id: str = Depends(get_current_user)):
+    """Create a Docker container for live preview"""
+    project = await db.projects.find_one({"id": project_id, "user_id": user_id})
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+    
+    frontend_code = project.get('generated_code', '')
+    backend_code = project.get('backend_code', '')
+    
+    result = await docker_manager.create_container(user_id, project_id, frontend_code, backend_code)
+    
+    if result['status'] == 'success':
+        # Update project with container info
+        await db.projects.update_one(
+            {"id": project_id},
+            {"$set": {
+                "container_id": result['container_id'],
+                "container_name": result['container_name'],
+                "preview_port": result['port'],
+                "preview_url": result['preview_url']
+            }}
+        )
+    
+    return result
+
+@api_router.post("/projects/{project_id}/container/start")
+async def start_project_container(project_id: str, user_id: str = Depends(get_current_user)):
+    """Start a stopped container"""
+    project = await db.projects.find_one({"id": project_id, "user_id": user_id})
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+    
+    container_name = project.get('container_name')
+    if not container_name:
+        raise HTTPException(status_code=400, detail="No container exists for this project")
+    
+    return await docker_manager.start_container(container_name)
+
+@api_router.post("/projects/{project_id}/container/stop")
+async def stop_project_container(project_id: str, user_id: str = Depends(get_current_user)):
+    """Stop a running container"""
+    project = await db.projects.find_one({"id": project_id, "user_id": user_id})
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+    
+    container_name = project.get('container_name')
+    if not container_name:
+        raise HTTPException(status_code=400, detail="No container exists for this project")
+    
+    return await docker_manager.stop_container(container_name)
+
+@api_router.delete("/projects/{project_id}/container")
+async def delete_project_container(project_id: str, user_id: str = Depends(get_current_user)):
+    """Delete a container"""
+    project = await db.projects.find_one({"id": project_id, "user_id": user_id})
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+    
+    container_name = project.get('container_name')
+    if not container_name:
+        raise HTTPException(status_code=400, detail="No container exists for this project")
+    
+    result = await docker_manager.delete_container(container_name)
+    
+    if result['status'] == 'success':
+        # Clear container info from project
+        await db.projects.update_one(
+            {"id": project_id},
+            {"$unset": {
+                "container_id": "",
+                "container_name": "",
+                "preview_port": "",
+                "preview_url": ""
+            }}
+        )
+    
+    return result
+
+@api_router.get("/projects/{project_id}/container/status")
+async def get_container_status(project_id: str, user_id: str = Depends(get_current_user)):
+    """Get container status"""
+    project = await db.projects.find_one({"id": project_id, "user_id": user_id})
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+    
+    container_name = project.get('container_name')
+    if not container_name:
+        return {"status": "error", "message": "No container exists"}
+    
+    return await docker_manager.get_container_status(container_name)
+
+# Admin endpoint to build/push Docker image
+@api_router.post("/admin/docker/build-image")
+async def build_docker_image():
+    """Build the workspace Docker image (admin only)"""
+    return await docker_manager.build_image()
+
+@api_router.post("/admin/docker/push-image")
+async def push_docker_image():
+    """Push image to Docker Hub (admin only)"""
+    return await docker_manager.push_image()
+
 app.include_router(api_router)
 
 app.add_middleware(
