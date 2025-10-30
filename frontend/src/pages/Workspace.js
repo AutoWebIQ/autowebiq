@@ -413,27 +413,6 @@ const Workspace = () => {
     }
   };
 
-  const downloadProject = async () => {
-    try {
-      const config = getAxiosConfig();
-      const res = await axios.get(`${API}/projects/${id}/download`, {
-        ...config,
-        responseType: 'blob'
-      });
-      
-      const url = window.URL.createObjectURL(new Blob([res.data]));
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', `${project.name}.zip`);
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      toast.success('Downloaded!');
-    } catch (error) {
-      toast.error('Download failed');
-    }
-  };
-
   const openInNewTab = () => {
     if (!project.generated_code) {
       toast.error('No code generated yet');
