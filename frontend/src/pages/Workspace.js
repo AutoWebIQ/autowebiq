@@ -208,14 +208,7 @@ const Workspace = () => {
   const sendMessage = async () => {
     if (!input.trim() || loading) return;
     
-    const modelCost = models[selectedModel]?.cost || 5;
-    
-    // Check credits
-    if (userCredits < modelCost) {
-      toast.error(`Insufficient credits! Need ${modelCost} credits. Buy more credits.`);
-      navigate('/credits');
-      return;
-    }
+    // Note: Backend will handle credit deduction dynamically
     
     const userMessage = {
       role: 'user',
@@ -231,8 +224,7 @@ const Workspace = () => {
     try {
       const res = await axios.post(`${API}/chat`, {
         project_id: id,
-        message: messageText,
-        model: selectedModel
+        message: messageText
       }, getAxiosConfig());
       
       setMessages(prev => [...prev, {
@@ -245,10 +237,10 @@ const Workspace = () => {
         setProject(prev => ({ ...prev, generated_code: res.data.code }));
       }
       
-      // Update credits
-      setUserCredits(prev => prev - modelCost);
+      // Refresh user credits from backend
+      await fetchUserCredits();
       
-      toast.success(`Generated! Used ${modelCost} credits`);
+      toast.success('Generated successfully!');
     } catch (error) {
       const errorMsg = error.response?.data?.detail || 'Failed to generate';
       toast.error(errorMsg);
