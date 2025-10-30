@@ -50,6 +50,13 @@ razorpay_client = razorpay.Client(auth=(os.environ['RAZORPAY_KEY_ID'], os.enviro
 # OpenAI client
 openai_client = AsyncOpenAI(api_key=os.environ.get('OPENAI_API_KEY'))
 
+# Initialize Multi-Agent Orchestrator
+agent_orchestrator = AgentOrchestrator(
+    openai_key=os.environ.get('OPENAI_API_KEY'),
+    anthropic_key=os.environ.get('ANTHROPIC_API_KEY'),
+    gemini_key=os.environ.get('GOOGLE_AI_API_KEY')
+)
+
 app = FastAPI()
 api_router = APIRouter(prefix="/api")
 
