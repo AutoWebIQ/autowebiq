@@ -72,7 +72,8 @@ class User(BaseModel):
     username: str
     email: str
     password_hash: str = ""  # Empty for Firebase Auth users
-    credits: int = 20  # Give 20 free credits on signup (Emergent standard)
+    credits: int = INITIAL_FREE_CREDITS  # Free credits on signup
+    initial_credits_granted: bool = False  # Flag to prevent double crediting
     picture: Optional[str] = None  # Profile picture URL
     auth_provider: str = "email"  # email, google, github
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
