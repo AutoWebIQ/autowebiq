@@ -1160,8 +1160,6 @@ async def build_with_agents(request: MultiAgentBuildRequest, user_id: str = Depe
             f"Build exception - full refund: {str(e)}",
             {"transaction_id": transaction_id}
         )
-            {"$inc": {"credits": 20}}
-        )
         raise HTTPException(status_code=500, detail=f"Multi-agent build error: {str(e)}")
 
 # Docker Container Management Endpoints
