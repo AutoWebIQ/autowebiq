@@ -140,6 +140,12 @@ backend:
         - working: true
           agent: "main"
           comment: "Updated all registration endpoints (regular register, Firebase sync, Google OAuth) to give 20 credits instead of 10. Added signup bonus transaction logging via credit_manager.add_signup_bonus(). Backward compatible - existing users unaffected."
+        - working: true
+          agent: "testing"
+          comment: "✅ SIGNUP CREDITS VERIFIED: New user registration correctly grants exactly 20 credits. Tested with POST /api/auth/register and verified both registration response and /api/auth/me endpoint show 20 credits. Credit balance maintained correctly after login. All authentication endpoints working properly."
+        - working: true
+          agent: "testing"
+          comment: "✅ SIGNUP CREDITS VERIFIED: New user registration correctly grants exactly 20 credits. Tested with POST /api/auth/register and verified both registration response and /api/auth/me endpoint show 20 credits. Credit balance maintained correctly after login. All authentication endpoints working properly."
   
   - task: "Dynamic Multi-Agent Build Costs"
     implemented: true
