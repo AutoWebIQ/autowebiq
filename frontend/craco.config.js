@@ -10,12 +10,17 @@ const config = {
 };
 
 // Conditionally load visual editing modules only if enabled
+// Note: We check if files exist before requiring to avoid build errors
 let babelMetadataPlugin;
 let setupDevServer;
 
 if (config.enableVisualEdits) {
-  babelMetadataPlugin = require("./plugins/visual-edits/babel-metadata-plugin");
-  setupDevServer = require("./plugins/visual-edits/dev-server-setup");
+  try {
+    babelMetadataPlugin = require("./plugins/visual-edits/babel-metadata-plugin");
+    setupDevServer = require("./plugins/visual-edits/dev-server-setup");
+  } catch (e) {
+    console.warn("Visual edits plugins not found, skipping...");
+  }
 }
 
 // Conditionally load health check modules only if enabled
@@ -24,9 +29,13 @@ let setupHealthEndpoints;
 let healthPluginInstance;
 
 if (config.enableHealthCheck) {
-  WebpackHealthPlugin = require("./plugins/health-check/webpack-health-plugin");
-  setupHealthEndpoints = require("./plugins/health-check/health-endpoints");
-  healthPluginInstance = new WebpackHealthPlugin();
+  try {
+    WebpackHealthPlugin = require("./plugins/health-check/webpack-health-plugin");
+    setupHealthEndpoints = require("./plugins/health-check/health-endpoints");
+    healthPluginInstance = new WebpackHealthPlugin();
+  } catch (e) {
+    console.warn("Health check plugins not found, skipping...");
+  }
 }
 
 const webpackConfig = {
@@ -68,20 +77,33 @@ const webpackConfig = {
         webpackConfig.plugins.push(healthPluginInstance);
       }
 
+      // Ensure proper module type for production builds
+      if (process.env.NODE_ENV === 'production') {
+        // Set output configuration to support modern JavaScript
+        webpackConfig.output = {
+          ...webpackConfig.output,
+          chunkLoadingGlobal: 'webpackChunkReactApp',
+          library: undefined,
+          libraryTarget: 'umd',
+          globalObject: 'this'
+        };
+      }
+
       return webpackConfig;
     },
   },
 };
 
 // Only add babel plugin if visual editing is enabled
-if (config.enableVisualEdits) {
+if (config.enableVisualEdits && babelMetadataPlugin) {
   webpackConfig.babel = {
     plugins: [babelMetadataPlugin],
   };
 }
 
 // Setup dev server with visual edits and/or health check
-if (config.enableVisualEdits || config.enableHealthCheck) {
+// Only apply devServer config in development mode
+if ((config.enableVisualEdits || config.enableHealthCheck) && process.env.NODE_ENV !== 'production') {
   webpackConfig.devServer = (devServerConfig) => {
     // Apply visual edits dev server setup if enabled
     if (config.enableVisualEdits && setupDevServer) {
