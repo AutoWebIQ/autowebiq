@@ -24,23 +24,42 @@ class GKEManager:
         self.preview_host = os.environ.get('PREVIEW_HOST', 'preview.autowebiq.com')
         self.cloudflare_api_token = os.environ.get('CLOUDFLARE_API_TOKEN')
         self.cloudflare_zone_id = os.environ.get('CLOUDFLARE_ZONE_ID')
-        self.gcp_key_path = '/app/gcp-service-account.json'
         
-        # Check if GKE is configured
-        self.is_configured = os.path.exists(self.gcp_key_path)
+        # GCP service account can be provided via env var (for production)
+        # or file path (for local development)
+        self.gcp_key_json = os.environ.get('GCP_SERVICE_ACCOUNT_JSON')
+        self.gcp_key_path = os.environ.get('GCP_SERVICE_ACCOUNT_PATH', '/app/gcp-service-account.json')
+        
+        # Check if GKE is configured (either JSON in env or file exists)
+        self.is_configured = bool(self.gcp_key_json) or os.path.exists(self.gcp_key_path)
         if self.is_configured:
             logger.info("GKE Manager initialized successfully")
         else:
-            logger.warning("GCP service account key not found. GKE features disabled.")
+            logger.warning("GCP service account not found. GKE features disabled.")
     
     async def authenticate_gke(self) -> bool:
         """Authenticate with GKE cluster"""
         try:
+            # If JSON in environment variable, create temporary file
+            temp_key_file = None
+            if self.gcp_key_json:
+                import tempfile
+                temp_key_file = tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.json')
+                temp_key_file.write(self.gcp_key_json)
+                temp_key_file.close()
+                key_file_path = temp_key_file.name
+            else:
+                key_file_path = self.gcp_key_path
+            
             # Activate service account
             subprocess.run([
                 'gcloud', 'auth', 'activate-service-account',
-                '--key-file', self.gcp_key_path
+                '--key-file', key_file_path
             ], check=True, capture_output=True)
+            
+            # Clean up temp file if created
+            if temp_key_file:
+                os.unlink(temp_key_file.name)
             
             # Set project
             subprocess.run([
