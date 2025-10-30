@@ -41,13 +41,7 @@ cloudinary.config(
 )
 
 mongo_url = os.environ['MONGO_URL']
-client = AsyncIOMotorClient(
-    mongo_url,
-    tls=True,
-    tlsAllowInvalidCertificates=True,
-    serverSelectionTimeoutMS=5000,
-    connectTimeoutMS=10000
-)
+client = AsyncIOMotorClient(mongo_url, serverSelectionTimeoutMS=5000)
 db = client[os.environ['DB_NAME']]
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
