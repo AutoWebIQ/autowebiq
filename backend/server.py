@@ -1006,28 +1006,77 @@ class MultiAgentBuildRequest(BaseModel):
 @api_router.post("/build-with-agents")
 async def build_with_agents(request: MultiAgentBuildRequest, user_id: str = Depends(get_current_user)):
     """
-    Build a complete website using multi-agent system
-    This is the NEW way - similar to Emergent's approach
+    Build a complete website using multi-agent system with dynamic credit deduction
+    Credits deducted based on agents used, models, and complexity (Emergent-style)
     """
     
-    # Check user has enough credits (minimum 20 for multi-agent build)
-    user_doc = await db.users.find_one({"id": user_id})
-    if user_doc['credits'] < 20:
-        raise HTTPException(
-            status_code=402,
-            detail=f"Insufficient credits. Multi-agent build requires 20 credits. You have {user_doc['credits']}."
-        )
+    # Initialize credit manager
+    credit_manager = get_credit_manager(db)
     
     # Verify project
     project = await db.projects.find_one({"id": request.project_id, "user_id": user_id})
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
     
-    # Deduct credits upfront
-    await db.users.update_one(
-        {"id": user_id},
-        {"$inc": {"credits": -20}}
+    # Calculate estimated cost for multi-agent build
+    # We'll determine which agents will be used based on the prompt/project
+    agents_to_use = [
+        AgentType.PLANNER,
+        AgentType.FRONTEND,
+        AgentType.IMAGE,
+        AgentType.TESTING
+    ]
+    
+    models_used = {
+        AgentType.PLANNER: ModelType.CLAUDE_SONNET_4,
+        AgentType.FRONTEND: ModelType.GPT_4O,
+        AgentType.IMAGE: ModelType.DALLE_3,
+        AgentType.TESTING: ModelType.GPT_4O
+    }
+    
+    # Check if backend is needed (can be determined from prompt or project settings)
+    needs_backend = 'api' in request.prompt.lower() or 'backend' in request.prompt.lower()
+    if needs_backend:
+        agents_to_use.append(AgentType.BACKEND)
+        models_used[AgentType.BACKEND] = ModelType.GPT_4O
+    
+    has_images = len(request.uploaded_images) > 0 or True  # Image agent runs by default
+    
+    # Calculate cost
+    cost_breakdown = await credit_manager.calculate_multi_agent_cost(
+        agents_to_use,
+        models_used,
+        has_images=has_images,
+        has_backend=needs_backend
     )
+    
+    estimated_cost = cost_breakdown['total']
+    
+    # Check if user has enough credits
+    user_balance = await credit_manager.get_user_balance(user_id)
+    if user_balance < estimated_cost:
+        raise HTTPException(
+            status_code=402,
+            detail=f"Insufficient credits. Multi-agent build requires {estimated_cost} credits. You have {user_balance}. Breakdown: {cost_breakdown['breakdown']}"
+        )
+    
+    # Reserve credits upfront
+    reservation = await credit_manager.reserve_credits(
+        user_id,
+        estimated_cost,
+        "multi_agent_build",
+        {
+            "project_id": request.project_id,
+            "agents_used": [a.value for a in agents_to_use],
+            "estimated_cost": estimated_cost,
+            "breakdown": cost_breakdown
+        }
+    )
+    
+    if reservation['status'] != 'success':
+        raise HTTPException(status_code=402, detail="Failed to reserve credits")
+    
+    transaction_id = reservation['transaction_id']
     
     try:
         # Use the multi-agent orchestrator
@@ -1038,6 +1087,35 @@ async def build_with_agents(request: MultiAgentBuildRequest, user_id: str = Depe
         )
         
         if result['status'] == 'completed':
+            # Calculate actual cost (could be less if some agents weren't needed)
+            actual_agents_used = []
+            if result.get('plan'):
+                actual_agents_used.append(AgentType.PLANNER)
+            if result.get('frontend_code'):
+                actual_agents_used.append(AgentType.FRONTEND)
+            if result.get('backend_code'):
+                actual_agents_used.append(AgentType.BACKEND)
+            if result.get('images'):
+                actual_agents_used.append(AgentType.IMAGE)
+            if result.get('test_results'):
+                actual_agents_used.append(AgentType.TESTING)
+            
+            # Recalculate actual cost
+            actual_cost_breakdown = await credit_manager.calculate_multi_agent_cost(
+                actual_agents_used,
+                models_used,
+                has_images=len(result.get('images', [])) > 0,
+                has_backend=bool(result.get('backend_code'))
+            )
+            
+            actual_cost = actual_cost_breakdown['total']
+            
+            # Complete transaction (will refund difference if actual < estimated)
+            completion = await credit_manager.complete_transaction(
+                transaction_id,
+                actual_cost
+            )
+            
             # Update project with generated code
             await db.projects.update_one(
                 {"id": request.project_id},
@@ -1045,29 +1123,43 @@ async def build_with_agents(request: MultiAgentBuildRequest, user_id: str = Depe
                     "generated_code": result['frontend_code'],
                     "backend_code": result.get('backend_code', ''),
                     "project_plan": result['plan'],
+                    "credit_cost": actual_cost,
                     "updated_at": datetime.now(timezone.utc).isoformat()
                 }}
             )
+            
+            # Get updated balance
+            new_balance = await credit_manager.get_user_balance(user_id)
             
             return {
                 "status": "success",
                 "plan": result['plan'],
                 "frontend_code": result['frontend_code'],
                 "backend_code": result.get('backend_code', ''),
-                "message": "✅ Website built successfully with multi-agent system!"
+                "message": "✅ Website built successfully with multi-agent system!",
+                "credits_used": actual_cost,
+                "credits_refunded": completion['refunded'],
+                "remaining_balance": new_balance,
+                "cost_breakdown": actual_cost_breakdown
             }
         else:
-            # Refund credits on failure
-            await db.users.update_one(
-                {"id": user_id},
-                {"$inc": {"credits": 20}}
+            # Full refund on failure
+            await credit_manager.refund_credits(
+                user_id,
+                estimated_cost,
+                "Build failed - full refund",
+                {"transaction_id": transaction_id, "error": result.get('error')}
             )
             raise HTTPException(status_code=500, detail=result.get('error', 'Build failed'))
     
     except Exception as e:
-        # Refund credits on exception
-        await db.users.update_one(
-            {"id": user_id},
+        # Full refund on exception
+        await credit_manager.refund_credits(
+            user_id,
+            estimated_cost,
+            f"Build exception - full refund: {str(e)}",
+            {"transaction_id": transaction_id}
+        )
             {"$inc": {"credits": 20}}
         )
         raise HTTPException(status_code=500, detail=f"Multi-agent build error: {str(e)}")
