@@ -158,15 +158,18 @@ backend:
   
   - task: "Credit API Endpoints"
     implemented: true
-    working: true
+    working: false
     file: "backend/server.py"
-    stuck_count: 0
+    stuck_count: 1
     priority: "high"
     needs_retesting: false
     status_history:
         - working: true
           agent: "main"
           comment: "Added 4 credit endpoints: GET /credits/balance (current balance), GET /credits/transactions (history with limit), GET /credits/summary (total spent/refunded/purchased), GET /credits/pricing (agent & model costs). Pricing endpoint tested successfully - returns correct cost tables."
+        - working: false
+          agent: "testing"
+          comment: "❌ CRITICAL ISSUE FOUND: GET /credits/transactions endpoint returns 500 Internal Server Error due to MongoDB ObjectId serialization issue. Error: 'ObjectId' object is not iterable. Other credit endpoints work correctly: /credits/balance (✅), /credits/pricing (✅). The transaction history endpoint needs ObjectId to string conversion fix in credit_system.py or server.py."
 
   - task: "GKE Workspace Manager"
     implemented: true
