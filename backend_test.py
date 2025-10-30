@@ -9,7 +9,7 @@ import os
 class AutoWebIQAPITester:
     def __init__(self):
         # Get backend URL from frontend .env
-        self.base_url = "https://webbuilder-ai-3.preview.emergentagent.com"
+        self.base_url = "https://devtopia-app.preview.emergentagent.com"
         self.api_url = f"{self.base_url}/api"
         self.jwt_token = None
         self.session_token = None
