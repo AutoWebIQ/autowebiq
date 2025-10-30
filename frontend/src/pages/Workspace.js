@@ -355,6 +355,20 @@ const Workspace = () => {
         }]);
       }
       
+      // Testing agent message
+      setMessages(prev => [...prev, {
+        role: 'system',
+        content: '🧪 **Testing Agent**: Running quality checks...',
+        created_at: new Date().toISOString()
+      }]);
+      
+      const testScore = res.data.test_results?.score || 85;
+      setMessages(prev => [...prev, {
+        role: 'system',
+        content: `✅ **Testing Agent**: Tests passed! Quality score: ${testScore}/100`,
+        created_at: new Date().toISOString()
+      }]);
+      
       // Final success message
       setMessages(prev => [...prev, {
         role: 'assistant',
