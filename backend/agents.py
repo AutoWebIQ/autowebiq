@@ -144,6 +144,10 @@ class FrontendAgent(Agent):
         """Generate frontend code based on plan"""
         await self.send_message("🎨 Designing user interface...", AgentStatus.THINKING, 20)
         
+        # Get uploaded images from context
+        uploaded_images = context.get('uploaded_images', [])
+        images_from_generation = context.get('images', [])
+        
         system_prompt = """You are an expert frontend developer. Generate a complete, modern, responsive website.
 
 Requirements:
@@ -153,7 +157,7 @@ Requirements:
 - Include all pages from the plan
 - Add smooth animations and transitions
 - Use modern color schemes
-- Include placeholder images with proper alt text
+- Include proper alt text for images
 - Make it production-ready
 
 Return ONLY the complete HTML code with embedded CSS and JS."""
@@ -163,12 +167,21 @@ Return ONLY the complete HTML code with embedded CSS and JS."""
             
             await self.send_message("🎨 Building components...", AgentStatus.WORKING, 50)
             
+            # Build image context
+            image_context = ""
+            if uploaded_images:
+                image_context = f"\n\nUser has uploaded {len(uploaded_images)} custom image(s). Use these images in the website:\n"
+                for idx, img_url in enumerate(uploaded_images, 1):
+                    image_context += f"{idx}. {img_url}\n"
+                image_context += "\nIncorporate these images appropriately (logo, hero image, gallery, etc.)"
+            
             prompt = f"""Project: {plan['project_name']}
 Description: {plan['description']}
 Type: {plan['type']}
 Pages: {', '.join(plan['pages'])}
 Features: {', '.join(plan['features'])}
 Color Scheme: {plan.get('color_scheme', 'modern')}
+{image_context}
 
 Generate a complete, beautiful, modern website."""
             
