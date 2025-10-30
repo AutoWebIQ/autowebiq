@@ -33,6 +33,17 @@
   font-weight: 600;
   font-family: 'Space Grotesk', sans-serif;
   letter-spacing: -0.02em;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.logo-icon-nav {
+  color: #10b981;
+}
+
+.logo-icon-footer {
+  color: #10b981;
 }
 
 .nav-links {
