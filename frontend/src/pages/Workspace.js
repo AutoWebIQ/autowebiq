@@ -319,7 +319,8 @@ const Workspace = () => {
       
       const res = await axios.post(`${API}/build-with-agents`, {
         project_id: id,
-        prompt: messageText
+        prompt: messageText,
+        uploaded_images: uploadedImages.map(img => img.url) // Pass uploaded image URLs
       }, getAxiosConfig());
       
       // Add success messages with plan details
