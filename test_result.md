@@ -393,6 +393,30 @@ backend:
           comment: "✅ FIREBASE SYNC USER SWITCHING VERIFIED: POST /api/auth/firebase/sync endpoint working perfectly for user switching scenario. Tested with two different Firebase users (test-firebase-uid-1 and test-firebase-uid-2). Each sync creates/updates correct user in database with proper data isolation. New users get 10 credits as expected (not 50). Response includes correct user-specific data with no caching issues. User 1 and User 2 have separate IDs and isolated data. Re-sync of existing user maintains same ID. /auth/me endpoint returns correct user data for each token. All 26 tests passed including comprehensive user switching validation."
 
 frontend:
+  - task: "CreditsPage Enhanced with 3 Tabs"
+    implemented: true
+    working: "NA"
+    file: "frontend/src/pages/CreditsPage.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: "NA"
+          agent: "main"
+          comment: "Complete redesign with 3 tabs: Buy Credits, Transaction History, Pricing Table. Added credit summary card showing current balance, total spent, refunded, purchased. Transaction history table with color-coded types and statuses. Pricing table with per-agent and per-model costs plus example builds. Fetches data from 4 credit API endpoints."
+  
+  - task: "Workspace Real-Time Credit Display"
+    implemented: true
+    working: "NA"
+    file: "frontend/src/pages/Workspace.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: "NA"
+          agent: "main"
+          comment: "Updated buildWithAgents to show dynamic pricing. Displays estimated cost range (17-35 credits) on activation. Shows per-agent costs during execution (Planner 5, Frontend 8, Backend 6, Image 12, Testing 4). Success message includes detailed credit breakdown with used, refunded, remaining balance. Removed fixed 20-credit cost."
+
   - task: "Image Upload with Visual Preview"
     implemented: true
     working: "NA"
