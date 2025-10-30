@@ -15,6 +15,7 @@ import { Sparkles, Code, Zap, Download, Eye, Trash2, Plus, CreditCard, Rocket, M
 import Prism from 'prismjs';
 import 'prismjs/themes/prism-tomorrow.css';
 import '@/App.css';
+import { loadFirebaseAuthMethods, getFirebaseAuth } from './firebaseAuth';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
