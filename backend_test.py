@@ -628,7 +628,7 @@ print("Test data cleaned up");
         project_data = {
             "name": "Test Website",
             "description": "A test website created by AutoWebIQ API testing",
-            "model": "gpt-4o"
+            "model": "claude-4.5-sonnet-200k"
         }
         
         success, response, _ = self.run_test(
