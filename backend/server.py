@@ -700,6 +700,32 @@ async def get_projects(user_id: str = Depends(get_current_user)):
     ).sort("updated_at", -1).to_list(100)
     return projects
 
+@api_router.post("/projects")
+async def create_project(name: str, user_id: str = Depends(get_current_user)):
+    """Create a new project"""
+    project_id = str(uuid.uuid4())
+    
+    project = {
+        "id": project_id,
+        "name": name,
+        "user_id": user_id,
+        "description": "",
+        "generated_code": "",
+        "backend_code": "",
+        "status": "active",
+        "model": "gpt-4o",  # Default model
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "updated_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    await db.projects.insert_one(project)
+    
+    return {
+        "id": project_id,
+        "name": name,
+        "message": "Project created successfully"
+    }
+
 @api_router.get("/projects/{project_id}")
 async def get_project(project_id: str, user_id: str = Depends(get_current_user)):
     project = await db.projects.find_one({"id": project_id, "user_id": user_id}, {"_id": 0})
