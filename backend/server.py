@@ -700,16 +700,16 @@ async def get_projects(user_id: str = Depends(get_current_user)):
     ).sort("updated_at", -1).to_list(100)
     return projects
 
-@api_router.post("/projects")
-async def create_project(name: str, user_id: str = Depends(get_current_user)):
+@api_router.post("/projects/create")
+async def create_project(request: dict, user_id: str = Depends(get_current_user)):
     """Create a new project"""
     project_id = str(uuid.uuid4())
     
     project = {
         "id": project_id,
-        "name": name,
+        "name": request.get("name", "Untitled Project"),
         "user_id": user_id,
-        "description": "",
+        "description": request.get("description", ""),
         "generated_code": "",
         "backend_code": "",
         "status": "active",
@@ -722,7 +722,7 @@ async def create_project(name: str, user_id: str = Depends(get_current_user)):
     
     return {
         "id": project_id,
-        "name": name,
+        "name": project["name"],
         "message": "Project created successfully"
     }
 
