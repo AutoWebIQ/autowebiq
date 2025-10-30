@@ -29,6 +29,7 @@ const Workspace = () => {
   const [uploadingFile, setUploadingFile] = useState(false);
   const [userCredits, setUserCredits] = useState(0);
   const [models, setModels] = useState({});
+  const [uploadedImages, setUploadedImages] = useState([]); // Store uploaded image URLs
   const messagesEndRef = useRef(null);
   const iframeRef = useRef(null);
   const recognitionRef = useRef(null);
