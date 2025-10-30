@@ -378,10 +378,27 @@ const Workspace = () => {
         created_at: new Date().toISOString()
       }]);
       
-      // Final success message
+      // Final success message with credit breakdown
+      const creditsUsed = res.data.credits_used || 0;
+      const creditsRefunded = res.data.credits_refunded || 0;
+      const remainingBalance = res.data.remaining_balance || userCredits;
+      const costBreakdown = res.data.cost_breakdown || {};
+      
+      let breakdownText = '';
+      if (costBreakdown.breakdown) {
+        breakdownText = '\n\n**Credit Usage:**\n';
+        Object.entries(costBreakdown.breakdown).forEach(([agent, cost]) => {
+          breakdownText += `- ${agent}: ${cost} credits\n`;
+        });
+        if (creditsRefunded > 0) {
+          breakdownText += `\n💚 **Refunded**: ${creditsRefunded} credits (actual cost was less than estimated)`;
+        }
+        breakdownText += `\n\n💳 **Total Used**: ${creditsUsed} credits | **Remaining**: ${remainingBalance} credits`;
+      }
+      
       setMessages(prev => [...prev, {
         role: 'assistant',
-        content: `🎉 **Complete!** Your ${plan.project_name} is ready!\n\n**What was built:**\n- ${plan.pages.length} pages\n- ${plan.features.length} features\n- ${res.data.backend_code ? 'Backend API included' : 'Frontend only'}\n\nCheck the preview on the right! →`,
+        content: `🎉 **Complete!** Your ${plan.project_name} is ready!\n\n**What was built:**\n- ${plan.pages.length} pages\n- ${plan.features.length} features\n- ${res.data.backend_code ? 'Backend API included' : 'Frontend only'}${breakdownText}\n\nCheck the preview on the right! →`,
         created_at: new Date().toISOString()
       }]);
       
@@ -395,10 +412,10 @@ const Workspace = () => {
         }));
       }
       
-      // Update credits
-      setUserCredits(prev => prev - agentCost);
+      // Update credits with actual remaining balance
+      setUserCredits(remainingBalance);
       
-      toast.success(`Website built! Used ${agentCost} credits`);
+      toast.success(`Website built! Used ${creditsUsed} credits${creditsRefunded > 0 ? ` (${creditsRefunded} refunded)` : ''}`);
       
     } catch (error) {
       const errorMsg = error.response?.data?.detail || 'Multi-agent build failed';
