@@ -1,0 +1,64 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: workspace-template
+  namespace: autowebiq-workspaces
+  labels:
+    app: autowebiq-workspace
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: autowebiq-workspace
+  template:
+    metadata:
+      labels:
+        app: autowebiq-workspace
+    spec:
+      containers:
+      - name: workspace
+        image: aashikzm098/autowebiq-workspace:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 80
+          name: http
+          protocol: TCP
+        - containerPort: 3000
+          name: frontend
+          protocol: TCP
+        - containerPort: 8001
+          name: backend
+          protocol: TCP
+        env:
+        - name: USER_ID
+          value: "PLACEHOLDER_USER_ID"
+        - name: PROJECT_ID
+          value: "PLACEHOLDER_PROJECT_ID"
+        envFrom:
+        - configMapRef:
+            name: autowebiq-config
+        - secretRef:
+            name: autowebiq-secrets
+        resources:
+          limits:
+            cpu: "500m"
+            memory: "512Mi"
+          requests:
+            cpu: "250m"
+            memory: "256Mi"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 80
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 80
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
