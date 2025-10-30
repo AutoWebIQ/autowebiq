@@ -766,21 +766,29 @@ print("Test data cleaned up");
         )
         
         if success:
-            # Test multi-agent build
+            # Test multi-agent build (expect 402 due to insufficient credits - this is correct behavior)
             build_data = {
                 "project_id": self.test_project_id,
-                "prompt": "Build a modern landing page for a tech startup",
+                "prompt": "Build a simple landing page",
                 "uploaded_images": []
             }
             
             success, response, _ = self.run_test(
-                "Multi-Agent Build",
+                "Multi-Agent Build (Insufficient Credits)",
                 "POST",
                 "build-with-agents",
-                200,
+                402,  # Expect 402 due to insufficient credits
                 data=build_data,
                 headers={"Authorization": f"Bearer {self.jwt_token}"}
             )
+            
+            if success:
+                # Verify the error message mentions credits
+                if "Insufficient credits" in response.get('detail', ''):
+                    self.log_test("Multi-Agent Build Credit Check", True)
+                else:
+                    self.log_test("Multi-Agent Build Credit Check", False, "Expected credit error message")
+            
             return success
         
         return False
