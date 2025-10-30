@@ -99,15 +99,6 @@ const Workspace = () => {
     }
   };
 
-  const fetchModels = async () => {
-    try {
-      const res = await axios.get(`${API}/models`);
-      setModels(res.data);
-    } catch (error) {
-      console.error('Failed to load models');
-    }
-  };
-
   const initVoiceRecognition = () => {
     if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
