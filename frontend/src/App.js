@@ -4,6 +4,7 @@ import axios from 'axios';
 import Workspace from './pages/Workspace';
 import CreditsPage from './pages/CreditsPage';
 import UserMenu from './components/UserMenu';
+import EmergentLanding from './components/EmergentLanding';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -20,9 +21,6 @@ import { INITIAL_FREE_CREDITS } from './constants';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
-
-const LandingPage = () => {
-  const navigate = useNavigate();
   
   // Auto-redirect logged-in users to dashboard
   useEffect(() => {
