@@ -319,6 +319,18 @@ const Workspace = () => {
       
       setMessages(prev => [...prev, {
         role: 'system',
+        content: '🎨 **Image Agent**: Generating custom images...',
+        created_at: new Date().toISOString()
+      }]);
+      
+      setMessages(prev => [...prev, {
+        role: 'system',
+        content: `✅ **Image Agent**: ${res.data.images?.length || 0} images created!`,
+        created_at: new Date().toISOString()
+      }]);
+      
+      setMessages(prev => [...prev, {
+        role: 'system',
         content: '🎨 **Frontend Agent**: Building user interface...',
         created_at: new Date().toISOString()
       }]);
