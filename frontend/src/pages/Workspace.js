@@ -558,6 +558,66 @@ const Workspace = () => {
                 </Button>
               </div>
             </div>
+            
+            {/* Display uploaded images */}
+            {uploadedImages.length > 0 && (
+              <div className="uploaded-images-preview" style={{ 
+                display: 'flex', 
+                gap: '8px', 
+                flexWrap: 'wrap', 
+                padding: '8px 0',
+                borderBottom: '1px solid #e5e7eb',
+                marginBottom: '8px'
+              }}>
+                {uploadedImages.map((img, idx) => (
+                  <div key={idx} style={{ 
+                    position: 'relative', 
+                    width: '60px', 
+                    height: '60px',
+                    borderRadius: '4px',
+                    overflow: 'hidden',
+                    border: '2px solid #e5e7eb'
+                  }}>
+                    <img 
+                      src={img.url} 
+                      alt={img.filename}
+                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                      title={img.filename}
+                    />
+                    <button
+                      onClick={() => setUploadedImages(prev => prev.filter((_, i) => i !== idx))}
+                      style={{
+                        position: 'absolute',
+                        top: '2px',
+                        right: '2px',
+                        background: 'rgba(0,0,0,0.6)',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '50%',
+                        width: '18px',
+                        height: '18px',
+                        cursor: 'pointer',
+                        fontSize: '12px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center'
+                      }}
+                    >
+                      ×
+                    </button>
+                  </div>
+                ))}
+                <div style={{ 
+                  fontSize: '11px', 
+                  color: '#666', 
+                  alignSelf: 'center',
+                  marginLeft: '8px'
+                }}>
+                  {uploadedImages.length} image{uploadedImages.length !== 1 ? 's' : ''} uploaded
+                </div>
+              </div>
+            )}
+            
             <Textarea
               data-testid="message-input"
               placeholder="Describe what you want to build or modify... (Press Enter to send, Shift+Enter for new line)"
