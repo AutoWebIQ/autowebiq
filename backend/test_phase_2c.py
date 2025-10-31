@@ -130,8 +130,8 @@ async def test_phase_2c():
         # Test 9: PostgreSQL Direct Query
         print("\n9️⃣  Testing PostgreSQL direct query...")
         try:
-            from database import AsyncSessionLocal
-            from sqlalchemy import select, func, User
+            from database import AsyncSessionLocal, User
+            from sqlalchemy import select, func
             
             async with AsyncSessionLocal() as session:
                 result = await session.execute(select(func.count(User.id)))
