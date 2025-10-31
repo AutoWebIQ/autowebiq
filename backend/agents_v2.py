@@ -702,6 +702,7 @@ class ImprovedBackendAgent:
     
     def __init__(self, openai_client):
         self.client = openai_client
+        self.model = "gpt-5"  # Latest GPT-5
         self.type = AgentType.BACKEND
         self.messages = []
     
