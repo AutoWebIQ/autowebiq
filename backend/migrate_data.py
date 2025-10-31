@@ -249,7 +249,7 @@ class DataMigrator:
                     status=mongo_tx.get('status', 'completed'),
                     description=mongo_tx.get('description'),
                     extra_data=mongo_tx.get('metadata'),
-                    created_at=mongo_tx.get('created_at', datetime.now(timezone.utc))
+                    created_at=parse_datetime(mongo_tx.get('created_at'))
                 )
                 
                 session.add(pg_tx)
