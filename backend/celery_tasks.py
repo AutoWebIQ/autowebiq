@@ -89,14 +89,22 @@ async def _build_website_async(task_self, user_prompt, project_id, user_id, uplo
         # Import here to avoid circular dependencies
         import sys
         import os
+        from pathlib import Path
+        from dotenv import load_dotenv
+        
         sys.path.append('/app/backend')
+        
+        # Load environment variables
+        env_path = Path('/app/backend/.env')
+        load_dotenv(env_path)
+        
         from template_orchestrator import TemplateBasedOrchestrator
         from database import mongo_db
         
         # Initialize orchestrator
         openai_key = os.environ.get('OPENAI_API_KEY')
         anthropic_key = os.environ.get('ANTHROPIC_API_KEY')
-        gemini_key = os.environ.get('GEMINI_API_KEY')
+        gemini_key = os.environ.get('GOOGLE_AI_API_KEY')
         
         orchestrator = TemplateBasedOrchestrator(
             openai_key=openai_key,
