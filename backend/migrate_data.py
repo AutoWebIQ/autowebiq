@@ -277,7 +277,7 @@ class DataMigrator:
         for mongo_session in mongo_sessions:
             try:
                 # Skip expired sessions
-                expires_at = mongo_session.get('expires_at')
+                expires_at = parse_datetime(mongo_session.get('expires_at'))
                 if expires_at and expires_at < datetime.now(timezone.utc):
                     self.stats['sessions']['skipped'] += 1
                     continue
@@ -306,7 +306,7 @@ class DataMigrator:
                     user_id=user_id,
                     session_token=mongo_session.get('session_token'),
                     expires_at=expires_at,
-                    created_at=mongo_session.get('created_at', datetime.now(timezone.utc))
+                    created_at=parse_datetime(mongo_session.get('created_at'))
                 )
                 
                 session.add(pg_session)
