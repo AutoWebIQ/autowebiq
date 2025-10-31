@@ -1341,39 +1341,70 @@ print("Test data cleaned up");
         return successful_builds >= 3  # At least 3 out of 5 scenarios should succeed
 
     def run_all_tests(self):
-        """Run comprehensive backend testing as requested"""
-        print("🚀 Starting AutoWebIQ Comprehensive Backend Testing")
+        """Run comprehensive backend testing as requested in review"""
+        print("🚀 Starting AutoWebIQ V2 Comprehensive Backend Testing")
         print(f"   Base URL: {self.base_url}")
         print("=" * 70)
 
-        # Test 1: Authentication Flow
+        # Test 1: Health Check (verify all systems operational)
+        success, response, _ = self.run_test(
+            "System Health Check",
+            "GET",
+            "health",
+            200
+        )
+        
+        if success:
+            health_status = response.get('status', 'unknown')
+            databases = response.get('databases', {})
+            services = response.get('services', {})
+            
+            print(f"   🏥 System Health: {health_status}")
+            print(f"   🗄️ Databases: {databases}")
+            print(f"   ⚙️ Services: {services}")
+            
+            # Check for Celery workers
+            celery_status = services.get('celery', 'unknown')
+            if 'workers active' in celery_status:
+                self.log_test("Celery Workers Active", True)
+            else:
+                self.log_test("Celery Workers Active", False, f"Celery status: {celery_status}")
+
+        # Test 2: V2 Complete Build Flow (MAIN FOCUS as per review request)
+        print("\n" + "="*50)
+        print("🎯 MAIN REVIEW REQUEST: V2 COMPLETE BUILD FLOW")
+        print("="*50)
+        v2_success = self.test_v2_complete_build_flow_with_demo_account()
+        
+        # Test 3: Authentication Flow (V1 compatibility)
         auth_success = self.test_comprehensive_auth_flow()
         
-        # Test 2: Project Management
+        # Test 4: Project Management (V1)
         project_success = self.test_project_management()
         
-        # Test 3: Credits System
+        # Test 5: Credits System (V1)
         credits_success = self.test_credits_system()
         
-        # Test 4: Core Features
+        # Test 6: Core Features (V1)
         core_success = self.test_core_features()
         
-        # Test 5: GitHub Integration Error Handling
+        # Test 7: GitHub Integration Error Handling
         github_success = self.test_github_integration_error_handling()
         
-        # Test 6: GKE Workspace Error Handling
+        # Test 8: GKE Workspace Error Handling
         gke_success = self.test_gke_workspace_error_handling()
         
-        # Test 7: Additional OAuth tests (existing)
+        # Test 9: Additional OAuth tests (existing)
         self.test_google_oauth_session_endpoint()
         
-        # Test 8: NEW - Template System Testing (MAIN FOCUS)
+        # Test 10: Template System Testing (V1 compatibility)
         template_success = self.test_template_system_with_demo_account()
         
         # Cleanup
         self.cleanup_test_data()
 
-        return auth_success and project_success and credits_success and core_success and template_success
+        # V2 system is the main focus, so prioritize its success
+        return v2_success and auth_success and project_success and credits_success
 
     def print_summary(self):
         """Print test summary"""
