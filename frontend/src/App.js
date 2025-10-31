@@ -797,6 +797,8 @@ function App() {
         <Route path="/credits" element={<CreditsPage />} />
         <Route path="/terms" element={<TermsOfService />} />
         <Route path="/terms-of-service" element={<TermsOfService />} />
+        <Route path="/privacy" element={<PrivacyPolicy />} />
+        <Route path="/privacy-policy" element={<PrivacyPolicy />} />
       </Routes>
     </BrowserRouter>
   );
