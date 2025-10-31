@@ -25,9 +25,15 @@ def test_review_criteria():
     
     token = login_response.json()['access_token']
     headers = {"Authorization": f"Bearer {token}"}
-    initial_credits = login_response.json()['user']['credits']
+    initial_credits = login_response.json()['user']['credits']  # V1 credits
     
-    print(f"✅ Login successful with {initial_credits} credits")
+    # Get V2 credits for comparison
+    v2_credits_response = requests.get(f"{base_url}/v2/user/credits", headers=headers)
+    if v2_credits_response.status_code == 200:
+        v2_initial_credits = v2_credits_response.json()['credits']
+        print(f"✅ Login successful with V1: {initial_credits} credits, V2: {v2_initial_credits} credits")
+    else:
+        print(f"✅ Login successful with {initial_credits} credits (V2 credits unavailable)")
     
     # 2. Create new project via V2 API (POST /api/v2/projects)
     print("\n2️⃣ Create new project via V2 API")
