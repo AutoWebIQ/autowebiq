@@ -81,15 +81,15 @@ async def _build_website_async(task_self, user_prompt, project_id, user_id, uplo
         start_time = datetime.now(timezone.utc)
         
         # Update task state
-        task_task_self.update_state(
+        task_self.update_state(
             state='PROGRESS',
             meta={'stage': 'initializing', 'progress': 0}
         )
-            
-            # Import here to avoid circular dependencies
-            from template_orchestrator import TemplateBasedOrchestrator
-            from database import mongo_db
-            import os
+        
+        # Import here to avoid circular dependencies
+        from template_orchestrator import TemplateBasedOrchestrator
+        from database import mongo_db
+        import os
             
             # Initialize orchestrator
             openai_key = os.environ.get('OPENAI_API_KEY')
