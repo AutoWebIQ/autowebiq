@@ -1,0 +1,223 @@
+/* Terms of Service Page Styles */
+
+.terms-page {
+  min-height: 100vh;
+  background: #F9FAFB;
+}
+
+.terms-nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  background: #8B5CF6;
+  padding: 1rem 0;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.terms-nav .nav-content {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.terms-nav .brand {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  cursor: pointer;
+}
+
+.terms-nav .brand-icon {
+  width: 48px;
+  height: 48px;
+  background: white;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #8B5CF6;
+}
+
+.terms-nav .brand-name {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: white;
+  font-family: 'Space Grotesk', sans-serif;
+}
+
+.back-btn {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  padding: 0.75rem 1.5rem;
+  border-radius: 12px;
+  font-weight: 500;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.3s;
+}
+
+.back-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: translateX(-3px);
+}
+
+.terms-container {
+  padding: 120px 2rem 80px;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.terms-content {
+  background: white;
+  padding: 3rem;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+}
+
+.terms-title {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #1F2937;
+  margin-bottom: 2rem;
+  font-family: 'Space Grotesk', sans-serif;
+  text-align: center;
+  padding-bottom: 2rem;
+  border-bottom: 3px solid #8B5CF6;
+}
+
+.terms-section {
+  margin-bottom: 3rem;
+}
+
+.terms-section h2 {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #8B5CF6;
+  margin-bottom: 1.5rem;
+  font-family: 'Space Grotesk', sans-serif;
+}
+
+.terms-section h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #374151;
+  margin-top: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.terms-section p {
+  color: #4B5563;
+  line-height: 1.8;
+  margin-bottom: 1rem;
+  font-size: 1rem;
+}
+
+.terms-section ul,
+.terms-section ol {
+  margin-left: 2rem;
+  margin-bottom: 1rem;
+  color: #4B5563;
+  line-height: 1.8;
+}
+
+.terms-section li {
+  margin-bottom: 0.5rem;
+}
+
+.terms-section strong {
+  color: #1F2937;
+  font-weight: 600;
+}
+
+.last-updated {
+  margin-top: 3rem;
+  padding-top: 2rem;
+  border-top: 2px solid #E5E7EB;
+  text-align: center;
+}
+
+.last-updated p {
+  color: #6B7280;
+  font-size: 0.95rem;
+}
+
+.terms-footer {
+  padding: 2rem;
+  background: #5B21B6;
+  color: white;
+  text-align: center;
+}
+
+.footer-container-terms {
+  max-width: 1400px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.terms-footer .footer-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 1.25rem;
+  font-weight: 700;
+  font-family: 'Space Grotesk', sans-serif;
+}
+
+.terms-footer .brand-icon {
+  width: 40px;
+  height: 40px;
+  background: white;
+  border-radius: 10px;
+  color: #8B5CF6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.terms-footer .footer-text {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 0.95rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .terms-container {
+    padding: 100px 1rem 60px;
+  }
+
+  .terms-content {
+    padding: 2rem 1.5rem;
+  }
+
+  .terms-title {
+    font-size: 2rem;
+  }
+
+  .terms-section h2 {
+    font-size: 1.5rem;
+  }
+
+  .terms-section h3 {
+    font-size: 1.1rem;
+  }
+
+  .terms-nav .brand-name {
+    font-size: 1.25rem;
+  }
+
+  .back-btn {
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+  }
+}
