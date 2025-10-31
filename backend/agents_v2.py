@@ -592,6 +592,10 @@ Generate the COMPLETE, PRODUCTION-READY HTML file with embedded CSS and JavaScri
             return html_code
             
         except Exception as e:
+            import traceback
+            error_details = traceback.format_exc()
+            print(f"❌ FRONTEND AGENT ERROR: {str(e)}")
+            print(f"Full traceback: {error_details}")
             await self.send_message(f"❌ Frontend generation failed: {str(e)}", AgentStatus.FAILED, 0)
             return self._create_fallback_html(plan)
     
