@@ -429,177 +429,162 @@ const Workspace = () => {
   }
 
   return (
-    <div className="workspace-container" data-testid="workspace">
-      <div className="workspace-header">
-        <div className="header-left">
-          <Button variant="ghost" onClick={() => navigate('/dashboard')} data-testid="back-btn">
-            <ArrowLeft className="mr-2" size={18} /> Dashboard
+    <div className="modern-workspace">
+      {/* Header */}
+      <header className="workspace-header-modern">
+        <div className="header-left-modern">
+          <Button className="back-button-modern" onClick={() => navigate('/dashboard')}>
+            <ArrowLeft size={20} />
           </Button>
-          <div className="project-info">
-            <h2 data-testid="project-name">{project.name}</h2>
-            <p data-testid="project-desc">{project.description}</p>
+          <div className="project-title-modern">
+            <h1>{project.name}</h1>
           </div>
         </div>
-        <div className="header-right">
-          <div className="credits-display" data-testid="credits-display">
+        <div className="header-right-modern">
+          <div className="credits-badge-modern">
             <CreditCard size={16} />
             <span>{userCredits} Credits</span>
           </div>
         </div>
-      </div>
+      </header>
 
-      <div className="workspace-content">
-        <div className="workspace-chat" data-testid="chat-panel">
-          <ScrollArea className="chat-messages">
+      {/* Main Content */}
+      <div className="workspace-layout-modern">
+        {/* Chat Section */}
+        <div className="chat-section-modern">
+          <ScrollArea className="messages-container-modern">
+            {messages.length === 0 && (
+              <div className="empty-chat-modern">
+                <div className="empty-icon-modern">🤖</div>
+                <h2>Start Building Your Website</h2>
+                <p>Describe what you want to build and AI will generate it for you</p>
+              </div>
+            )}
+            
             {messages.map((msg, idx) => (
-              <div key={idx} className={`chat-message ${msg.role}`} data-testid={`message-${idx}`}>
-                <div className="message-avatar">
-                  {msg.role === 'user' ? '👤' : '🤖'}
+              <div key={idx} className={`message-modern ${msg.role}`}>
+                <div className="message-avatar-modern">
+                  {msg.role === 'user' ? (
+                    <div className="avatar-user">{localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')).username?.[0]?.toUpperCase() || 'U' : 'U'}</div>
+                  ) : (
+                    <div className="avatar-ai">AI</div>
+                  )}
                 </div>
-                <div className="message-content">
+                <div className="message-bubble-modern">
                   <ReactMarkdown>{msg.content}</ReactMarkdown>
                 </div>
               </div>
             ))}
+            
             {loading && (
-              <div className="chat-message assistant" data-testid="loading-message">
-                <div className="message-avatar">🤖</div>
-                <div className="message-content">
-                  <div className="thinking-animation">
-                    <div className="thinking-dots">
-                      <span></span>
-                      <span></span>
-                      <span></span>
-                    </div>
-                    <p className="thinking-text">AI is thinking and generating your website...</p>
+              <div className="message-modern assistant">
+                <div className="message-avatar-modern">
+                  <div className="avatar-ai">AI</div>
+                </div>
+                <div className="message-bubble-modern">
+                  <div className="typing-indicator">
+                    <span></span>
+                    <span></span>
+                    <span></span>
                   </div>
                 </div>
               </div>
             )}
+            
             <div ref={messagesEndRef} />
           </ScrollArea>
-          
-          <div className="chat-input-area" data-testid="input-area">
-            <div className="input-actions">
-              <Button
-                data-testid="voice-btn"
-                size="sm"
-                variant={isRecording ? "destructive" : "ghost"}
-                onClick={toggleVoiceRecording}
+
+          {/* Input Area */}
+          <div className="input-section-modern">
+            <div className="input-wrapper-modern">
+              <Textarea
+                placeholder="Describe your website idea..."
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    buildWithAgents();
+                  }
+                }}
                 disabled={loading}
-                title="Voice input"
-              >
-                {isRecording ? <MicOff size={18} /> : <Mic size={18} />}
-              </Button>
-              <div {...getRootProps()}>
-                <input {...getInputProps()} />
-                <Button
-                  data-testid="upload-btn"
-                  size="sm"
-                  variant="ghost"
-                  disabled={loading || uploadingFile}
-                  title="Upload image/video/file"
-                >
-                  {uploadingFile ? <Loader2 className="animate-spin" size={18} /> : <ImageIcon size={18} />}
-                </Button>
-              </div>
-            </div>
-            
-            {/* Display uploaded images */}
-            {uploadedImages.length > 0 && (
-              <div className="uploaded-images-preview" style={{ 
-                display: 'flex', 
-                gap: '8px', 
-                flexWrap: 'wrap', 
-                padding: '8px 0',
-                borderBottom: '1px solid #e5e7eb',
-                marginBottom: '8px'
-              }}>
-                {uploadedImages.map((img, idx) => (
-                  <div key={idx} style={{ 
-                    position: 'relative', 
-                    width: '60px', 
-                    height: '60px',
-                    borderRadius: '4px',
-                    overflow: 'hidden',
-                    border: '2px solid #e5e7eb'
-                  }}>
-                    <img 
-                      src={img.url} 
-                      alt={img.filename}
-                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                      title={img.filename}
-                    />
-                    <button
-                      onClick={() => setUploadedImages(prev => prev.filter((_, i) => i !== idx))}
-                      style={{
-                        position: 'absolute',
-                        top: '2px',
-                        right: '2px',
-                        background: 'rgba(0,0,0,0.6)',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '50%',
-                        width: '18px',
-                        height: '18px',
-                        cursor: 'pointer',
-                        fontSize: '12px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center'
-                      }}
-                    >
-                      ×
-                    </button>
-                  </div>
-                ))}
-                <div style={{ 
-                  fontSize: '11px', 
-                  color: '#666', 
-                  alignSelf: 'center',
-                  marginLeft: '8px'
-                }}>
-                  {uploadedImages.length} image{uploadedImages.length !== 1 ? 's' : ''} uploaded
-                </div>
-              </div>
-            )}
-            
-            <Textarea
-              data-testid="message-input"
-              placeholder="Describe what you want to build or modify... (Press Enter to send, Shift+Enter for new line)"
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                  e.preventDefault();
-                  buildWithAgents();
-                }
-              }}
-              disabled={loading}
-              style={{ color: '#1F2937', backgroundColor: 'white' }}
-            />
-            <div className="flex gap-2">
+                className="chat-textarea-modern"
+              />
               <Button 
-                onClick={buildWithAgents} 
-                disabled={loading || !input.trim()} 
-                data-testid="build-agents-btn"
-                className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
+                onClick={buildWithAgents}
+                disabled={loading || !input.trim()}
+                className="send-button-modern"
               >
-                {loading ? <Loader2 className="animate-spin" size={18} /> : <Send size={18} />}
-                <span className="ml-2">Generate</span>
+                {loading ? <Loader2 className="animate-spin" size={20} /> : <Send size={20} />}
               </Button>
             </div>
           </div>
         </div>
 
-        <div className="workspace-preview" data-testid="preview-panel">
-          <div className="preview-toolbar">
-            <div className="preview-tabs">
+        {/* Preview Section */}
+        <div className="preview-section-modern">
+          <div className="preview-header-modern">
+            <div className="preview-tabs-modern">
               <button
                 className={previewMode === 'preview' ? 'active' : ''}
-                onClick={() => {setPreviewMode('preview'); setEditMode(false);}}
-                data-testid="preview-tab"
+                onClick={() => setPreviewMode('preview')}
               >
+                <Eye size={16} />
+                Preview
+              </button>
+              <button
+                className={previewMode === 'code' ? 'active' : ''}
+                onClick={() => setPreviewMode('code')}
+              >
+                <Code size={16} />
+                Code
+              </button>
+            </div>
+            {project.generated_code && (
+              <Button className="open-tab-btn" onClick={openInNewTab}>
+                <ExternalLink size={16} />
+                Open in New Tab
+              </Button>
+            )}
+          </div>
+
+          <div className="preview-content-modern">
+            {!project.generated_code ? (
+              <div className="preview-empty-modern">
+                <Code size={48} />
+                <p>Your generated website will appear here</p>
+              </div>
+            ) : (
+              <>
+                {previewMode === 'preview' && (
+                  <iframe
+                    ref={iframeRef}
+                    srcDoc={project.generated_code}
+                    title="Website Preview"
+                    className="preview-iframe-modern"
+                  />
+                )}
+                {previewMode === 'code' && (
+                  <Editor
+                    height="100%"
+                    defaultLanguage="html"
+                    value={project.generated_code}
+                    theme="vs-dark"
+                    options={{
+                      readOnly: !editMode,
+                      minimap: { enabled: false },
+                      fontSize: 14
+                    }}
+                    onChange={(value) => setEditedCode(value)}
+                  />
+                )}
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
                 <Eye size={16} /> Preview
               </button>
               <button
