@@ -137,6 +137,9 @@ async def build_website_task(
         result['build_time'] = build_time
         result['completed_at'] = end_time.isoformat()
         
+        # Send WebSocket completion notification
+        await ws_manager.send_build_complete(project_id, result)
+        
         print(f"✅ Website built successfully in {build_time:.1f}s")
         
         # Update task state
