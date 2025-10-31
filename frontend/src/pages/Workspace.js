@@ -628,6 +628,215 @@ const WorkspaceV2 = () => {
           </div>
         </div>
       </div>
+
+      {/* Validation Results Modal */}
+      {showValidationModal && validationResults && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0, 0, 0, 0.8)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000,
+          padding: '20px'
+        }}>
+          <div style={{
+            background: '#fff',
+            borderRadius: '12px',
+            maxWidth: '900px',
+            width: '100%',
+            maxHeight: '90vh',
+            overflow: 'auto',
+            boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)'
+          }}>
+            {/* Modal Header */}
+            <div style={{
+              padding: '24px',
+              borderBottom: '1px solid #e5e7eb',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center'
+            }}>
+              <div>
+                <h2 style={{ fontSize: '1.5rem', fontWeight: '700', color: '#111', marginBottom: '8px' }}>
+                  Validation Results
+                </h2>
+                <p style={{ color: '#6b7280', fontSize: '0.875rem' }}>
+                  {validationResults.passed_checks}/{validationResults.total_checks} checks passed • Score: {validationResults.overall_score}/100
+                </p>
+              </div>
+              <button
+                onClick={() => setShowValidationModal(false)}
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  fontSize: '1.5rem',
+                  color: '#6b7280',
+                  cursor: 'pointer',
+                  padding: '4px 8px'
+                }}
+              >
+                ×
+              </button>
+            </div>
+
+            {/* Overall Score */}
+            <div style={{ padding: '24px', background: '#f9fafb' }}>
+              <div style={{
+                background: '#fff',
+                padding: '20px',
+                borderRadius: '8px',
+                border: '2px solid ' + (validationResults.overall_score >= 90 ? '#10b981' : 
+                                        validationResults.overall_score >= 75 ? '#3b82f6' : 
+                                        validationResults.overall_score >= 60 ? '#f59e0b' : '#ef4444')
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                  <div style={{
+                    fontSize: '3rem',
+                    fontWeight: '700',
+                    color: validationResults.overall_score >= 90 ? '#10b981' : 
+                           validationResults.overall_score >= 75 ? '#3b82f6' : 
+                           validationResults.overall_score >= 60 ? '#f59e0b' : '#ef4444'
+                  }}>
+                    {validationResults.overall_score}
+                  </div>
+                  <div>
+                    <div style={{ fontSize: '1.25rem', fontWeight: '600', color: '#111' }}>
+                      {validationResults.overall_score >= 90 ? 'EXCELLENT' : 
+                       validationResults.overall_score >= 75 ? 'GOOD' : 
+                       validationResults.overall_score >= 60 ? 'NEEDS IMPROVEMENT' : 'POOR'}
+                    </div>
+                    <div style={{ fontSize: '0.875rem', color: '#6b7280' }}>
+                      {validationResults.all_passed ? 'All checks passed! 🎉' : 'Some improvements needed'}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Individual Checks */}
+            <div style={{ padding: '24px' }}>
+              <h3 style={{ fontSize: '1.125rem', fontWeight: '600', color: '#111', marginBottom: '16px' }}>
+                Detailed Results
+              </h3>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                {Object.entries(validationResults.results).map(([key, result]) => (
+                  <div
+                    key={key}
+                    style={{
+                      border: '1px solid #e5e7eb',
+                      borderRadius: '8px',
+                      padding: '16px',
+                      background: result.passed ? '#f0fdf4' : '#fef2f2'
+                    }}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        {result.passed ? (
+                          <CheckCircle size={20} style={{ color: '#10b981' }} />
+                        ) : (
+                          <XCircle size={20} style={{ color: '#ef4444' }} />
+                        )}
+                        <span style={{ fontWeight: '600', color: '#111' }}>
+                          {result.check_name}
+                        </span>
+                      </div>
+                      <span style={{
+                        fontWeight: '700',
+                        color: result.score >= 90 ? '#10b981' : 
+                               result.score >= 75 ? '#3b82f6' : 
+                               result.score >= 60 ? '#f59e0b' : '#ef4444'
+                      }}>
+                        {result.score}/100
+                      </span>
+                    </div>
+
+                    {result.issues && result.issues.length > 0 && (
+                      <div style={{ marginTop: '12px' }}>
+                        <div style={{ fontSize: '0.875rem', fontWeight: '600', color: '#6b7280', marginBottom: '8px' }}>
+                          Issues Found:
+                        </div>
+                        <ul style={{ margin: 0, paddingLeft: '20px', fontSize: '0.875rem', color: '#374151' }}>
+                          {result.issues.slice(0, 3).map((issue, idx) => (
+                            <li key={idx} style={{ marginBottom: '4px' }}>
+                              {issue.message}
+                            </li>
+                          ))}
+                          {result.issues.length > 3 && (
+                            <li style={{ color: '#6b7280', fontStyle: 'italic' }}>
+                              +{result.issues.length - 3} more issues
+                            </li>
+                          )}
+                        </ul>
+                      </div>
+                    )}
+
+                    {result.recommendations && result.recommendations.length > 0 && (
+                      <div style={{ marginTop: '12px', padding: '12px', background: '#fff', borderRadius: '6px', border: '1px solid #e5e7eb' }}>
+                        <div style={{ fontSize: '0.875rem', fontWeight: '600', color: '#6b7280', marginBottom: '6px' }}>
+                          💡 Recommendations:
+                        </div>
+                        <ul style={{ margin: 0, paddingLeft: '20px', fontSize: '0.875rem', color: '#374151' }}>
+                          {result.recommendations.slice(0, 2).map((rec, idx) => (
+                            <li key={idx} style={{ marginBottom: '4px' }}>
+                              {rec}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div style={{
+              padding: '24px',
+              borderTop: '1px solid #e5e7eb',
+              display: 'flex',
+              justifyContent: 'flex-end',
+              gap: '12px'
+            }}>
+              <button
+                onClick={() => setShowValidationModal(false)}
+                style={{
+                  background: '#e5e7eb',
+                  color: '#374151',
+                  padding: '10px 20px',
+                  borderRadius: '6px',
+                  border: 'none',
+                  cursor: 'pointer',
+                  fontWeight: '500'
+                }}
+              >
+                Close
+              </button>
+              <button
+                onClick={() => {
+                  setShowValidationModal(false);
+                  handleValidate();
+                }}
+                style={{
+                  background: '#7c3aed',
+                  color: '#fff',
+                  padding: '10px 20px',
+                  borderRadius: '6px',
+                  border: 'none',
+                  cursor: 'pointer',
+                  fontWeight: '500'
+                }}
+              >
+                Re-validate
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
