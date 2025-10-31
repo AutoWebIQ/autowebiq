@@ -841,6 +841,214 @@ print("Test data cleaned up");
         # This test passes if it returns an error (expected without GKE cluster)
         return True
 
+    def test_template_system_with_demo_account(self):
+        """Test expanded template and component library system with demo account"""
+        print("\n🎨 Testing Expanded Template & Component Library System")
+        
+        # Use demo account as specified in review request
+        demo_email = "demo@test.com"
+        demo_password = "Demo123456"
+        
+        # Login with demo account
+        success, response, _ = self.run_test(
+            "Demo Account Login",
+            "POST",
+            "auth/login",
+            200,
+            data={
+                "email": demo_email,
+                "password": demo_password
+            }
+        )
+        
+        if not success or 'access_token' not in response:
+            self.log_test("Template System Testing", False, "Failed to login with demo account")
+            return False
+        
+        demo_token = response['access_token']
+        demo_user_id = response['user']['id']
+        initial_credits = response['user']['credits']
+        
+        print(f"   ✅ Demo account logged in with {initial_credits} credits")
+        
+        # Test scenarios as specified in review request
+        test_scenarios = [
+            {
+                "name": "Luxury E-commerce",
+                "prompt": "Create a luxury skincare e-commerce website with premium product showcase, elegant design, and sophisticated branding",
+                "expected_template_category": "ecommerce",
+                "expected_keywords": ["luxury", "premium", "elegant"]
+            },
+            {
+                "name": "Modern SaaS",
+                "prompt": "Build a modern B2B SaaS platform landing page for a project management tool with features showcase, pricing, and enterprise security highlights",
+                "expected_template_category": "saas",
+                "expected_keywords": ["modern", "b2b", "platform"]
+            },
+            {
+                "name": "Creative Portfolio",
+                "prompt": "Create a professional portfolio website for a freelance consultant specializing in digital strategy with services section and contact form",
+                "expected_template_category": "portfolio",
+                "expected_keywords": ["professional", "portfolio", "consultant"]
+            },
+            {
+                "name": "Restaurant Website",
+                "prompt": "Design an elegant restaurant website with menu showcase, reservation system, and beautiful food photography",
+                "expected_template_category": "restaurant",
+                "expected_keywords": ["restaurant", "elegant", "menu"]
+            },
+            {
+                "name": "Medical Clinic",
+                "prompt": "Build a professional medical clinic website with services, doctor profiles, and appointment booking",
+                "expected_template_category": "medical",
+                "expected_keywords": ["medical", "professional", "clinic"]
+            }
+        ]
+        
+        successful_builds = 0
+        total_scenarios = len(test_scenarios)
+        
+        for i, scenario in enumerate(test_scenarios):
+            print(f"\n   🧪 Testing Scenario {i+1}/{total_scenarios}: {scenario['name']}")
+            
+            # Create project for this scenario
+            project_data = {
+                "name": f"Template Test - {scenario['name']}",
+                "description": scenario['prompt'],
+                "model": "claude-4.5-sonnet-200k"
+            }
+            
+            success, response, _ = self.run_test(
+                f"Create Project - {scenario['name']}",
+                "POST",
+                "projects/create",
+                200,
+                data=project_data,
+                headers={"Authorization": f"Bearer {demo_token}"}
+            )
+            
+            if not success or 'id' not in response:
+                continue
+            
+            project_id = response['id']
+            
+            # Test template-based build with expanded system
+            build_data = {
+                "project_id": project_id,
+                "prompt": scenario['prompt'],
+                "uploaded_images": []
+            }
+            
+            print(f"      🚀 Starting template-based build...")
+            build_start_time = time.time()
+            
+            success, response, _ = self.run_test(
+                f"Template Build - {scenario['name']}",
+                "POST",
+                "build-with-agents",
+                200,
+                data=build_data,
+                headers={"Authorization": f"Bearer {demo_token}"}
+            )
+            
+            build_end_time = time.time()
+            build_duration = build_end_time - build_start_time
+            
+            if success:
+                successful_builds += 1
+                
+                # Analyze build results
+                frontend_code = response.get('frontend_code', '')
+                credits_used = response.get('credits_used', 0)
+                cost_breakdown = response.get('cost_breakdown', {})
+                
+                print(f"      ✅ Build completed in {build_duration:.1f}s")
+                print(f"      📊 Credits used: {credits_used}")
+                print(f"      📝 HTML length: {len(frontend_code)} characters")
+                
+                # Verify success criteria
+                criteria_met = 0
+                total_criteria = 6
+                
+                # 1. Build time < 40 seconds
+                if build_duration < 40:
+                    criteria_met += 1
+                    print(f"      ✅ Build time: {build_duration:.1f}s (< 40s target)")
+                else:
+                    print(f"      ❌ Build time: {build_duration:.1f}s (> 40s target)")
+                
+                # 2. High-quality HTML (>3000 characters)
+                if len(frontend_code) > 3000:
+                    criteria_met += 1
+                    print(f"      ✅ HTML quality: {len(frontend_code)} chars (> 3000 target)")
+                else:
+                    print(f"      ❌ HTML quality: {len(frontend_code)} chars (< 3000 target)")
+                
+                # 3. Credits in expected range (30-50)
+                if 30 <= credits_used <= 50:
+                    criteria_met += 1
+                    print(f"      ✅ Credit usage: {credits_used} (30-50 range)")
+                else:
+                    print(f"      ❌ Credit usage: {credits_used} (outside 30-50 range)")
+                
+                # 4. Contains expected keywords in HTML
+                html_lower = frontend_code.lower()
+                keyword_matches = sum(1 for keyword in scenario['expected_keywords'] if keyword in html_lower)
+                if keyword_matches >= 2:
+                    criteria_met += 1
+                    print(f"      ✅ Content relevance: {keyword_matches}/{len(scenario['expected_keywords'])} keywords found")
+                else:
+                    print(f"      ❌ Content relevance: {keyword_matches}/{len(scenario['expected_keywords'])} keywords found")
+                
+                # 5. Proper HTML structure
+                has_doctype = "<!DOCTYPE html>" in frontend_code
+                has_html_tags = "<html" in frontend_code and "</html>" in frontend_code
+                has_head = "<head>" in frontend_code and "</head>" in frontend_code
+                has_body = "<body>" in frontend_code and "</body>" in frontend_code
+                
+                if has_doctype and has_html_tags and has_head and has_body:
+                    criteria_met += 1
+                    print(f"      ✅ HTML structure: Valid")
+                else:
+                    print(f"      ❌ HTML structure: Invalid")
+                
+                # 6. Template system working (check for template-based response)
+                if 'plan' in response and response.get('status') == 'success':
+                    criteria_met += 1
+                    print(f"      ✅ Template system: Working")
+                else:
+                    print(f"      ❌ Template system: Issues detected")
+                
+                success_rate = (criteria_met / total_criteria) * 100
+                print(f"      📈 Success criteria: {criteria_met}/{total_criteria} ({success_rate:.1f}%)")
+                
+                # Log detailed results
+                self.log_test(f"Template Build Quality - {scenario['name']}", 
+                            criteria_met >= 4, 
+                            f"{criteria_met}/{total_criteria} criteria met ({success_rate:.1f}%)")
+            else:
+                print(f"      ❌ Build failed: {response.get('detail', 'Unknown error')}")
+        
+        # Overall template system assessment
+        overall_success_rate = (successful_builds / total_scenarios) * 100
+        print(f"\n   📊 Template System Overall Results:")
+        print(f"      Successful builds: {successful_builds}/{total_scenarios} ({overall_success_rate:.1f}%)")
+        
+        # Test template library accessibility
+        success, response, _ = self.run_test(
+            "Template Library Health Check",
+            "GET",
+            "health",
+            200
+        )
+        
+        if success and response.get('status') == 'healthy':
+            self.log_test("Template Library Accessibility", True)
+        else:
+            self.log_test("Template Library Accessibility", False, "Health check failed")
+        
+        return successful_builds >= 3  # At least 3 out of 5 scenarios should succeed
+
     def run_all_tests(self):
         """Run comprehensive backend testing as requested"""
         print("🚀 Starting AutoWebIQ Comprehensive Backend Testing")
@@ -868,10 +1076,13 @@ print("Test data cleaned up");
         # Test 7: Additional OAuth tests (existing)
         self.test_google_oauth_session_endpoint()
         
+        # Test 8: NEW - Template System Testing (MAIN FOCUS)
+        template_success = self.test_template_system_with_demo_account()
+        
         # Cleanup
         self.cleanup_test_data()
 
-        return auth_success and project_success and credits_success and core_success
+        return auth_success and project_success and credits_success and core_success and template_success
 
     def print_summary(self):
         """Print test summary"""
