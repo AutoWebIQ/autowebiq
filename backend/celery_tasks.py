@@ -184,7 +184,7 @@ build_website_task = celery_app.task(
     base=BuildWebsiteTask,
     name='celery_tasks.build_website_task',
     max_retries=0,
-)(BuildWebsiteTask.run_async)
+)(BuildWebsiteTask())
 
 
 class GenerateImagesTask(AsyncTask):
