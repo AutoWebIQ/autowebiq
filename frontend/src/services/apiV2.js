@@ -143,5 +143,7 @@ export default {
   startAsyncBuild,
   getBuildStatus,
   getCreditHistory,
+  deployToVercel,
+  checkDeploymentStatus,
   connectWebSocket
 };
