@@ -95,7 +95,7 @@ async def build_website_task(
             db=mongo_db
         )
         
-        # Set up progress callback
+        # Set up progress callback with WebSocket updates
         async def progress_callback(stage: str, progress: int, message: str):
             self.update_state(
                 state='PROGRESS',
@@ -105,6 +105,16 @@ async def build_website_task(
                     'message': message
                 }
             )
+            
+            # Send WebSocket update
+            await ws_manager.send_agent_message(
+                project_id=project_id,
+                agent_type=stage,
+                message=message,
+                status='working',
+                progress=progress
+            )
+            
             print(f"📊 [{progress}%] {stage}: {message}")
         
         # Generate website
