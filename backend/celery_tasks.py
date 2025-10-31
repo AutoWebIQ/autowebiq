@@ -173,7 +173,7 @@ async def _build_website_async(task_self, user_prompt, project_id, user_id, uplo
         # Send WebSocket error notification
         try:
             await ws_manager.send_build_error(project_id, error_msg)
-        except:
+        except Exception:
             pass  # Don't fail on WebSocket error
         
         # Re-raise the exception for proper Celery error handling
