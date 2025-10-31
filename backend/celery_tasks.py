@@ -163,30 +163,30 @@ async def _build_website_async(task_self, user_prompt, project_id, user_id, uplo
         return result
         
     except Exception as e:
-            error_msg = str(e)
-            error_trace = traceback.format_exc()
-            
-            print(f"❌ Build failed: {error_msg}")
-            print(error_trace)
-            
-            # Send WebSocket error notification
-            await ws_manager.send_build_error(project_id, error_msg)
-            
-            # Update task state
-            task_self.update_state(
-                state='FAILURE',
-                meta={
-                    'stage': 'failed',
-                    'error': error_msg,
-                    'traceback': error_trace
-                }
-            )
-            
-            return {
-                'status': 'failed',
+        error_msg = str(e)
+        error_trace = traceback.format_exc()
+        
+        print(f"❌ Build failed: {error_msg}")
+        print(error_trace)
+        
+        # Send WebSocket error notification
+        await ws_manager.send_build_error(project_id, error_msg)
+        
+        # Update task state
+        task_self.update_state(
+            state='FAILURE',
+            meta={
+                'stage': 'failed',
                 'error': error_msg,
                 'traceback': error_trace
             }
+        )
+        
+        return {
+            'status': 'failed',
+            'error': error_msg,
+            'traceback': error_trace
+        }
 
 
 @celery_app.task(
