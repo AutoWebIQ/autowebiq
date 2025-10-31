@@ -234,6 +234,56 @@ const WorkspaceV2 = () => {
     }
   };
 
+  const handleDeploy = async () => {
+    if (!project?.generated_code) {
+      toast.error('Please build your website first');
+      return;
+    }
+
+    setDeploying(true);
+    
+    try {
+      toast.info('🚀 Deploying to Vercel...');
+      
+      const result = await deployToVercel(id);
+      
+      setDeploymentUrl(result.deployment_url);
+      
+      toast.success(
+        <div>
+          <div>✅ Deployed successfully!</div>
+          <a 
+            href={result.deployment_url} 
+            target="_blank" 
+            rel="noopener noreferrer"
+            style={{ color: '#7c3aed', textDecoration: 'underline' }}
+          >
+            View live site →
+          </a>
+        </div>,
+        { duration: 8000 }
+      );
+
+      setMessages(prev => [...prev, {
+        role: 'system',
+        content: `🚀 **Deployed to Vercel**: Your website is live at [${result.deployment_url}](${result.deployment_url})`,
+        created_at: new Date().toISOString()
+      }]);
+
+    } catch (error) {
+      console.error('Deployment error:', error);
+      toast.error(error.response?.data?.detail || 'Deployment failed');
+      
+      setMessages(prev => [...prev, {
+        role: 'system',
+        content: `❌ **Deployment Failed**: ${error.response?.data?.detail || error.message}`,
+        created_at: new Date().toISOString()
+      }]);
+    } finally {
+      setDeploying(false);
+    }
+  };
+
   return (
     <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', background: '#0a0a0a' }}>
       {/* Header */}
