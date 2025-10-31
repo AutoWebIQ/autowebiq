@@ -22,6 +22,8 @@ const WorkspaceV2 = () => {
   const [buildingAsync, setBuildingAsync] = useState(false);
   const [currentTaskId, setCurrentTaskId] = useState(null);
   const [userCredits, setUserCredits] = useState(0);
+  const [deploying, setDeploying] = useState(false);
+  const [deploymentUrl, setDeploymentUrl] = useState(null);
   const messagesEndRef = useRef(null);
 
   const getAxiosConfig = () => ({
