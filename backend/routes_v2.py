@@ -283,12 +283,25 @@ async def start_async_build(
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
     
-    # Check credits (estimate 30-50 credits per build)
+    # Check and deduct credits using V2 credit system
     estimated_cost = 40
-    if current_user.credits < estimated_cost:
+    credit_manager = get_credit_manager_v2(session)
+    
+    # Deduct credits upfront
+    deduction_result = await credit_manager.deduct_credits(
+        user_id=current_user.id,
+        amount=estimated_cost,
+        description=f"V2 Async build for project: {project.name}",
+        extra_data={
+            "project_id": project_id,
+            "prompt": build_request.prompt[:100] + "..." if len(build_request.prompt) > 100 else build_request.prompt
+        }
+    )
+    
+    if deduction_result['status'] != 'success':
         raise HTTPException(
             status_code=402,
-            detail=f"Insufficient credits. Need ~{estimated_cost}, have {current_user.credits}"
+            detail=f"Insufficient credits. Need {estimated_cost}, have {deduction_result.get('balance', 0)}"
         )
     
     # Update project status to building
