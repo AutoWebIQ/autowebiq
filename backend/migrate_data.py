@@ -134,8 +134,8 @@ class DataMigrator:
                     status=mongo_project.get('status', 'draft'),
                     template_id=mongo_project.get('template_id'),
                     build_time=mongo_project.get('build_time'),
-                    created_at=mongo_project.get('created_at', datetime.now(timezone.utc)),
-                    updated_at=mongo_project.get('updated_at', datetime.now(timezone.utc))
+                    created_at=parse_datetime(mongo_project.get('created_at')),
+                    updated_at=parse_datetime(mongo_project.get('updated_at'))
                 )
                 
                 session.add(pg_project)
