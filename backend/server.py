@@ -1607,23 +1607,60 @@ app.include_router(router_v2)
 @app.get("/api/health")
 async def health_check():
     """Health check endpoint for monitoring"""
+    health_status = {
+        "status": "healthy",
+        "service": "autowebiq-backend",
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "databases": {},
+        "services": {}
+    }
+    
     try:
         # Check MongoDB connection
         await db.command('ping')
-        return {
-            "status": "healthy",
-            "service": "autowebiq-backend",
-            "database": "connected",
-            "timestamp": datetime.now(timezone.utc).isoformat()
-        }
+        health_status["databases"]["mongodb"] = "connected"
     except Exception as e:
-        return {
-            "status": "unhealthy",
-            "service": "autowebiq-backend",
-            "database": "disconnected",
-            "error": str(e),
-            "timestamp": datetime.now(timezone.utc).isoformat()
-        }
+        health_status["databases"]["mongodb"] = f"error: {str(e)}"
+        health_status["status"] = "degraded"
+    
+    try:
+        # Check PostgreSQL connection
+        from database import AsyncSessionLocal
+        from sqlalchemy import text
+        async with AsyncSessionLocal() as session:
+            await session.execute(text("SELECT 1"))
+        health_status["databases"]["postgresql"] = "connected"
+    except Exception as e:
+        health_status["databases"]["postgresql"] = f"error: {str(e)}"
+        health_status["status"] = "degraded"
+    
+    try:
+        # Check Redis connection
+        import redis.asyncio as redis
+        redis_client = redis.from_url(os.environ.get('REDIS_URL', 'redis://localhost:6379/0'))
+        await redis_client.ping()
+        await redis_client.close()
+        health_status["services"]["redis"] = "connected"
+    except Exception as e:
+        health_status["services"]["redis"] = f"error: {str(e)}"
+        health_status["status"] = "degraded"
+    
+    try:
+        # Check Celery workers
+        from celery_app import celery_app
+        inspect = celery_app.control.inspect()
+        stats = inspect.stats()
+        if stats:
+            worker_count = len(stats)
+            health_status["services"]["celery"] = f"{worker_count} workers active"
+        else:
+            health_status["services"]["celery"] = "no workers"
+            health_status["status"] = "degraded"
+    except Exception as e:
+        health_status["services"]["celery"] = f"error: {str(e)}"
+        health_status["status"] = "degraded"
+    
+    return health_status
 
 app.add_middleware(
     CORSMiddleware,
