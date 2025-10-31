@@ -82,7 +82,7 @@ async def test_complete_flow():
             print(f"❌ Error: {e}")
         
         # Step 4: Create a Test Project
-        print("\n📁 Step 4: Create Test Project")
+        print("\n📁 Step 4: Create Test Project (V2 API)")
         print("-"*70)
         
         try:
@@ -91,7 +91,7 @@ async def test_complete_flow():
                 "description": "End-to-end integration test project"
             }
             response = await client.post(
-                f"{BASE_URL}/api/projects/create",
+                f"{BASE_URL}/api/v2/projects",
                 json=project_data,
                 headers=headers
             )
