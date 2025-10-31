@@ -193,7 +193,7 @@ class DataMigrator:
                     agent_type=mongo_message.get('agent_type'),
                     agent_status=mongo_message.get('agent_status'),
                     progress=mongo_message.get('progress', 0),
-                    created_at=mongo_message.get('created_at', datetime.now(timezone.utc))
+                    created_at=parse_datetime(mongo_message.get('created_at'))
                 )
                 
                 session.add(pg_message)
