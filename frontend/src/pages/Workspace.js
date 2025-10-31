@@ -5,9 +5,9 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { toast } from 'sonner';
-import { Send, Loader2, Sparkles, Rocket, ExternalLink } from 'lucide-react';
+import { Send, Loader2, Sparkles, Rocket, ExternalLink, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
 import { useBuildWebSocket } from '../hooks/useBuildWebSocket';
-import { startAsyncBuild, getBuildStatus, deployToVercel } from '../services/apiV2';
+import { startAsyncBuild, getBuildStatus, deployToVercel, validateWebsite } from '../services/apiV2';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
