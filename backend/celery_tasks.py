@@ -255,13 +255,13 @@ async def _generate_images_async(task_self, image_requirements, project_id):
         }
         
     except Exception as e:
-            error_msg = str(e)
-            print(f"❌ Image generation failed: {error_msg}")
-            
-            return {
-                'status': 'failed',
-                'error': error_msg
-            }
+        error_msg = str(e)
+        print(f"❌ Image generation failed: {error_msg}")
+        
+        return {
+            'status': 'failed',
+            'error': error_msg
+        }
 
 
 # Register the task
