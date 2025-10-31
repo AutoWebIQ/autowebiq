@@ -74,7 +74,7 @@ AutoWebIQ is an advanced multi-agent AI platform for creating professional websi
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/autowebiq.git
+git clone https://github.com/AutoWebIQ/autowebiq.git
 cd autowebiq
 ```
 
