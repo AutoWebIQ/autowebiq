@@ -167,5 +167,7 @@ export default {
   getCreditHistory,
   deployToVercel,
   checkDeploymentStatus,
+  validateWebsite,
+  getValidationChecks,
   connectWebSocket
 };
