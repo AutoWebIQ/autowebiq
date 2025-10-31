@@ -60,19 +60,8 @@ class DataMigrator:
                     continue
                 
                 # Parse dates (MongoDB might store as ISO strings)
-                created_at = mongo_user.get('created_at')
-                if isinstance(created_at, str):
-                    from dateutil import parser
-                    created_at = parser.isoparse(created_at)
-                elif created_at is None:
-                    created_at = datetime.now(timezone.utc)
-                
-                updated_at = mongo_user.get('updated_at')
-                if isinstance(updated_at, str):
-                    from dateutil import parser
-                    updated_at = parser.isoparse(updated_at)
-                elif updated_at is None:
-                    updated_at = datetime.now(timezone.utc)
+                created_at = parse_datetime(mongo_user.get('created_at'))
+                updated_at = parse_datetime(mongo_user.get('updated_at'))
                 
                 # Create PostgreSQL user
                 pg_user = User(
