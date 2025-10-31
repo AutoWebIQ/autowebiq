@@ -672,7 +672,560 @@ TEMPLATES.extend([
 ])
 
 # Component definitions (40 components)
-COMPONENTS = []
+COMPONENTS = [
+    # ==================== NAVIGATION BARS (7 variants) ====================
+    {
+        "component_id": "nav_minimal_v1",
+        "name": "Minimal Navigation",
+        "category": "navigation",
+        "type": "navbar",
+        "description": "Clean minimal navigation with logo and links",
+        "tags": ["minimal", "clean", "modern", "simple"],
+        "responsive": True,
+        "customization_points": ["logo_text", "nav_links", "cta_text"],
+        "html": """<nav style="position:fixed;top:0;width:100%;background:rgba(255,255,255,0.98);backdrop-filter:blur(10px);padding:20px 40px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #eee;z-index:1000"><div style="font-size:1.25rem;font-weight:700;color:#1a1a1a">{{ logo_text }}</div><div style="display:flex;gap:32px;align-items:center"><a href="#" style="color:#1a1a1a;text-decoration:none;font-weight:500">Features</a><a href="#" style="color:#1a1a1a;text-decoration:none;font-weight:500">Pricing</a><a href="#" style="color:#1a1a1a;text-decoration:none;font-weight:500">About</a><a href="#" style="background:#1a1a1a;color:#fff;padding:10px 24px;border-radius:6px;text-decoration:none;font-weight:600">{{ cta_text }}</a></div></nav>"""
+    },
+    {
+        "component_id": "nav_glassmorphism_v1",
+        "name": "Glassmorphism Navigation",
+        "category": "navigation",
+        "type": "navbar",
+        "description": "Modern glass effect navigation with blur",
+        "tags": ["glassmorphism", "modern", "blur", "premium"],
+        "responsive": True,
+        "customization_points": ["logo_text", "nav_links"],
+        "html": """<nav style="position:fixed;top:0;width:100%;background:rgba(255,255,255,0.1);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);padding:20px 40px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid rgba(255,255,255,0.2);z-index:1000;box-shadow:0 4px 30px rgba(0,0,0,0.1)"><div style="font-size:1.5rem;font-weight:800;background:linear-gradient(135deg,#667eea,#764ba2);-webkit-background-clip:text;-webkit-text-fill-color:transparent">{{ logo_text }}</div><div style="display:flex;gap:40px"><a href="#" style="color:#fff;text-decoration:none;font-weight:600">Home</a><a href="#" style="color:#fff;text-decoration:none;font-weight:600">Products</a><a href="#" style="color:#fff;text-decoration:none;font-weight:600">Contact</a></div></nav>"""
+    },
+    {
+        "component_id": "nav_sidebar_v1",
+        "name": "Sidebar Navigation",
+        "category": "navigation",
+        "type": "navbar",
+        "description": "Vertical sidebar navigation for dashboard layouts",
+        "tags": ["sidebar", "vertical", "dashboard", "app"],
+        "responsive": True,
+        "customization_points": ["logo_text", "menu_items"],
+        "html": """<aside style="position:fixed;left:0;top:0;width:260px;height:100vh;background:#1a1a1a;color:#fff;padding:32px 20px;display:flex;flex-direction:column;gap:8px;z-index:1000"><div style="font-size:1.5rem;font-weight:800;margin-bottom:40px;color:#fff">{{ logo_text }}</div><a href="#" style="padding:12px 16px;border-radius:8px;color:#9ca3af;text-decoration:none;display:flex;align-items:center;gap:12px;transition:all 0.3s;font-weight:500"><span>📊</span> Dashboard</a><a href="#" style="padding:12px 16px;border-radius:8px;color:#9ca3af;text-decoration:none;display:flex;align-items:center;gap:12px;transition:all 0.3s;font-weight:500"><span>📈</span> Analytics</a><a href="#" style="padding:12px 16px;border-radius:8px;color:#9ca3af;text-decoration:none;display:flex;align-items:center;gap:12px;transition:all 0.3s;font-weight:500"><span>⚙️</span> Settings</a></aside>"""
+    },
+    {
+        "component_id": "nav_dropdown_v1",
+        "name": "Dropdown Navigation",
+        "category": "navigation",
+        "type": "navbar",
+        "description": "Navigation with dropdown menus",
+        "tags": ["dropdown", "mega-menu", "complex"],
+        "responsive": True,
+        "customization_points": ["logo_text", "menu_categories"],
+        "html": """<nav style="position:fixed;top:0;width:100%;background:#fff;padding:20px 40px;display:flex;justify-content:space-between;align-items:center;box-shadow:0 2px 10px rgba(0,0,0,0.05);z-index:1000"><div style="font-size:1.5rem;font-weight:700">{{ logo_text }}</div><div style="display:flex;gap:32px;align-items:center"><div style="position:relative"><a href="#" style="color:#1a1a1a;text-decoration:none;font-weight:500">Products ▾</a></div><a href="#" style="color:#1a1a1a;text-decoration:none;font-weight:500">Solutions</a><a href="#" style="color:#1a1a1a;text-decoration:none;font-weight:500">Pricing</a><a href="#" style="background:#667eea;color:#fff;padding:10px 24px;border-radius:6px;text-decoration:none;font-weight:600">Get Started</a></div></nav>"""
+    },
+    {
+        "component_id": "nav_gradient_v1",
+        "name": "Gradient Navigation",
+        "category": "navigation",
+        "type": "navbar",
+        "description": "Bold navigation with gradient background",
+        "tags": ["gradient", "colorful", "bold", "modern"],
+        "responsive": True,
+        "customization_points": ["logo_text", "nav_items"],
+        "html": """<nav style="position:fixed;top:0;width:100%;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);padding:20px 40px;display:flex;justify-content:space-between;align-items:center;z-index:1000;box-shadow:0 4px 20px rgba(102,126,234,0.3)"><div style="font-size:1.5rem;font-weight:800;color:#fff">{{ logo_text }}</div><div style="display:flex;gap:32px;align-items:center"><a href="#" style="color:#fff;text-decoration:none;font-weight:600;opacity:0.9">Features</a><a href="#" style="color:#fff;text-decoration:none;font-weight:600;opacity:0.9">Pricing</a><a href="#" style="background:#fff;color:#667eea;padding:10px 24px;border-radius:6px;text-decoration:none;font-weight:700">Sign Up</a></div></nav>"""
+    },
+    {
+        "component_id": "nav_dark_v1",
+        "name": "Dark Navigation",
+        "category": "navigation",
+        "type": "navbar",
+        "description": "Sleek dark mode navigation",
+        "tags": ["dark", "sleek", "elegant", "modern"],
+        "responsive": True,
+        "customization_points": ["logo_text", "nav_links"],
+        "html": """<nav style="position:fixed;top:0;width:100%;background:#0f172a;padding:20px 40px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #1e293b;z-index:1000"><div style="font-size:1.5rem;font-weight:800;color:#fff">{{ logo_text }}</div><div style="display:flex;gap:32px;align-items:center"><a href="#" style="color:#cbd5e1;text-decoration:none;font-weight:500">Home</a><a href="#" style="color:#cbd5e1;text-decoration:none;font-weight:500">About</a><a href="#" style="color:#cbd5e1;text-decoration:none;font-weight:500">Services</a><a href="#" style="background:#3b82f6;color:#fff;padding:10px 24px;border-radius:6px;text-decoration:none;font-weight:600">Contact</a></div></nav>"""
+    },
+    {
+        "component_id": "nav_centered_v1",
+        "name": "Centered Navigation",
+        "category": "navigation",
+        "type": "navbar",
+        "description": "Centered logo with balanced navigation",
+        "tags": ["centered", "balanced", "symmetric", "elegant"],
+        "responsive": True,
+        "customization_points": ["logo_text", "nav_links"],
+        "html": """<nav style="position:fixed;top:0;width:100%;background:#fff;padding:20px 40px;display:flex;justify-content:center;align-items:center;border-bottom:1px solid #e5e7eb;z-index:1000"><div style="display:flex;gap:40px;align-items:center"><a href="#" style="color:#1a1a1a;text-decoration:none;font-weight:500">Features</a><a href="#" style="color:#1a1a1a;text-decoration:none;font-weight:500">About</a><div style="font-size:1.5rem;font-weight:800;color:#1a1a1a;margin:0 20px">{{ logo_text }}</div><a href="#" style="color:#1a1a1a;text-decoration:none;font-weight:500">Blog</a><a href="#" style="color:#1a1a1a;text-decoration:none;font-weight:500">Contact</a></div></nav>"""
+    },
+
+    # ==================== HERO SECTIONS (10 variants) ====================
+    {
+        "component_id": "hero_split_v1",
+        "name": "Split Hero Section",
+        "category": "hero",
+        "type": "hero",
+        "description": "Split layout with text on left, image on right",
+        "tags": ["split", "two-column", "image", "modern"],
+        "responsive": True,
+        "customization_points": ["headline", "subheadline", "cta_text", "image_url"],
+        "html": """<section style="min-height:100vh;display:flex;align-items:center;padding:100px 40px;background:#fafafa"><div style="max-width:1400px;margin:0 auto;width:100%;display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:center"><div><h1 style="font-size:4rem;font-weight:800;line-height:1.1;margin-bottom:24px;color:#1a1a1a">{{ headline }}</h1><p style="font-size:1.25rem;color:#6b7280;margin-bottom:40px;line-height:1.8">{{ subheadline }}</p><a href="#" style="display:inline-block;background:#1a1a1a;color:#fff;padding:16px 40px;border-radius:8px;text-decoration:none;font-weight:700">{{ cta_text }}</a></div><div style="width:100%;height:600px;border-radius:16px;background:linear-gradient(135deg,#667eea,#764ba2);box-shadow:0 20px 60px rgba(0,0,0,0.15)"></div></div></section>"""
+    },
+    {
+        "component_id": "hero_centered_v1",
+        "name": "Centered Hero Section",
+        "category": "hero",
+        "type": "hero",
+        "description": "Centered text with gradient background",
+        "tags": ["centered", "gradient", "bold", "modern"],
+        "responsive": True,
+        "customization_points": ["headline", "subheadline", "cta_primary", "cta_secondary"],
+        "html": """<section style="min-height:100vh;display:flex;align-items:center;justify-content:center;text-align:center;padding:100px 40px;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%)"><div style="max-width:900px"><h1 style="font-size:4.5rem;font-weight:900;line-height:1.1;margin-bottom:24px;color:#fff">{{ headline }}</h1><p style="font-size:1.375rem;color:rgba(255,255,255,0.9);margin-bottom:40px;line-height:1.8">{{ subheadline }}</p><div style="display:flex;gap:20px;justify-content:center"><a href="#" style="display:inline-block;background:#fff;color:#667eea;padding:18px 40px;border-radius:8px;text-decoration:none;font-weight:700">{{ cta_primary }}</a><a href="#" style="display:inline-block;background:transparent;color:#fff;padding:18px 40px;border:2px solid #fff;border-radius:8px;text-decoration:none;font-weight:700">{{ cta_secondary }}</a></div></div></section>"""
+    },
+    {
+        "component_id": "hero_minimal_v1",
+        "name": "Minimal Hero Section",
+        "category": "hero",
+        "type": "hero",
+        "description": "Clean minimal hero with subtle design",
+        "tags": ["minimal", "clean", "simple", "elegant"],
+        "responsive": True,
+        "customization_points": ["headline", "subheadline", "cta_text"],
+        "html": """<section style="min-height:90vh;display:flex;align-items:center;padding:120px 40px;background:#fff"><div style="max-width:800px;margin:0 auto"><h1 style="font-size:4rem;font-weight:700;line-height:1.2;margin-bottom:32px;color:#1a1a1a">{{ headline }}</h1><p style="font-size:1.25rem;color:#6b7280;margin-bottom:48px;line-height:1.8">{{ subheadline }}</p><a href="#" style="display:inline-block;background:#1a1a1a;color:#fff;padding:16px 40px;border-radius:6px;text-decoration:none;font-weight:600;transition:transform 0.3s">{{ cta_text }}</a></div></section>"""
+    },
+    {
+        "component_id": "hero_video_bg_v1",
+        "name": "Video Background Hero",
+        "category": "hero",
+        "type": "hero",
+        "description": "Hero with video or animated background",
+        "tags": ["video", "animated", "dynamic", "modern"],
+        "responsive": True,
+        "customization_points": ["headline", "subheadline", "cta_text"],
+        "html": """<section style="position:relative;min-height:100vh;display:flex;align-items:center;justify-content:center;text-align:center;padding:100px 40px;background:#000;overflow:hidden"><div style="position:absolute;inset:0;background:linear-gradient(135deg,rgba(102,126,234,0.8),rgba(118,75,162,0.8));z-index:1"></div><div style="position:relative;z-index:2;max-width:900px;color:#fff"><h1 style="font-size:5rem;font-weight:900;line-height:1.1;margin-bottom:24px">{{ headline }}</h1><p style="font-size:1.5rem;margin-bottom:40px;opacity:0.95">{{ subheadline }}</p><a href="#" style="display:inline-block;background:#fff;color:#667eea;padding:20px 50px;border-radius:12px;text-decoration:none;font-weight:700;font-size:1.125rem">{{ cta_text }}</a></div></section>"""
+    },
+    {
+        "component_id": "hero_stats_v1",
+        "name": "Hero with Stats",
+        "category": "hero",
+        "type": "hero",
+        "description": "Hero section with integrated statistics",
+        "tags": ["stats", "data", "metrics", "saas"],
+        "responsive": True,
+        "customization_points": ["headline", "subheadline", "stat_1", "stat_2", "stat_3"],
+        "html": """<section style="min-height:90vh;display:flex;align-items:center;padding:100px 40px;background:linear-gradient(to bottom,#f9fafb,#fff)"><div style="max-width:1200px;margin:0 auto;text-align:center"><h1 style="font-size:4rem;font-weight:800;line-height:1.1;margin-bottom:24px;color:#1a1a1a">{{ headline }}</h1><p style="font-size:1.25rem;color:#6b7280;margin-bottom:60px;max-width:700px;margin-left:auto;margin-right:auto">{{ subheadline }}</p><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:40px;margin-top:60px"><div style="padding:32px;background:#fff;border-radius:12px;box-shadow:0 4px 20px rgba(0,0,0,0.05)"><div style="font-size:3rem;font-weight:800;color:#667eea;margin-bottom:8px">{{ stat_1 }}</div><div style="color:#6b7280">Active Users</div></div><div style="padding:32px;background:#fff;border-radius:12px;box-shadow:0 4px 20px rgba(0,0,0,0.05)"><div style="font-size:3rem;font-weight:800;color:#10b981;margin-bottom:8px">{{ stat_2 }}</div><div style="color:#6b7280">Projects</div></div><div style="padding:32px;background:#fff;border-radius:12px;box-shadow:0 4px 20px rgba(0,0,0,0.05)"><div style="font-size:3rem;font-weight:800;color:#f59e0b;margin-bottom:8px">{{ stat_3 }}</div><div style="color:#6b7280">Countries</div></div></div></div></section>"""
+    },
+    {
+        "component_id": "hero_app_showcase_v1",
+        "name": "App Showcase Hero",
+        "category": "hero",
+        "type": "hero",
+        "description": "Hero designed for app landing pages",
+        "tags": ["app", "mobile", "product", "showcase"],
+        "responsive": True,
+        "customization_points": ["app_name", "tagline", "cta_text"],
+        "html": """<section style="min-height:100vh;display:flex;align-items:center;padding:100px 40px;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%)"><div style="max-width:1400px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:center"><div style="color:#fff"><h1 style="font-size:4.5rem;font-weight:900;line-height:1.1;margin-bottom:24px">{{ app_name }}</h1><p style="font-size:1.5rem;margin-bottom:40px;opacity:0.95">{{ tagline }}</p><a href="#" style="display:inline-block;background:#fff;color:#667eea;padding:18px 40px;border-radius:12px;text-decoration:none;font-weight:700">{{ cta_text }}</a></div><div style="position:relative;height:600px;display:flex;justify-content:center;align-items:center"><div style="width:300px;height:600px;background:#1a1a1a;border-radius:40px;box-shadow:0 40px 80px rgba(0,0,0,0.3);border:8px solid #333"></div></div></div></section>"""
+    },
+    {
+        "component_id": "hero_fullscreen_image_v1",
+        "name": "Fullscreen Image Hero",
+        "category": "hero",
+        "type": "hero",
+        "description": "Full-screen hero with overlay text",
+        "tags": ["fullscreen", "image", "overlay", "dramatic"],
+        "responsive": True,
+        "customization_points": ["headline", "subheadline", "cta_text", "background_image"],
+        "html": """<section style="position:relative;min-height:100vh;display:flex;align-items:center;justify-content:center;text-align:center;padding:100px 40px;background:linear-gradient(rgba(0,0,0,0.5),rgba(0,0,0,0.5)),url('{{ background_image }}') center/cover;color:#fff"><div style="max-width:800px;z-index:2"><h1 style="font-size:5rem;font-weight:900;line-height:1.1;margin-bottom:24px;text-shadow:2px 2px 8px rgba(0,0,0,0.3)">{{ headline }}</h1><p style="font-size:1.5rem;margin-bottom:40px;opacity:0.95">{{ subheadline }}</p><a href="#" style="display:inline-block;background:#fff;color:#1a1a1a;padding:18px 50px;border-radius:8px;text-decoration:none;font-weight:700;font-size:1.125rem">{{ cta_text }}</a></div></section>"""
+    },
+    {
+        "component_id": "hero_asymmetric_v1",
+        "name": "Asymmetric Hero",
+        "category": "hero",
+        "type": "hero",
+        "description": "Creative asymmetric layout for unique designs",
+        "tags": ["asymmetric", "creative", "unique", "modern"],
+        "responsive": True,
+        "customization_points": ["headline", "subheadline", "cta_text"],
+        "html": """<section style="min-height:100vh;display:flex;align-items:center;padding:100px 40px;background:#fff;position:relative;overflow:hidden"><div style="position:absolute;top:-20%;right:-10%;width:800px;height:800px;background:linear-gradient(135deg,#667eea,#764ba2);border-radius:50%;opacity:0.1;z-index:0"></div><div style="max-width:1400px;margin:0 auto;position:relative;z-index:1"><h1 style="font-size:5rem;font-weight:900;line-height:1.1;margin-bottom:24px;color:#1a1a1a;max-width:700px">{{ headline }}</h1><p style="font-size:1.25rem;color:#6b7280;margin-bottom:40px;max-width:600px">{{ subheadline }}</p><a href="#" style="display:inline-block;background:#667eea;color:#fff;padding:18px 40px;border-radius:8px;text-decoration:none;font-weight:700">{{ cta_text }}</a></div></section>"""
+    },
+    {
+        "component_id": "hero_illustration_v1",
+        "name": "Hero with Illustration",
+        "category": "hero",
+        "type": "hero",
+        "description": "Hero with custom illustration graphics",
+        "tags": ["illustration", "graphic", "colorful", "friendly"],
+        "responsive": True,
+        "customization_points": ["headline", "subheadline", "cta_text"],
+        "html": """<section style="min-height:100vh;display:flex;align-items:center;padding:100px 40px;background:linear-gradient(to bottom right,#fef3c7,#fde68a)"><div style="max-width:1400px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:center"><div><h1 style="font-size:4rem;font-weight:800;line-height:1.1;margin-bottom:24px;color:#1a1a1a">{{ headline }}</h1><p style="font-size:1.25rem;color:#4b5563;margin-bottom:40px">{{ subheadline }}</p><a href="#" style="display:inline-block;background:#f59e0b;color:#fff;padding:16px 40px;border-radius:8px;text-decoration:none;font-weight:700">{{ cta_text }}</a></div><div style="width:100%;height:500px;background:linear-gradient(135deg,#f59e0b,#fbbf24);border-radius:24px;box-shadow:0 20px 60px rgba(245,158,11,0.3)"></div></div></section>"""
+    },
+    {
+        "component_id": "hero_particles_v1",
+        "name": "Animated Particles Hero",
+        "category": "hero",
+        "type": "hero",
+        "description": "Hero with particle animation effect",
+        "tags": ["particles", "animated", "tech", "modern"],
+        "responsive": True,
+        "customization_points": ["headline", "subheadline", "cta_text"],
+        "html": """<section style="position:relative;min-height:100vh;display:flex;align-items:center;justify-content:center;text-align:center;padding:100px 40px;background:#0f172a;color:#fff;overflow:hidden"><div style="position:absolute;inset:0;background:radial-gradient(circle at 50% 50%,rgba(102,126,234,0.2),transparent);z-index:0"></div><div style="max-width:900px;position:relative;z-index:1"><h1 style="font-size:5rem;font-weight:900;line-height:1.1;margin-bottom:24px">{{ headline }}</h1><p style="font-size:1.5rem;color:#cbd5e1;margin-bottom:40px">{{ subheadline }}</p><a href="#" style="display:inline-block;background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;padding:18px 50px;border-radius:12px;text-decoration:none;font-weight:700;font-size:1.125rem">{{ cta_text }}</a></div></section>"""
+    },
+
+    # ==================== FEATURE GRIDS & PRODUCT CARDS (10 variants) ====================
+    {
+        "component_id": "feature_grid_3col_v1",
+        "name": "3-Column Feature Grid",
+        "category": "features",
+        "type": "feature_grid",
+        "description": "Classic 3-column feature layout",
+        "tags": ["grid", "3-column", "features", "clean"],
+        "responsive": True,
+        "customization_points": ["title", "subtitle", "features"],
+        "html": """<section style="padding:100px 40px;background:#fff"><div style="max-width:1200px;margin:0 auto;text-align:center"><h2 style="font-size:3rem;font-weight:800;margin-bottom:16px;color:#1a1a1a">{{ title }}</h2><p style="font-size:1.125rem;color:#6b7280;margin-bottom:60px">{{ subtitle }}</p><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:40px"><div style="padding:40px;background:#f9fafb;border-radius:12px"><div style="width:60px;height:60px;background:#667eea;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.75rem;margin-bottom:20px;color:#fff">🚀</div><h3 style="font-size:1.25rem;font-weight:700;margin-bottom:12px">Fast Performance</h3><p style="color:#6b7280;line-height:1.6">Lightning-fast load times and optimized performance</p></div><div style="padding:40px;background:#f9fafb;border-radius:12px"><div style="width:60px;height:60px;background:#10b981;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.75rem;margin-bottom:20px;color:#fff">🔒</div><h3 style="font-size:1.25rem;font-weight:700;margin-bottom:12px">Secure</h3><p style="color:#6b7280;line-height:1.6">Bank-level security and data protection</p></div><div style="padding:40px;background:#f9fafb;border-radius:12px"><div style="width:60px;height:60px;background:#f59e0b;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.75rem;margin-bottom:20px;color:#fff">⚡</div><h3 style="font-size:1.25rem;font-weight:700;margin-bottom:12px">Reliable</h3><p style="color:#6b7280;line-height:1.6">99.9% uptime guarantee and 24/7 support</p></div></div></div></section>"""
+    },
+    {
+        "component_id": "product_card_ecom_v1",
+        "name": "E-commerce Product Card",
+        "category": "products",
+        "type": "product_card",
+        "description": "Product card for online stores",
+        "tags": ["ecommerce", "product", "shop", "store"],
+        "responsive": True,
+        "customization_points": ["product_name", "price", "description", "image_url"],
+        "html": """<div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;overflow:hidden;transition:all 0.3s"><div style="width:100%;height:300px;background:linear-gradient(135deg,#f3f4f6,#e5e7eb);overflow:hidden"></div><div style="padding:24px"><h3 style="font-size:1.25rem;font-weight:700;margin-bottom:8px;color:#1a1a1a">{{ product_name }}</h3><p style="color:#6b7280;margin-bottom:16px;font-size:0.9375rem">{{ description }}</p><div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:1.5rem;font-weight:800;color:#1a1a1a">{{ price }}</span><button style="background:#1a1a1a;color:#fff;padding:10px 20px;border:none;border-radius:6px;font-weight:600;cursor:pointer">Add to Cart</button></div></div></div>"""
+    },
+    {
+        "component_id": "feature_icon_grid_v1",
+        "name": "Icon Feature Grid",
+        "category": "features",
+        "type": "feature_grid",
+        "description": "Feature grid with prominent icons",
+        "tags": ["icons", "visual", "features", "modern"],
+        "responsive": True,
+        "customization_points": ["section_title", "features"],
+        "html": """<section style="padding:100px 40px;background:#f9fafb"><div style="max-width:1200px;margin:0 auto"><h2 style="text-align:center;font-size:3rem;font-weight:800;margin-bottom:80px">{{ section_title }}</h2><div style="display:grid;grid-template-columns:repeat(4,1fr);gap:32px"><div style="text-align:center"><div style="width:80px;height:80px;background:linear-gradient(135deg,#667eea,#764ba2);border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:2.5rem;margin:0 auto 20px">📊</div><h3 style="font-weight:700;margin-bottom:8px">Analytics</h3><p style="color:#6b7280;font-size:0.9375rem">Track metrics</p></div><div style="text-align:center"><div style="width:80px;height:80px;background:linear-gradient(135deg,#f093fb,#f5576c);border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:2.5rem;margin:0 auto 20px">🎨</div><h3 style="font-weight:700;margin-bottom:8px">Design</h3><p style="color:#6b7280;font-size:0.9375rem">Beautiful UI</p></div><div style="text-align:center"><div style="width:80px;height:80px;background:linear-gradient(135deg,#4facfe,#00f2fe);border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:2.5rem;margin:0 auto 20px">⚡</div><h3 style="font-weight:700;margin-bottom:8px">Speed</h3><p style="color:#6b7280;font-size:0.9375rem">Fast load</p></div><div style="text-align:center"><div style="width:80px;height:80px;background:linear-gradient(135deg,#43e97b,#38f9d7);border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:2.5rem;margin:0 auto 20px">🔐</div><h3 style="font-weight:700;margin-bottom:8px">Security</h3><p style="color:#6b7280;font-size:0.9375rem">Protected</p></div></div></div></section>"""
+    },
+    {
+        "component_id": "product_showcase_v1",
+        "name": "Product Showcase Grid",
+        "category": "products",
+        "type": "product_grid",
+        "description": "Grid layout for showcasing multiple products",
+        "tags": ["showcase", "grid", "products", "ecommerce"],
+        "responsive": True,
+        "customization_points": ["section_title", "products"],
+        "html": """<section style="padding:100px 40px;background:#fff"><div style="max-width:1400px;margin:0 auto"><h2 style="text-align:center;font-size:3rem;font-weight:800;margin-bottom:60px">{{ section_title }}</h2><div style="display:grid;grid-template-columns:repeat(4,1fr);gap:24px"><div style="position:relative;overflow:hidden;border-radius:12px;aspect-ratio:1;background:linear-gradient(135deg,#667eea,#764ba2)"></div><div style="position:relative;overflow:hidden;border-radius:12px;aspect-ratio:1;background:linear-gradient(135deg,#f093fb,#f5576c)"></div><div style="position:relative;overflow:hidden;border-radius:12px;aspect-ratio:1;background:linear-gradient(135deg,#4facfe,#00f2fe)"></div><div style="position:relative;overflow:hidden;border-radius:12px;aspect-ratio:1;background:linear-gradient(135deg,#43e97b,#38f9d7)"></div></div></div></section>"""
+    },
+    {
+        "component_id": "feature_alternating_v1",
+        "name": "Alternating Feature Layout",
+        "category": "features",
+        "type": "feature_section",
+        "description": "Alternating text and image feature sections",
+        "tags": ["alternating", "zigzag", "detailed", "modern"],
+        "responsive": True,
+        "customization_points": ["features"],
+        "html": """<section style="padding:100px 40px;background:#fff"><div style="max-width:1200px;margin:0 auto"><div style="display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:center;margin-bottom:100px"><div><h3 style="font-size:2.5rem;font-weight:800;margin-bottom:20px">Powerful Analytics</h3><p style="font-size:1.125rem;color:#6b7280;line-height:1.8">Track your performance with real-time analytics and detailed insights into your metrics.</p></div><div style="height:400px;background:linear-gradient(135deg,#667eea,#764ba2);border-radius:16px"></div></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:center"><div style="height:400px;background:linear-gradient(135deg,#f093fb,#f5576c);border-radius:16px"></div><div><h3 style="font-size:2.5rem;font-weight:800;margin-bottom:20px">Seamless Integration</h3><p style="font-size:1.125rem;color:#6b7280;line-height:1.8">Connect with your favorite tools and platforms for a unified workflow.</p></div></div></div></section>"""
+    },
+    {
+        "component_id": "product_featured_v1",
+        "name": "Featured Product Display",
+        "category": "products",
+        "type": "featured_product",
+        "description": "Large featured product with details",
+        "tags": ["featured", "highlight", "product", "hero"],
+        "responsive": True,
+        "customization_points": ["product_name", "tagline", "features", "price"],
+        "html": """<section style="padding:100px 40px;background:linear-gradient(to bottom,#f9fafb,#fff)"><div style="max-width:1400px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:center"><div style="height:600px;background:linear-gradient(135deg,#667eea,#764ba2);border-radius:24px;box-shadow:0 40px 80px rgba(102,126,234,0.2)"></div><div><div style="display:inline-block;background:#667eea;color:#fff;padding:8px 16px;border-radius:20px;font-size:0.875rem;font-weight:600;margin-bottom:20px">NEW</div><h2 style="font-size:3.5rem;font-weight:900;margin-bottom:20px">{{ product_name }}</h2><p style="font-size:1.25rem;color:#6b7280;margin-bottom:32px">{{ tagline }}</p><ul style="list-style:none;padding:0;margin-bottom:40px"><li style="padding:12px 0;border-bottom:1px solid #e5e7eb;color:#1a1a1a">✓ Feature One</li><li style="padding:12px 0;border-bottom:1px solid #e5e7eb;color:#1a1a1a">✓ Feature Two</li><li style="padding:12px 0;border-bottom:1px solid #e5e7eb;color:#1a1a1a">✓ Feature Three</li></ul><div style="display:flex;align-items:center;gap:24px"><span style="font-size:3rem;font-weight:900">{{ price }}</span><a href="#" style="background:#1a1a1a;color:#fff;padding:16px 40px;border-radius:8px;text-decoration:none;font-weight:700">Buy Now</a></div></div></div></section>"""
+    },
+    {
+        "component_id": "feature_cards_v1",
+        "name": "Feature Cards Grid",
+        "category": "features",
+        "type": "feature_cards",
+        "description": "Cards-based feature presentation",
+        "tags": ["cards", "modern", "shadow", "clean"],
+        "responsive": True,
+        "customization_points": ["section_title", "features"],
+        "html": """<section style="padding:100px 40px;background:#fff"><div style="max-width:1200px;margin:0 auto"><h2 style="text-align:center;font-size:3rem;font-weight:800;margin-bottom:60px">{{ section_title }}</h2><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:32px"><div style="background:#fff;padding:40px;border-radius:16px;box-shadow:0 4px 20px rgba(0,0,0,0.08);border:1px solid #e5e7eb;transition:all 0.3s"><div style="font-size:2.5rem;margin-bottom:20px">💡</div><h3 style="font-size:1.5rem;font-weight:700;margin-bottom:12px">Innovation</h3><p style="color:#6b7280;line-height:1.6">Cutting-edge solutions that push boundaries</p></div><div style="background:#fff;padding:40px;border-radius:16px;box-shadow:0 4px 20px rgba(0,0,0,0.08);border:1px solid #e5e7eb;transition:all 0.3s"><div style="font-size:2.5rem;margin-bottom:20px">🎯</div><h3 style="font-size:1.5rem;font-weight:700;margin-bottom:12px">Precision</h3><p style="color:#6b7280;line-height:1.6">Accurate and reliable results every time</p></div><div style="background:#fff;padding:40px;border-radius:16px;box-shadow:0 4px 20px rgba(0,0,0,0.08);border:1px solid #e5e7eb;transition:all 0.3s"><div style="font-size:2.5rem;margin-bottom:20px">🚀</div><h3 style="font-size:1.5rem;font-weight:700;margin-bottom:12px">Scale</h3><p style="color:#6b7280;line-height:1.6">Grow without limits or constraints</p></div></div></div></section>"""
+    },
+    {
+        "component_id": "product_comparison_v1",
+        "name": "Product Comparison Table",
+        "category": "products",
+        "type": "comparison",
+        "description": "Side-by-side product comparison",
+        "tags": ["comparison", "table", "pricing", "features"],
+        "responsive": True,
+        "customization_points": ["products", "features"],
+        "html": """<section style="padding:100px 40px;background:#f9fafb"><div style="max-width:1200px;margin:0 auto"><h2 style="text-align:center;font-size:3rem;font-weight:800;margin-bottom:60px">Compare Plans</h2><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:24px"><div style="background:#fff;padding:40px;border-radius:16px;border:2px solid #e5e7eb"><h3 style="font-size:1.5rem;font-weight:700;margin-bottom:8px">Basic</h3><div style="font-size:2.5rem;font-weight:900;margin-bottom:20px">$9<span style="font-size:1rem;color:#6b7280">/mo</span></div><ul style="list-style:none;padding:0"><li style="padding:8px 0;color:#1a1a1a">✓ 10 Projects</li><li style="padding:8px 0;color:#1a1a1a">✓ Basic Support</li><li style="padding:8px 0;color:#9ca3af">✗ Advanced Features</li></ul></div><div style="background:#667eea;color:#fff;padding:40px;border-radius:16px;transform:scale(1.05);box-shadow:0 20px 40px rgba(102,126,234,0.3)"><div style="background:rgba(255,255,255,0.2);padding:4px 12px;border-radius:12px;display:inline-block;margin-bottom:12px;font-size:0.875rem">POPULAR</div><h3 style="font-size:1.5rem;font-weight:700;margin-bottom:8px">Pro</h3><div style="font-size:2.5rem;font-weight:900;margin-bottom:20px">$29<span style="font-size:1rem;opacity:0.8">/mo</span></div><ul style="list-style:none;padding:0"><li style="padding:8px 0">✓ Unlimited Projects</li><li style="padding:8px 0">✓ Priority Support</li><li style="padding:8px 0">✓ Advanced Features</li></ul></div><div style="background:#fff;padding:40px;border-radius:16px;border:2px solid #e5e7eb"><h3 style="font-size:1.5rem;font-weight:700;margin-bottom:8px">Enterprise</h3><div style="font-size:2.5rem;font-weight:900;margin-bottom:20px">$99<span style="font-size:1rem;color:#6b7280">/mo</span></div><ul style="list-style:none;padding:0"><li style="padding:8px 0;color:#1a1a1a">✓ Custom Everything</li><li style="padding:8px 0;color:#1a1a1a">✓ Dedicated Support</li><li style="padding:8px 0;color:#1a1a1a">✓ SLA Guarantee</li></ul></div></div></div></section>"""
+    },
+    {
+        "component_id": "feature_bento_v1",
+        "name": "Bento Box Features",
+        "category": "features",
+        "type": "bento",
+        "description": "Modern bento-style feature layout",
+        "tags": ["bento", "grid", "modern", "creative"],
+        "responsive": True,
+        "customization_points": ["features"],
+        "html": """<section style="padding:100px 40px;background:#fff"><div style="max-width:1200px;margin:0 auto;display:grid;grid-template-columns:repeat(4,1fr);grid-template-rows:repeat(2,250px);gap:16px"><div style="grid-column:span 2;grid-row:span 2;background:linear-gradient(135deg,#667eea,#764ba2);border-radius:24px;padding:40px;color:#fff;display:flex;flex-direction:column;justify-content:center"><h3 style="font-size:2.5rem;font-weight:800;margin-bottom:16px">Main Feature</h3><p style="font-size:1.125rem;opacity:0.95">The centerpiece of your product offering</p></div><div style="grid-column:span 2;background:#f9fafb;border-radius:24px;padding:32px;display:flex;flex-direction:column;justify-content:center"><h4 style="font-size:1.5rem;font-weight:700;margin-bottom:12px">Feature Two</h4><p style="color:#6b7280">Supporting feature description</p></div><div style="background:#f9fafb;border-radius:24px;padding:32px;display:flex;flex-direction:column;justify-content:center"><h4 style="font-weight:700;margin-bottom:8px">Quick</h4><p style="color:#6b7280;font-size:0.9375rem">Fast</p></div><div style="background:#f9fafb;border-radius:24px;padding:32px;display:flex;flex-direction:column;justify-content:center"><h4 style="font-weight:700;margin-bottom:8px">Secure</h4><p style="color:#6b7280;font-size:0.9375rem">Safe</p></div></div></section>"""
+    },
+    {
+        "component_id": "product_carousel_v1",
+        "name": "Product Carousel",
+        "category": "products",
+        "type": "carousel",
+        "description": "Horizontal scrolling product showcase",
+        "tags": ["carousel", "slider", "products", "modern"],
+        "responsive": True,
+        "customization_points": ["section_title", "products"],
+        "html": """<section style="padding:100px 40px;background:#fff;overflow:hidden"><div style="max-width:1400px;margin:0 auto"><h2 style="text-align:center;font-size:3rem;font-weight:800;margin-bottom:60px">{{ section_title }}</h2><div style="display:flex;gap:24px;overflow-x:auto;padding-bottom:20px"><div style="min-width:300px;background:#fff;border:1px solid #e5e7eb;border-radius:12px;overflow:hidden"><div style="height:300px;background:linear-gradient(135deg,#667eea,#764ba2)"></div><div style="padding:24px"><h3 style="font-weight:700;margin-bottom:8px">Product One</h3><p style="color:#6b7280;font-size:0.9375rem">Description here</p></div></div><div style="min-width:300px;background:#fff;border:1px solid #e5e7eb;border-radius:12px;overflow:hidden"><div style="height:300px;background:linear-gradient(135deg,#f093fb,#f5576c)"></div><div style="padding:24px"><h3 style="font-weight:700;margin-bottom:8px">Product Two</h3><p style="color:#6b7280;font-size:0.9375rem">Description here</p></div></div><div style="min-width:300px;background:#fff;border:1px solid #e5e7eb;border-radius:12px;overflow:hidden"><div style="height:300px;background:linear-gradient(135deg,#4facfe,#00f2fe)"></div><div style="padding:24px"><h3 style="font-weight:700;margin-bottom:8px">Product Three</h3><p style="color:#6b7280;font-size:0.9375rem">Description here</p></div></div></div></div></section>"""
+    },
+
+    # ==================== CALL-TO-ACTION BLOCKS (5 variants) ====================
+    {
+        "component_id": "cta_centered_v1",
+        "name": "Centered CTA",
+        "category": "cta",
+        "type": "cta_block",
+        "description": "Centered call-to-action section",
+        "tags": ["centered", "simple", "clean"],
+        "responsive": True,
+        "customization_points": ["headline", "subheadline", "cta_text"],
+        "html": """<section style="padding:100px 40px;background:linear-gradient(135deg,#667eea,#764ba2);text-align:center"><div style="max-width:800px;margin:0 auto;color:#fff"><h2 style="font-size:3.5rem;font-weight:900;margin-bottom:24px">{{ headline }}</h2><p style="font-size:1.25rem;margin-bottom:40px;opacity:0.95">{{ subheadline }}</p><a href="#" style="display:inline-block;background:#fff;color:#667eea;padding:18px 50px;border-radius:12px;text-decoration:none;font-weight:700;font-size:1.125rem">{{ cta_text }}</a></div></section>"""
+    },
+    {
+        "component_id": "cta_split_v1",
+        "name": "Split CTA",
+        "category": "cta",
+        "type": "cta_block",
+        "description": "Two-column CTA with text and form",
+        "tags": ["split", "form", "newsletter"],
+        "responsive": True,
+        "customization_points": ["headline", "description", "cta_text"],
+        "html": """<section style="padding:100px 40px;background:#f9fafb"><div style="max-width:1200px;margin:0 auto;background:#fff;border-radius:24px;box-shadow:0 20px 60px rgba(0,0,0,0.1);overflow:hidden;display:grid;grid-template-columns:1fr 1fr;align-items:center"><div style="padding:60px"><h2 style="font-size:3rem;font-weight:800;margin-bottom:20px">{{ headline }}</h2><p style="font-size:1.125rem;color:#6b7280">{{ description }}</p></div><div style="background:linear-gradient(135deg,#667eea,#764ba2);padding:60px;color:#fff"><input type="email" placeholder="Enter your email" style="width:100%;padding:16px;border-radius:8px;border:none;margin-bottom:16px;font-size:1rem"><button style="width:100%;background:#fff;color:#667eea;padding:16px;border-radius:8px;border:none;font-weight:700;font-size:1rem;cursor:pointer">{{ cta_text }}</button></div></div></section>"""
+    },
+    {
+        "component_id": "cta_banner_v1",
+        "name": "Banner CTA",
+        "category": "cta",
+        "type": "cta_banner",
+        "description": "Full-width banner style CTA",
+        "tags": ["banner", "wide", "bold"],
+        "responsive": True,
+        "customization_points": ["headline", "cta_text"],
+        "html": """<section style="padding:60px 40px;background:#1a1a1a;color:#fff"><div style="max-width:1200px;margin:0 auto;display:flex;justify-content:space-between;align-items:center"><div><h3 style="font-size:2.5rem;font-weight:800;margin-bottom:12px">{{ headline }}</h3><p style="font-size:1.125rem;opacity:0.9">Get started today with no credit card required</p></div><a href="#" style="background:#fff;color:#1a1a1a;padding:18px 40px;border-radius:8px;text-decoration:none;font-weight:700;font-size:1.125rem;white-space:nowrap">{{ cta_text }}</a></div></section>"""
+    },
+    {
+        "component_id": "cta_card_v1",
+        "name": "Card CTA",
+        "category": "cta",
+        "type": "cta_card",
+        "description": "CTA in a floating card design",
+        "tags": ["card", "floating", "modern"],
+        "responsive": True,
+        "customization_points": ["headline", "subheadline", "cta_text"],
+        "html": """<section style="padding:100px 40px;background:#fff"><div style="max-width:800px;margin:0 auto;background:linear-gradient(135deg,#667eea,#764ba2);border-radius:24px;padding:80px;text-align:center;color:#fff;box-shadow:0 30px 60px rgba(102,126,234,0.3)"><h2 style="font-size:3.5rem;font-weight:900;margin-bottom:20px">{{ headline }}</h2><p style="font-size:1.25rem;margin-bottom:40px;opacity:0.95">{{ subheadline }}</p><a href="#" style="display:inline-block;background:#fff;color:#667eea;padding:18px 50px;border-radius:12px;text-decoration:none;font-weight:700;font-size:1.125rem">{{ cta_text }}</a></div></section>"""
+    },
+    {
+        "component_id": "cta_minimal_v1",
+        "name": "Minimal CTA",
+        "category": "cta",
+        "type": "cta_block",
+        "description": "Subtle minimal call-to-action",
+        "tags": ["minimal", "subtle", "clean"],
+        "responsive": True,
+        "customization_points": ["headline", "cta_text"],
+        "html": """<section style="padding:80px 40px;background:#fff;border-top:1px solid #e5e7eb;border-bottom:1px solid #e5e7eb"><div style="max-width:1200px;margin:0 auto;display:flex;justify-content:space-between;align-items:center"><h3 style="font-size:2rem;font-weight:700">{{ headline }}</h3><a href="#" style="background:#1a1a1a;color:#fff;padding:16px 32px;border-radius:8px;text-decoration:none;font-weight:600">{{ cta_text }}</a></div></section>"""
+    },
+
+    # ==================== FORMS (5 variants) ====================
+    {
+        "component_id": "form_contact_v1",
+        "name": "Contact Form",
+        "category": "forms",
+        "type": "contact",
+        "description": "Standard contact form with fields",
+        "tags": ["contact", "form", "input"],
+        "responsive": True,
+        "customization_points": ["form_title", "submit_text"],
+        "html": """<section style="padding:100px 40px;background:#fff"><div style="max-width:600px;margin:0 auto"><h2 style="font-size:3rem;font-weight:800;margin-bottom:40px;text-align:center">{{ form_title }}</h2><form style="display:flex;flex-direction:column;gap:20px"><input type="text" placeholder="Your Name" style="padding:16px;border:1px solid #d1d5db;border-radius:8px;font-size:1rem"><input type="email" placeholder="Your Email" style="padding:16px;border:1px solid #d1d5db;border-radius:8px;font-size:1rem"><textarea placeholder="Your Message" rows="5" style="padding:16px;border:1px solid #d1d5db;border-radius:8px;font-size:1rem;resize:vertical"></textarea><button type="submit" style="background:#1a1a1a;color:#fff;padding:16px;border-radius:8px;border:none;font-weight:700;font-size:1rem;cursor:pointer">{{ submit_text }}</button></form></div></section>"""
+    },
+    {
+        "component_id": "form_newsletter_v1",
+        "name": "Newsletter Form",
+        "category": "forms",
+        "type": "newsletter",
+        "description": "Email newsletter subscription form",
+        "tags": ["newsletter", "email", "subscribe"],
+        "responsive": True,
+        "customization_points": ["title", "description", "button_text"],
+        "html": """<section style="padding:80px 40px;background:#f9fafb"><div style="max-width:600px;margin:0 auto;text-align:center"><h3 style="font-size:2rem;font-weight:700;margin-bottom:16px">{{ title }}</h3><p style="color:#6b7280;margin-bottom:32px">{{ description }}</p><form style="display:flex;gap:12px"><input type="email" placeholder="Enter your email" style="flex:1;padding:16px;border:1px solid #d1d5db;border-radius:8px;font-size:1rem"><button type="submit" style="background:#1a1a1a;color:#fff;padding:16px 32px;border-radius:8px;border:none;font-weight:700;cursor:pointer">{{ button_text }}</button></form></div></section>"""
+    },
+    {
+        "component_id": "form_login_v1",
+        "name": "Login Form",
+        "category": "forms",
+        "type": "login",
+        "description": "User login form",
+        "tags": ["login", "auth", "authentication"],
+        "responsive": True,
+        "customization_points": ["form_title", "login_button"],
+        "html": """<section style="min-height:100vh;display:flex;align-items:center;justify-content:center;background:#f9fafb;padding:40px"><div style="background:#fff;padding:60px;border-radius:16px;box-shadow:0 4px 20px rgba(0,0,0,0.08);width:100%;max-width:450px"><h2 style="font-size:2rem;font-weight:800;margin-bottom:32px;text-align:center">{{ form_title }}</h2><form style="display:flex;flex-direction:column;gap:20px"><input type="email" placeholder="Email address" style="padding:16px;border:1px solid #d1d5db;border-radius:8px;font-size:1rem"><input type="password" placeholder="Password" style="padding:16px;border:1px solid #d1d5db;border-radius:8px;font-size:1rem"><button type="submit" style="background:#1a1a1a;color:#fff;padding:16px;border-radius:8px;border:none;font-weight:700;font-size:1rem;cursor:pointer">{{ login_button }}</button></form><p style="text-align:center;margin-top:20px;color:#6b7280;font-size:0.9375rem">Don't have an account? <a href="#" style="color:#667eea;text-decoration:none;font-weight:600">Sign up</a></p></div></section>"""
+    },
+    {
+        "component_id": "form_signup_v1",
+        "name": "Signup Form",
+        "category": "forms",
+        "type": "signup",
+        "description": "User registration form",
+        "tags": ["signup", "register", "auth"],
+        "responsive": True,
+        "customization_points": ["form_title", "signup_button"],
+        "html": """<section style="min-height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#667eea,#764ba2);padding:40px"><div style="background:#fff;padding:60px;border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,0.2);width:100%;max-width:500px"><h2 style="font-size:2rem;font-weight:800;margin-bottom:32px;text-align:center">{{ form_title }}</h2><form style="display:flex;flex-direction:column;gap:16px"><input type="text" placeholder="Full Name" style="padding:16px;border:1px solid #d1d5db;border-radius:8px;font-size:1rem"><input type="email" placeholder="Email address" style="padding:16px;border:1px solid #d1d5db;border-radius:8px;font-size:1rem"><input type="password" placeholder="Password" style="padding:16px;border:1px solid #d1d5db;border-radius:8px;font-size:1rem"><input type="password" placeholder="Confirm Password" style="padding:16px;border:1px solid #d1d5db;border-radius:8px;font-size:1rem"><button type="submit" style="background:#667eea;color:#fff;padding:16px;border-radius:8px;border:none;font-weight:700;font-size:1rem;cursor:pointer;margin-top:8px">{{ signup_button }}</button></form></div></section>"""
+    },
+    {
+        "component_id": "form_search_v1",
+        "name": "Search Form",
+        "category": "forms",
+        "type": "search",
+        "description": "Search bar component",
+        "tags": ["search", "find", "filter"],
+        "responsive": True,
+        "customization_points": ["placeholder", "button_text"],
+        "html": """<div style="max-width:600px;margin:0 auto;padding:40px"><form style="display:flex;gap:12px;background:#fff;padding:8px;border-radius:12px;box-shadow:0 4px 20px rgba(0,0,0,0.1)"><input type="text" placeholder="{{ placeholder }}" style="flex:1;padding:16px;border:none;font-size:1rem;outline:none"><button type="submit" style="background:#1a1a1a;color:#fff;padding:16px 32px;border-radius:8px;border:none;font-weight:700;cursor:pointer">{{ button_text }}</button></form></div>"""
+    },
+
+    # ==================== TESTIMONIALS (5 variants) ====================
+    {
+        "component_id": "testimonial_cards_v1",
+        "name": "Testimonial Cards",
+        "category": "testimonials",
+        "type": "testimonial_grid",
+        "description": "Grid of testimonial cards",
+        "tags": ["testimonials", "reviews", "social-proof"],
+        "responsive": True,
+        "customization_points": ["section_title", "testimonials"],
+        "html": """<section style="padding:100px 40px;background:#f9fafb"><div style="max-width:1200px;margin:0 auto"><h2 style="text-align:center;font-size:3rem;font-weight:800;margin-bottom:60px">{{ section_title }}</h2><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:32px"><div style="background:#fff;padding:40px;border-radius:16px;box-shadow:0 4px 20px rgba(0,0,0,0.05)"><div style="color:#fbbf24;margin-bottom:20px;font-size:1.25rem">★★★★★</div><p style="color:#1a1a1a;margin-bottom:24px;line-height:1.6">"This product completely transformed how we work. Highly recommended!"</p><div style="display:flex;align-items:center;gap:12px"><div style="width:48px;height:48px;background:linear-gradient(135deg,#667eea,#764ba2);border-radius:50%"></div><div><div style="font-weight:700">Sarah Johnson</div><div style="color:#6b7280;font-size:0.875rem">CEO, TechCorp</div></div></div></div><div style="background:#fff;padding:40px;border-radius:16px;box-shadow:0 4px 20px rgba(0,0,0,0.05)"><div style="color:#fbbf24;margin-bottom:20px;font-size:1.25rem">★★★★★</div><p style="color:#1a1a1a;margin-bottom:24px;line-height:1.6">"Amazing experience from start to finish. The team was incredibly helpful."</p><div style="display:flex;align-items:center;gap:12px"><div style="width:48px;height:48px;background:linear-gradient(135deg,#f093fb,#f5576c);border-radius:50%"></div><div><div style="font-weight:700">Michael Chen</div><div style="color:#6b7280;font-size:0.875rem">Founder, StartupXYZ</div></div></div></div><div style="background:#fff;padding:40px;border-radius:16px;box-shadow:0 4px 20px rgba(0,0,0,0.05)"><div style="color:#fbbf24;margin-bottom:20px;font-size:1.25rem">★★★★★</div><p style="color:#1a1a1a;margin-bottom:24px;line-height:1.6">"Best investment we've made this year. Results exceeded expectations."</p><div style="display:flex;align-items:center;gap:12px"><div style="width:48px;height:48px;background:linear-gradient(135deg,#43e97b,#38f9d7);border-radius:50%"></div><div><div style="font-weight:700">Emily Davis</div><div style="color:#6b7280;font-size:0.875rem">Director, Agency Co</div></div></div></div></div></div></section>"""
+    },
+    {
+        "component_id": "testimonial_featured_v1",
+        "name": "Featured Testimonial",
+        "category": "testimonials",
+        "type": "featured_testimonial",
+        "description": "Large featured testimonial",
+        "tags": ["testimonial", "featured", "highlight"],
+        "responsive": True,
+        "customization_points": ["quote", "author", "role", "company"],
+        "html": """<section style="padding:100px 40px;background:#fff"><div style="max-width:1000px;margin:0 auto;text-align:center"><div style="font-size:4rem;color:#667eea;margin-bottom:32px">"</div><p style="font-size:2rem;font-weight:600;line-height:1.5;color:#1a1a1a;margin-bottom:40px">{{ quote }}</p><div style="width:80px;height:80px;background:linear-gradient(135deg,#667eea,#764ba2);border-radius:50%;margin:0 auto 20px"></div><div style="font-size:1.25rem;font-weight:700;margin-bottom:4px">{{ author }}</div><div style="color:#6b7280">{{ role }}, {{ company }}</div></div></section>"""
+    },
+    {
+        "component_id": "testimonial_slider_v1",
+        "name": "Testimonial Slider",
+        "category": "testimonials",
+        "type": "testimonial_carousel",
+        "description": "Horizontal scrolling testimonials",
+        "tags": ["slider", "carousel", "testimonials"],
+        "responsive": True,
+        "customization_points": ["testimonials"],
+        "html": """<section style="padding:100px 40px;background:#f9fafb;overflow:hidden"><div style="max-width:1400px;margin:0 auto"><h2 style="text-align:center;font-size:3rem;font-weight:800;margin-bottom:60px">What Our Customers Say</h2><div style="display:flex;gap:32px;overflow-x:auto;padding-bottom:20px"><div style="min-width:400px;background:#fff;padding:40px;border-radius:16px;box-shadow:0 4px 20px rgba(0,0,0,0.05)"><div style="color:#fbbf24;margin-bottom:16px">★★★★★</div><p style="color:#1a1a1a;margin-bottom:24px;line-height:1.6">"Outstanding service and product quality."</p><div style="display:flex;align-items:center;gap:12px"><div style="width:48px;height:48px;background:#667eea;border-radius:50%"></div><div><div style="font-weight:700">Alex Turner</div><div style="color:#6b7280;font-size:0.875rem">Product Manager</div></div></div></div><div style="min-width:400px;background:#fff;padding:40px;border-radius:16px;box-shadow:0 4px 20px rgba(0,0,0,0.05)"><div style="color:#fbbf24;margin-bottom:16px">★★★★★</div><p style="color:#1a1a1a;margin-bottom:24px;line-height:1.6">"Exactly what we needed for our business."</p><div style="display:flex;align-items:center;gap:12px"><div style="width:48px;height:48px;background:#10b981;border-radius:50%"></div><div><div style="font-weight:700">Rachel Green</div><div style="color:#6b7280;font-size:0.875rem">Marketing Lead</div></div></div></div><div style="min-width:400px;background:#fff;padding:40px;border-radius:16px;box-shadow:0 4px 20px rgba(0,0,0,0.05)"><div style="color:#fbbf24;margin-bottom:16px">★★★★★</div><p style="color:#1a1a1a;margin-bottom:24px;line-height:1.6">"Incredible results in just a few weeks."</p><div style="display:flex;align-items:center;gap:12px"><div style="width:48px;height:48px;background:#f59e0b;border-radius:50%"></div><div><div style="font-weight:700">David Lee</div><div style="color:#6b7280;font-size:0.875rem">Growth Manager</div></div></div></div></div></div></section>"""
+    },
+    {
+        "component_id": "testimonial_minimal_v1",
+        "name": "Minimal Testimonial",
+        "category": "testimonials",
+        "type": "testimonial_simple",
+        "description": "Simple minimal testimonial",
+        "tags": ["minimal", "simple", "clean"],
+        "responsive": True,
+        "customization_points": ["quote", "author"],
+        "html": """<section style="padding:80px 40px;background:#fff;border-top:1px solid #e5e7eb;border-bottom:1px solid #e5e7eb"><div style="max-width:800px;margin:0 auto;text-align:center"><p style="font-size:1.5rem;font-style:italic;color:#1a1a1a;margin-bottom:24px">"{{ quote }}"</p><div style="font-weight:700">— {{ author }}</div></div></section>"""
+    },
+    {
+        "component_id": "testimonial_video_v1",
+        "name": "Video Testimonial",
+        "category": "testimonials",
+        "type": "testimonial_video",
+        "description": "Testimonial with video placeholder",
+        "tags": ["video", "testimonial", "multimedia"],
+        "responsive": True,
+        "customization_points": ["section_title", "video_url"],
+        "html": """<section style="padding:100px 40px;background:#f9fafb"><div style="max-width:1000px;margin:0 auto"><h2 style="text-align:center;font-size:3rem;font-weight:800;margin-bottom:60px">{{ section_title }}</h2><div style="background:#1a1a1a;aspect-ratio:16/9;border-radius:16px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:4rem">▶️</div><div style="margin-top:32px;text-align:center"><p style="font-size:1.25rem;color:#1a1a1a;margin-bottom:16px">"Working with this team changed everything for us."</p><div style="font-weight:700">Jennifer Brown, VP of Operations</div></div></div></section>"""
+    },
+
+    # ==================== FOOTERS (7 variants) ====================
+    {
+        "component_id": "footer_minimal_v1",
+        "name": "Minimal Footer",
+        "category": "footer",
+        "type": "footer",
+        "description": "Clean minimal footer",
+        "tags": ["minimal", "simple", "clean"],
+        "responsive": True,
+        "customization_points": ["company_name", "links"],
+        "html": """<footer style="background:#fff;border-top:1px solid #e5e7eb;padding:60px 40px"><div style="max-width:1200px;margin:0 auto;display:flex;justify-content:space-between;align-items:center"><div style="font-weight:700;font-size:1.125rem">{{ company_name }}</div><div style="display:flex;gap:32px"><a href="#" style="color:#6b7280;text-decoration:none;font-size:0.9375rem">About</a><a href="#" style="color:#6b7280;text-decoration:none;font-size:0.9375rem">Privacy</a><a href="#" style="color:#6b7280;text-decoration:none;font-size:0.9375rem">Terms</a><a href="#" style="color:#6b7280;text-decoration:none;font-size:0.9375rem">Contact</a></div></div><div style="max-width:1200px;margin:32px auto 0;text-align:center;color:#9ca3af;font-size:0.875rem">© 2025 {{ company_name }}. All rights reserved.</div></footer>"""
+    },
+    {
+        "component_id": "footer_comprehensive_v1",
+        "name": "Comprehensive Footer",
+        "category": "footer",
+        "type": "footer",
+        "description": "Multi-column footer with links",
+        "tags": ["comprehensive", "multi-column", "detailed"],
+        "responsive": True,
+        "customization_points": ["company_name", "columns"],
+        "html": """<footer style="background:#1a1a1a;color:#fff;padding:80px 40px 40px"><div style="max-width:1200px;margin:0 auto;display:grid;grid-template-columns:repeat(4,1fr);gap:60px;margin-bottom:60px"><div><div style="font-size:1.5rem;font-weight:800;margin-bottom:20px">{{ company_name }}</div><p style="color:#9ca3af;line-height:1.6">Building the future of technology, one innovation at a time.</p></div><div><h4 style="font-weight:700;margin-bottom:20px">Product</h4><div style="display:flex;flex-direction:column;gap:12px"><a href="#" style="color:#9ca3af;text-decoration:none">Features</a><a href="#" style="color:#9ca3af;text-decoration:none">Pricing</a><a href="#" style="color:#9ca3af;text-decoration:none">Documentation</a></div></div><div><h4 style="font-weight:700;margin-bottom:20px">Company</h4><div style="display:flex;flex-direction:column;gap:12px"><a href="#" style="color:#9ca3af;text-decoration:none">About</a><a href="#" style="color:#9ca3af;text-decoration:none">Careers</a><a href="#" style="color:#9ca3af;text-decoration:none">Blog</a></div></div><div><h4 style="font-weight:700;margin-bottom:20px">Legal</h4><div style="display:flex;flex-direction:column;gap:12px"><a href="#" style="color:#9ca3af;text-decoration:none">Privacy</a><a href="#" style="color:#9ca3af;text-decoration:none">Terms</a><a href="#" style="color:#9ca3af;text-decoration:none">Security</a></div></div></div><div style="max-width:1200px;margin:0 auto;padding-top:40px;border-top:1px solid #374151;text-align:center;color:#6b7280">© 2025 {{ company_name }}. All rights reserved.</div></footer>"""
+    },
+    {
+        "component_id": "footer_newsletter_v1",
+        "name": "Newsletter Footer",
+        "category": "footer",
+        "type": "footer",
+        "description": "Footer with newsletter signup",
+        "tags": ["newsletter", "subscription", "email"],
+        "responsive": True,
+        "customization_points": ["company_name", "newsletter_cta"],
+        "html": """<footer style="background:#f9fafb;padding:80px 40px 40px"><div style="max-width:1200px;margin:0 auto"><div style="display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:center;margin-bottom:60px"><div><h3 style="font-size:2rem;font-weight:800;margin-bottom:16px">{{ newsletter_cta }}</h3><p style="color:#6b7280;margin-bottom:24px">Get the latest updates and news delivered to your inbox.</p><form style="display:flex;gap:12px"><input type="email" placeholder="Your email" style="flex:1;padding:14px;border:1px solid #d1d5db;border-radius:8px"><button type="submit" style="background:#1a1a1a;color:#fff;padding:14px 28px;border-radius:8px;border:none;font-weight:700;cursor:pointer">Subscribe</button></form></div><div style="display:grid;grid-template-columns:repeat(2,1fr);gap:40px"><div><h4 style="font-weight:700;margin-bottom:16px">Product</h4><div style="display:flex;flex-direction:column;gap:8px"><a href="#" style="color:#6b7280;text-decoration:none">Features</a><a href="#" style="color:#6b7280;text-decoration:none">Pricing</a></div></div><div><h4 style="font-weight:700;margin-bottom:16px">Company</h4><div style="display:flex;flex-direction:column;gap:8px"><a href="#" style="color:#6b7280;text-decoration:none">About</a><a href="#" style="color:#6b7280;text-decoration:none">Contact</a></div></div></div></div><div style="text-align:center;padding-top:40px;border-top:1px solid #e5e7eb;color:#6b7280">© 2025 {{ company_name }}. All rights reserved.</div></div></footer>"""
+    },
+    {
+        "component_id": "footer_social_v1",
+        "name": "Social Media Footer",
+        "category": "footer",
+        "type": "footer",
+        "description": "Footer with social media links",
+        "tags": ["social", "media", "icons"],
+        "responsive": True,
+        "customization_points": ["company_name", "social_links"],
+        "html": """<footer style="background:#1a1a1a;color:#fff;padding:60px 40px"><div style="max-width:1200px;margin:0 auto"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:40px"><div style="font-size:1.5rem;font-weight:800">{{ company_name }}</div><div style="display:flex;gap:16px"><a href="#" style="width:40px;height:40px;background:#374151;border-radius:8px;display:flex;align-items:center;justify-content:center;text-decoration:none;color:#fff">📘</a><a href="#" style="width:40px;height:40px;background:#374151;border-radius:8px;display:flex;align-items:center;justify-content:center;text-decoration:none;color:#fff">🐦</a><a href="#" style="width:40px;height:40px;background:#374151;border-radius:8px;display:flex;align-items:center;justify-content:center;text-decoration:none;color:#fff">📷</a><a href="#" style="width:40px;height:40px;background:#374151;border-radius:8px;display:flex;align-items:center;justify-content:center;text-decoration:none;color:#fff">💼</a></div></div><div style="text-align:center;padding-top:40px;border-top:1px solid #374151;color:#6b7280">© 2025 {{ company_name }}. All rights reserved.</div></div></footer>"""
+    },
+    {
+        "component_id": "footer_centered_v1",
+        "name": "Centered Footer",
+        "category": "footer",
+        "type": "footer",
+        "description": "Centered layout footer",
+        "tags": ["centered", "simple", "clean"],
+        "responsive": True,
+        "customization_points": ["company_name", "tagline"],
+        "html": """<footer style="background:#fff;border-top:1px solid #e5e7eb;padding:80px 40px"><div style="max-width:800px;margin:0 auto;text-align:center"><div style="font-size:1.5rem;font-weight:800;margin-bottom:16px">{{ company_name }}</div><p style="color:#6b7280;margin-bottom:32px">{{ tagline }}</p><div style="display:flex;justify-content:center;gap:32px;margin-bottom:40px"><a href="#" style="color:#6b7280;text-decoration:none">About</a><a href="#" style="color:#6b7280;text-decoration:none">Features</a><a href="#" style="color:#6b7280;text-decoration:none">Pricing</a><a href="#" style="color:#6b7280;text-decoration:none">Contact</a></div><div style="color:#9ca3af;font-size:0.875rem">© 2025 {{ company_name }}. All rights reserved.</div></div></footer>"""
+    },
+    {
+        "component_id": "footer_dark_v1",
+        "name": "Dark Footer",
+        "category": "footer",
+        "type": "footer",
+        "description": "Dark mode footer design",
+        "tags": ["dark", "modern", "sleek"],
+        "responsive": True,
+        "customization_points": ["company_name", "cta"],
+        "html": """<footer style="background:#0f172a;color:#fff;padding:100px 40px 40px"><div style="max-width:1200px;margin:0 auto"><div style="background:#1e293b;border-radius:16px;padding:60px;text-align:center;margin-bottom:60px"><h3 style="font-size:2.5rem;font-weight:800;margin-bottom:16px">{{ cta }}</h3><p style="color:#cbd5e1;margin-bottom:32px;font-size:1.125rem">Join thousands of satisfied customers</p><a href="#" style="display:inline-block;background:#3b82f6;color:#fff;padding:16px 40px;border-radius:8px;text-decoration:none;font-weight:700">Get Started Free</a></div><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:60px;margin-bottom:60px"><div><h4 style="font-weight:700;margin-bottom:20px">Product</h4><div style="display:flex;flex-direction:column;gap:12px"><a href="#" style="color:#94a3b8;text-decoration:none">Features</a><a href="#" style="color:#94a3b8;text-decoration:none">Pricing</a></div></div><div><h4 style="font-weight:700;margin-bottom:20px">Company</h4><div style="display:flex;flex-direction:column;gap:12px"><a href="#" style="color:#94a3b8;text-decoration:none">About</a><a href="#" style="color:#94a3b8;text-decoration:none">Blog</a></div></div><div><h4 style="font-weight:700;margin-bottom:20px">Support</h4><div style="display:flex;flex-direction:column;gap:12px"><a href="#" style="color:#94a3b8;text-decoration:none">Help Center</a><a href="#" style="color:#94a3b8;text-decoration:none">Contact</a></div></div></div><div style="text-align:center;padding-top:40px;border-top:1px solid #1e293b;color:#64748b">© 2025 {{ company_name }}. All rights reserved.</div></div></footer>"""
+    },
+    {
+        "component_id": "footer_gradient_v1",
+        "name": "Gradient Footer",
+        "category": "footer",
+        "type": "footer",
+        "description": "Footer with gradient background",
+        "tags": ["gradient", "colorful", "modern"],
+        "responsive": True,
+        "customization_points": ["company_name", "cta"],
+        "html": """<footer style="background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:#fff;padding:80px 40px 40px"><div style="max-width:1200px;margin:0 auto"><div style="text-align:center;margin-bottom:60px"><h3 style="font-size:3rem;font-weight:900;margin-bottom:16px">{{ cta }}</h3><p style="font-size:1.25rem;margin-bottom:32px;opacity:0.95">Start your journey today</p><a href="#" style="display:inline-block;background:#fff;color:#667eea;padding:18px 40px;border-radius:12px;text-decoration:none;font-weight:700">Get Started</a></div><div style="display:grid;grid-template-columns:repeat(4,1fr);gap:40px;margin-bottom:60px"><div><h4 style="font-weight:700;margin-bottom:16px;opacity:0.95">Product</h4><div style="display:flex;flex-direction:column;gap:8px"><a href="#" style="color:#fff;text-decoration:none;opacity:0.8">Features</a><a href="#" style="color:#fff;text-decoration:none;opacity:0.8">Pricing</a></div></div><div><h4 style="font-weight:700;margin-bottom:16px;opacity:0.95">Company</h4><div style="display:flex;flex-direction:column;gap:8px"><a href="#" style="color:#fff;text-decoration:none;opacity:0.8">About</a><a href="#" style="color:#fff;text-decoration:none;opacity:0.8">Careers</a></div></div><div><h4 style="font-weight:700;margin-bottom:16px;opacity:0.95">Resources</h4><div style="display:flex;flex-direction:column;gap:8px"><a href="#" style="color:#fff;text-decoration:none;opacity:0.8">Blog</a><a href="#" style="color:#fff;text-decoration:none;opacity:0.8">Docs</a></div></div><div><h4 style="font-weight:700;margin-bottom:16px;opacity:0.95">Legal</h4><div style="display:flex;flex-direction:column;gap:8px"><a href="#" style="color:#fff;text-decoration:none;opacity:0.8">Privacy</a><a href="#" style="color:#fff;text-decoration:none;opacity:0.8">Terms</a></div></div></div><div style="text-align:center;padding-top:40px;border-top:1px solid rgba(255,255,255,0.2);opacity:0.8">© 2025 {{ company_name }}. All rights reserved.</div></div></footer>"""
+    }
+]
 
 # Additional Specialized Templates (11-25)
 TEMPLATES.extend([
