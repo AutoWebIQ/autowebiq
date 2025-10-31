@@ -264,13 +264,7 @@ async def _generate_images_async(task_self, image_requirements, project_id):
         }
 
 
-# Register the task
-generate_images_task = celery_app.task(
-    bind=True,
-    base=GenerateImagesTask,
-    name='celery_tasks.generate_images_task',
-    max_retries=2,
-)(GenerateImagesTask())
+# Task is already registered with decorator above
 
 
 # Health check task
