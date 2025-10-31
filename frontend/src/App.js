@@ -872,6 +872,7 @@ function App() {
         <Route path="/auth" element={<AuthPage />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/workspace/:id" element={<Workspace />} />
+        <Route path="/workspace-v2/:id" element={<WorkspaceV2 />} />
         <Route path="/credits" element={<CreditsPage />} />
         <Route path="/terms" element={<TermsOfService />} />
         <Route path="/terms-of-service" element={<TermsOfService />} />
