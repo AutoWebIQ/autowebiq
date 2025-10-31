@@ -251,6 +251,15 @@ class GenerateImagesTask(AsyncTask):
         }
 
 
+# Register the task
+generate_images_task = celery_app.task(
+    bind=True,
+    base=GenerateImagesTask,
+    name='celery_tasks.generate_images_task',
+    max_retries=2,
+)(GenerateImagesTask())
+
+
 # Health check task
 @celery_app.task(name='celery_tasks.health_check')
 def health_check():
