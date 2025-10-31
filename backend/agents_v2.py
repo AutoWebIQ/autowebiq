@@ -50,6 +50,7 @@ class ImprovedPlannerAgent:
     
     def __init__(self, anthropic_client):
         self.client = anthropic_client
+        self.model = "claude-sonnet-4-5"  # Latest Claude 4.5 Sonnet
         self.type = AgentType.PLANNER
         self.messages = []
     
