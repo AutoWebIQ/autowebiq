@@ -68,8 +68,8 @@ class StorageService:
                 'ContentType': content_type,
             }
             
-            if public:
-                extra_args['ACL'] = 'public-read'
+            # Note: Don't use ACL if bucket has ACLs disabled
+            # Bucket policy should handle public access instead
             
             self.s3_client.put_object(
                 Bucket=self.s3_bucket,
