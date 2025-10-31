@@ -170,7 +170,7 @@ Be creative, thoughtful, and strategic. Think like you're building this for a re
             await self.send_message("🧠 Running strategic analysis...", AgentStatus.WORKING, 40)
             
             response = self.client.messages.create(
-                model="claude-sonnet-4-20250514",
+                model=self.model,
                 max_tokens=4000,
                 temperature=0.8,  # Higher for more creativity
                 system=system_prompt,
