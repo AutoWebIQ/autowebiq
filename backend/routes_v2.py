@@ -556,3 +556,159 @@ async def check_deployment_status(
             status_code=500,
             detail=f"Failed to check deployment status: {str(e)}"
         )
+
+
+
+# ==================== Validation Endpoints ====================
+
+class ValidationRequest(BaseModel):
+    """Request to validate a website"""
+    project_id: str
+    url: Optional[str] = None  # Optional deployed URL for live checks
+
+
+@router_v2.post("/validate/website")
+async def validate_website(
+    validation_request: ValidationRequest,
+    current_user: User = Depends(get_current_user),
+    session: AsyncSession = Depends(get_db)
+):
+    """
+    Run 9-point validation on a generated website
+    
+    Validates:
+    1. HTML - Syntax and structure
+    2. CSS - Syntax and best practices
+    3. JavaScript - Syntax and errors
+    4. Accessibility - WCAG 2.1 compliance
+    5. SEO - Meta tags, structure
+    6. Performance - Load time, optimization
+    7. Security - HTTPS, headers, vulnerabilities
+    8. Browser Compatibility - Cross-browser support
+    9. Mobile Responsiveness - Viewport, responsive design
+    """
+    from validation_service import WebsiteValidator
+    
+    # Verify project ownership
+    result = await session.execute(
+        select(Project)
+        .where(Project.id == validation_request.project_id)
+        .where(Project.user_id == current_user.id)
+    )
+    
+    project = result.scalar_one_or_none()
+    
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+    
+    # Check if project has generated code
+    if not project.generated_html:
+        raise HTTPException(
+            status_code=400,
+            detail="Project has no generated code. Please build the website first."
+        )
+    
+    try:
+        # Initialize validator
+        validator = WebsiteValidator()
+        
+        # Run validation
+        validation_results = await validator.validate_all(
+            html_content=project.generated_html,
+            css_content=project.generated_css or "",
+            js_content=project.generated_js or "",
+            url=validation_request.url
+        )
+        
+        # Store validation results in project (optional)
+        # You could add a validation_results JSON field to Project model
+        
+        return {
+            'success': True,
+            'project_id': project.id,
+            'project_name': project.name,
+            'overall_score': validation_results['overall_score'],
+            'passed_checks': validation_results['passed_checks'],
+            'total_checks': validation_results['total_checks'],
+            'all_passed': validation_results['all_passed'],
+            'results': validation_results['results'],
+            'summary': validation_results['summary'],
+            'timestamp': datetime.now(timezone.utc).isoformat()
+        }
+        
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Validation error: {str(e)}"
+        )
+
+
+@router_v2.get("/validate/checks")
+async def get_validation_checks(current_user: User = Depends(get_current_user)):
+    """Get information about available validation checks"""
+    
+    return {
+        'total_checks': 9,
+        'checks': [
+            {
+                'id': 1,
+                'name': 'HTML Validation',
+                'description': 'Validates HTML5 syntax, structure, and semantic markup',
+                'criteria': ['DOCTYPE', 'Semantic tags', 'Closed tags', 'Valid attributes']
+            },
+            {
+                'id': 2,
+                'name': 'CSS Validation',
+                'description': 'Validates CSS syntax and best practices',
+                'criteria': ['Valid syntax', 'Vendor prefixes', 'No duplicates', 'Proper usage']
+            },
+            {
+                'id': 3,
+                'name': 'JavaScript Validation',
+                'description': 'Validates JavaScript syntax and modern practices',
+                'criteria': ['No console statements', 'No eval', 'ES6+ syntax', 'Error handling']
+            },
+            {
+                'id': 4,
+                'name': 'Accessibility (WCAG 2.1)',
+                'description': 'Validates WCAG 2.1 accessibility compliance',
+                'criteria': ['Alt text', 'ARIA labels', 'Semantic HTML', 'Keyboard navigation', 'Color contrast']
+            },
+            {
+                'id': 5,
+                'name': 'SEO Optimization',
+                'description': 'Validates SEO best practices',
+                'criteria': ['Meta tags', 'Title', 'Description', 'Open Graph', 'Heading structure']
+            },
+            {
+                'id': 6,
+                'name': 'Performance',
+                'description': 'Validates performance optimization',
+                'criteria': ['File sizes', 'Minification', 'Image optimization', 'Lazy loading', 'Caching']
+            },
+            {
+                'id': 7,
+                'name': 'Security',
+                'description': 'Validates security best practices',
+                'criteria': ['HTTPS', 'CSP', 'XSS prevention', 'Secure headers', 'CSRF protection']
+            },
+            {
+                'id': 8,
+                'name': 'Browser Compatibility',
+                'description': 'Validates cross-browser compatibility',
+                'criteria': ['Vendor prefixes', 'Polyfills', 'Feature detection', 'IE11 support']
+            },
+            {
+                'id': 9,
+                'name': 'Mobile Responsiveness',
+                'description': 'Validates mobile-first responsive design',
+                'criteria': ['Viewport', 'Media queries', 'Touch targets', 'Responsive images']
+            }
+        ],
+        'scoring': {
+            'excellent': '90-100',
+            'good': '75-89',
+            'needs_improvement': '60-74',
+            'poor': '0-59'
+        }
+    }
