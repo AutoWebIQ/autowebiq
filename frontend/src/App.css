@@ -2606,7 +2606,9 @@ h1, h2, h3, h4, h5, h6 {
 
 .preview-content-professional {
   flex: 1;
-  overflow: hidden;
+  overflow: auto;
+  position: relative;
+  height: 100%;
 }
 
 .preview-empty-professional {
