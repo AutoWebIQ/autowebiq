@@ -28,9 +28,14 @@ const EmergentLanding = () => {
             </div>
             <span className="brand-name">AutoWebIQ</span>
           </div>
-          <Button className="get-started-purple" onClick={() => navigate('/auth?mode=register')}>
-            Get Started
-          </Button>
+          <div className="nav-buttons">
+            <Button className="login-btn-purple" onClick={() => navigate('/auth?mode=login')}>
+              Login
+            </Button>
+            <Button className="get-started-purple" onClick={() => navigate('/auth?mode=register')}>
+              Get Started
+            </Button>
+          </div>
         </div>
       </nav>
 
