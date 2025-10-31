@@ -1,71 +1,127 @@
-import React, { useState, useEffect, useRef } from 'react';
+// Enhanced Workspace with V2 API and WebSocket Support
+// Real-time build updates with async Celery tasks
+
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import Editor from '@monaco-editor/react';
-import { useDropzone } from 'react-dropzone';
-import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from 'sonner';
-import { Send, ArrowLeft, Loader2, Code, Eye, ExternalLink, CreditCard, Mic, MicOff, Image as ImageIcon, Edit3, Save, Sparkles, Rocket, LogOut } from 'lucide-react';
-import ReactMarkdown from 'react-markdown';
+import { Send, Loader2, Sparkles } from 'lucide-react';
+import { useBuildWebSocket } from '../hooks/useBuildWebSocket';
+import { startAsyncBuild, getBuildStatus } from '../services/apiV2';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
-const Workspace = () => {
+const WorkspaceV2 = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [project, setProject] = useState(null);
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
-  const [previewMode, setPreviewMode] = useState('preview');
-  const [editMode, setEditMode] = useState(false);
-  const [editedCode, setEditedCode] = useState('');
-  const [isRecording, setIsRecording] = useState(false);
-  const [uploadingFile, setUploadingFile] = useState(false);
+  const [buildingAsync, setBuildingAsync] = useState(false);
+  const [currentTaskId, setCurrentTaskId] = useState(null);
   const [userCredits, setUserCredits] = useState(0);
-  const [uploadedImages, setUploadedImages] = useState([]); // Store uploaded image URLs
   const messagesEndRef = useRef(null);
-  const iframeRef = useRef(null);
-  const recognitionRef = useRef(null);
 
   const getAxiosConfig = () => ({
     headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
     withCredentials: true
   });
 
+  // WebSocket message handler
+  const handleWebSocketMessage = useCallback((data) => {
+    console.log('WebSocket message:', data);
+
+    if (data.type === 'connection') {
+      console.log('WebSocket connection established');
+      return;
+    }
+
+    if (data.type === 'agent_message') {
+      // Add agent message to chat
+      const agentEmoji = {
+        'planner': '🧠',
+        'frontend': '🎨',
+        'backend': '⚙️',
+        'image': '🖼️',
+        'testing': '🧪',
+        'initializing': '🚀',
+        'building': '🏗️'
+      }[data.agent_type] || '💬';
+
+      const statusText = data.status === 'working' ? 'working...' : data.status;
+      
+      setMessages(prev => [...prev, {
+        role: 'system',
+        content: `${agentEmoji} **${data.agent_type} Agent** [${data.progress}%]: ${data.message}`,
+        created_at: new Date().toISOString()
+      }]);
+    }
+
+    if (data.type === 'build_progress') {
+      console.log('Build progress:', data.data);
+    }
+
+    if (data.type === 'build_complete') {
+      setBuildingAsync(false);
+      setCurrentTaskId(null);
+      
+      // Update project with generated code
+      if (data.result && data.result.generated_code) {
+        setProject(prev => ({
+          ...prev,
+          generated_code: data.result.generated_code
+        }));
+      }
+
+      setMessages(prev => [...prev, {
+        role: 'system',
+        content: `✅ **Build Complete!** Website generated successfully in ${data.result.build_time?.toFixed(1) || '?'}s`,
+        created_at: new Date().toISOString()
+      }]);
+
+      toast.success('Website built successfully!');
+      
+      // Refresh credits
+      fetchUserCredits();
+    }
+
+    if (data.type === 'build_error') {
+      setBuildingAsync(false);
+      setCurrentTaskId(null);
+      
+      setMessages(prev => [...prev, {
+        role: 'system',
+        content: `❌ **Build Failed**: ${data.error}`,
+        created_at: new Date().toISOString()
+      }]);
+
+      toast.error('Build failed. Please try again.');
+    }
+
+    if (data.type === 'heartbeat') {
+      // Just keep connection alive
+      console.log('Heartbeat received');
+    }
+  }, []);
+
+  // Initialize WebSocket
+  const { connectionStatus, sendMessage } = useBuildWebSocket(
+    id,
+    localStorage.getItem('token'),
+    handleWebSocketMessage
+  );
+
   useEffect(() => {
     fetchProject();
     fetchMessages();
     fetchUserCredits();
-    initVoiceRecognition();
   }, [id]);
 
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
-
-  useEffect(() => {
-    if (project && iframeRef.current && previewMode === 'preview' && !editMode) {
-      const iframe = iframeRef.current;
-      const defaultHTML = '<html><body><div style="display:flex;align-items:center;justify-content:center;height:100vh;font-family:sans-serif;color:#666;">Send a message to generate your website...</div></body></html>';
-      const codeToShow = project.generated_code || defaultHTML;
-      
-      // Force iframe refresh
-      iframe.srcdoc = '';
-      setTimeout(() => {
-        iframe.srcdoc = codeToShow;
-      }, 10);
-    }
-  }, [project?.generated_code, previewMode, editMode]);
-
-  useEffect(() => {
-    if (project && editMode) {
-      setEditedCode(project.generated_code || '');
-    }
-  }, [project, editMode]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -76,553 +132,307 @@ const Workspace = () => {
       const res = await axios.get(`${API}/projects/${id}`, getAxiosConfig());
       setProject(res.data);
     } catch (error) {
+      console.error('Error fetching project:', error);
       toast.error('Failed to load project');
-      navigate('/dashboard');
     }
   };
 
   const fetchMessages = async () => {
     try {
       const res = await axios.get(`${API}/projects/${id}/messages`, getAxiosConfig());
-      setMessages(res.data.filter(m => m.role !== 'system'));
+      setMessages(res.data);
     } catch (error) {
-      console.error('Failed to load messages');
+      console.error('Error fetching messages:', error);
     }
   };
 
   const fetchUserCredits = async () => {
     try {
-      const res = await axios.get(`${API}/auth/me`, getAxiosConfig());
+      const res = await axios.get(`${API}/credits/balance`, getAxiosConfig());
       setUserCredits(res.data.credits);
     } catch (error) {
-      console.error('Failed to load credits');
+      console.error('Error fetching credits:', error);
     }
   };
 
-  const initVoiceRecognition = () => {
-    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
-      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-      recognitionRef.current = new SpeechRecognition();
-      recognitionRef.current.continuous = false;
-      recognitionRef.current.interimResults = false;
-      
-      recognitionRef.current.onresult = (event) => {
-        const transcript = event.results[0][0].transcript;
-        setInput(prev => prev + ' ' + transcript);
-        setIsRecording(false);
-        toast.success('Voice captured!');
-      };
-      
-      recognitionRef.current.onerror = () => {
-        setIsRecording(false);
-        toast.error('Voice recognition failed');
-      };
-      
-      recognitionRef.current.onend = () => {
-        setIsRecording(false);
-      };
-    }
-  };
+  const handleSendMessage = async () => {
+    if (!input.trim() || loading || buildingAsync) return;
 
-  const toggleVoiceRecording = () => {
-    if (!recognitionRef.current) {
-      toast.error('Voice recognition not supported in this browser');
-      return;
-    }
-    
-    if (isRecording) {
-      recognitionRef.current.stop();
-      setIsRecording(false);
-    } else {
-      recognitionRef.current.start();
-      setIsRecording(true);
-      toast.info('Listening...');
-    }
-  };
-
-  const saveEditedCode = async () => {
-    try {
-      await axios.put(`${API}/projects/${id}`, {
-        generated_code: editedCode
-      }, getAxiosConfig());
-      
-      setProject(prev => ({ ...prev, generated_code: editedCode }));
-      setEditMode(false);
-      toast.success('Code saved successfully!');
-    } catch (error) {
-      toast.error('Failed to save code');
-    }
-  };
-
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({
-    accept: {
-      'image/*': ['.png', '.jpg', '.jpeg', '.gif', '.webp', '.svg'],
-      'video/*': ['.mp4', '.webm', '.mov'],
-      'application/*': ['.pdf', '.doc', '.docx']
-    },
-    maxSize: 10485760, // 10MB
-    onDrop: async (acceptedFiles) => {
-      if (acceptedFiles.length === 0) return;
-      
-      setUploadingFile(true);
-      const file = acceptedFiles[0];
-      
-      try {
-        const formData = new FormData();
-        formData.append('file', file);
-        formData.append('project_id', id);
-        
-        const config = getAxiosConfig();
-        const res = await axios.post(`${API}/upload`, formData, {
-          ...config,
-          headers: {
-            ...config.headers,
-            'Content-Type': 'multipart/form-data'
-          }
-        });
-        
-        // Check if it's an image
-        const isImage = file.type.startsWith('image/');
-        
-        if (isImage) {
-          // Add to uploaded images array
-          setUploadedImages(prev => [...prev, {
-            url: res.data.url,
-            filename: file.name,
-            format: res.data.format
-          }]);
-          toast.success(`Image uploaded: ${file.name}`);
-        } else {
-          // Add file info to chat for non-images
-          setInput(prev => prev + `\n[Uploaded: ${file.name} - ${res.data.url}]`);
-          toast.success('File uploaded!');
-        }
-      } catch (error) {
-        toast.error('Upload failed');
-      } finally {
-        setUploadingFile(false);
-      }
-    }
-  });
-
-  const sendMessage = async () => {
-    if (!input.trim() || loading) return;
-    
-    // Note: Backend will handle credit deduction dynamically
-    
-    const userMessage = {
-      role: 'user',
-      content: input,
-      created_at: new Date().toISOString()
-    };
-    
-    const messageText = input;
-    setMessages(prev => [...prev, userMessage]);
+    const messageText = input.trim();
     setInput('');
     setLoading(true);
-    
-    try {
-      const res = await axios.post(`${API}/chat`, {
-        project_id: id,
-        message: messageText
-      }, getAxiosConfig());
-      
-      setMessages(prev => [...prev, {
-        role: 'assistant',
-        content: res.data.ai_message.content,
-        created_at: res.data.ai_message.created_at
-      }]);
-      
-      if (res.data.code) {
-        setProject(prev => ({ ...prev, generated_code: res.data.code }));
-      }
-      
-      // Refresh user credits from backend
-      await fetchUserCredits();
-      
-      toast.success('Generated successfully!');
-    } catch (error) {
-      const errorMsg = error.response?.data?.detail || 'Failed to generate';
-      toast.error(errorMsg);
-      setMessages(prev => prev.slice(0, -1));
-      
-      if (error.response?.status === 402) {
-        navigate('/credits');
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
 
-  // NEW: Multi-Agent Website Builder
-  const buildWithAgents = async () => {
-    if (!input.trim() || loading) return;
-    
-    // Note: We'll get the actual cost from the backend response
-    // Backend calculates dynamically based on agents used
-    
     // Add user message
-    const userMessage = {
+    const userMsg = {
       role: 'user',
-      content: input,
+      content: messageText,
       created_at: new Date().toISOString()
     };
-    
-    const messageText = input;
-    setMessages(prev => [...prev, userMessage]);
-    setInput('');
-    setLoading(true);
-    
-    // Add agent status message with credit info
-    const agentStatusMsg = {
-      role: 'system',
-      content: '🤖 **Multi-Agent System Activated**\n\nDeploying AI agents to build your website...\n\n💳 **Dynamic Pricing**: Credits will be deducted based on agents used (Estimated: 17-35 credits)',
-      created_at: new Date().toISOString()
-    };
-    setMessages(prev => [...prev, agentStatusMsg]);
-    
+    setMessages(prev => [...prev, userMsg]);
+
     try {
-      // Add planner agent message
-      setMessages(prev => [...prev, {
-        role: 'system',
-        content: '🧠 **Planner Agent**: Analyzing your requirements... (5 credits)',
-        created_at: new Date().toISOString()
-      }]);
-      
-      const res = await axios.post(`${API}/build-with-agents`, {
-        project_id: id,
-        prompt: messageText,
-        uploaded_images: uploadedImages.map(img => img.url) // Pass uploaded image URLs
+      // Save message to database
+      await axios.post(`${API}/projects/${id}/messages`, {
+        role: 'user',
+        content: messageText
       }, getAxiosConfig());
-      
-      // Add success messages with plan details
-      const plan = res.data.plan;
-      
+
+      // Start async build with V2 API
       setMessages(prev => [...prev, {
         role: 'system',
-        content: `✅ **Planner Agent**: Project plan created!\n\n**Project**: ${plan.project_name}\n**Type**: ${plan.type}\n**Pages**: ${plan.pages.join(', ')}\n**Features**: ${plan.features.join(', ')}`,
+        content: '🚀 **Starting build...** Connecting to WebSocket for real-time updates...',
         created_at: new Date().toISOString()
       }]);
+
+      setBuildingAsync(true);
+
+      const buildResponse = await startAsyncBuild(id, messageText, []);
       
+      console.log('Async build started:', buildResponse);
+      
+      setCurrentTaskId(buildResponse.task_id);
+
       setMessages(prev => [...prev, {
         role: 'system',
-        content: '🎨 **Image Agent**: Generating custom images... (12 credits)',
+        content: `✅ **Build Started** (Task: ${buildResponse.task_id.substring(0, 8)}...)\n\nWebSocket Status: ${connectionStatus}\n\nWatch for real-time updates below!`,
         created_at: new Date().toISOString()
       }]);
-      
-      setMessages(prev => [...prev, {
-        role: 'system',
-        content: `✅ **Image Agent**: ${res.data.images?.length || 0} images created!`,
-        created_at: new Date().toISOString()
-      }]);
-      
-      setMessages(prev => [...prev, {
-        role: 'system',
-        content: '🎨 **Frontend Agent**: Building user interface... (8 credits)',
-        created_at: new Date().toISOString()
-      }]);
-      
-      setMessages(prev => [...prev, {
-        role: 'system',
-        content: '✅ **Frontend Agent**: UI code generated successfully!',
-        created_at: new Date().toISOString()
-      }]);
-      
-      if (res.data.backend_code) {
-        setMessages(prev => [...prev, {
-          role: 'system',
-          content: '⚙️ **Backend Agent**: Creating API endpoints... (6 credits)',
-          created_at: new Date().toISOString()
-        }]);
-        
-        setMessages(prev => [...prev, {
-          role: 'system',
-          content: '✅ **Backend Agent**: Backend API generated successfully!',
-          created_at: new Date().toISOString()
-        }]);
-      }
-      
-      // Testing agent message
-      setMessages(prev => [...prev, {
-        role: 'system',
-        content: '🧪 **Testing Agent**: Running quality checks... (4 credits)',
-        created_at: new Date().toISOString()
-      }]);
-      
-      const testScore = res.data.test_results?.score || 85;
-      setMessages(prev => [...prev, {
-        role: 'system',
-        content: `✅ **Testing Agent**: Tests passed! Quality score: ${testScore}/100`,
-        created_at: new Date().toISOString()
-      }]);
-      
-      // Final success message with credit breakdown
-      const creditsUsed = res.data.credits_used || 0;
-      const creditsRefunded = res.data.credits_refunded || 0;
-      const remainingBalance = res.data.remaining_balance || userCredits;
-      const costBreakdown = res.data.cost_breakdown || {};
-      
-      let breakdownText = '';
-      if (costBreakdown.breakdown) {
-        breakdownText = '\n\n**Credit Usage:**\n';
-        Object.entries(costBreakdown.breakdown).forEach(([agent, cost]) => {
-          breakdownText += `- ${agent}: ${cost} credits\n`;
-        });
-        if (creditsRefunded > 0) {
-          breakdownText += `\n💚 **Refunded**: ${creditsRefunded} credits (actual cost was less than estimated)`;
-        }
-        breakdownText += `\n\n💳 **Total Used**: ${creditsUsed} credits | **Remaining**: ${remainingBalance} credits`;
-      }
-      
-      setMessages(prev => [...prev, {
-        role: 'assistant',
-        content: `🎉 **Complete!** Your ${plan.project_name} is ready!\n\n**What was built:**\n- ${plan.pages.length} pages\n- ${plan.features.length} features\n- ${res.data.backend_code ? 'Backend API included' : 'Frontend only'}${breakdownText}\n\nCheck the preview on the right! →`,
-        created_at: new Date().toISOString()
-      }]);
-      
-      // Update preview with generated code
-      if (res.data.frontend_code) {
-        setProject(prev => ({ 
-          ...prev, 
-          generated_code: res.data.frontend_code,
-          backend_code: res.data.backend_code || '',
-          project_plan: plan
-        }));
-      }
-      
-      // Update credits with actual remaining balance
-      setUserCredits(remainingBalance);
-      
-      toast.success(`Website built! Used ${creditsUsed} credits${creditsRefunded > 0 ? ` (${creditsRefunded} refunded)` : ''}`);
-      
+
+      toast.success('Build started! Watch for real-time updates.');
+
     } catch (error) {
-      const errorMsg = error.response?.data?.detail || 'Multi-agent build failed';
-      toast.error(errorMsg);
-      
-      setMessages(prev => [...prev, {
-        role: 'system',
-        content: `❌ **Build Failed**: ${errorMsg}`,
-        created_at: new Date().toISOString()
-      }]);
+      console.error('Error starting build:', error);
       
       if (error.response?.status === 402) {
-        navigate('/credits');
+        setMessages(prev => [...prev, {
+          role: 'system',
+          content: '⚠️ **Insufficient Credits**: You need more credits to build this project.',
+          created_at: new Date().toISOString()
+        }]);
+        toast.error('Insufficient credits');
+      } else {
+        setMessages(prev => [...prev, {
+          role: 'system',
+          content: `❌ **Error**: ${error.response?.data?.detail || error.message}`,
+          created_at: new Date().toISOString()
+        }]);
+        toast.error('Failed to start build');
       }
+      
+      setBuildingAsync(false);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    navigate('/');
-  };
-
-  const openInNewTab = () => {
-    if (!project.generated_code) {
-      toast.error('No code generated yet');
-      return;
+  const handleKeyPress = (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSendMessage();
     }
-    
-    const blob = new Blob([project.generated_code], { type: 'text/html' });
-    const url = window.URL.createObjectURL(blob);
-    window.open(url, '_blank');
   };
-
-  if (!project) {
-    return <div className="loading-screen">Loading workspace...</div>;
-  }
 
   return (
-    <div className="workspace-modern">
-      {/* Professional Header */}
-      <header className="workspace-header-professional">
-        <div className="header-content-professional">
-          {/* Left: Logo and Navigation */}
-          <div className="header-left-professional">
-            <div className="workspace-logo" onClick={() => navigate('/dashboard')}>
-              <Sparkles size={24} />
-              <span>AutoWebIQ</span>
-            </div>
-            <Button className="home-btn-workspace" onClick={() => navigate('/dashboard')}>
-              <Rocket size={18} />
-              Home
-            </Button>
+    <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', background: '#0a0a0a' }}>
+      {/* Header */}
+      <header style={{
+        background: '#111',
+        borderBottom: '1px solid #222',
+        padding: '16px 24px',
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center'
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+          <button
+            onClick={() => navigate('/dashboard')}
+            style={{
+              background: 'transparent',
+              border: '1px solid #333',
+              color: '#fff',
+              padding: '8px 16px',
+              borderRadius: '6px',
+              cursor: 'pointer'
+            }}
+          >
+            ← Back
+          </button>
+          <h1 style={{ color: '#fff', fontSize: '1.25rem', fontWeight: '600' }}>
+            {project?.name || 'Project'}
+          </h1>
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+          <div style={{
+            background: '#1a1a1a',
+            padding: '8px 16px',
+            borderRadius: '6px',
+            border: '1px solid #333'
+          }}>
+            <span style={{ color: '#888', marginRight: '8px' }}>WebSocket:</span>
+            <span style={{
+              color: connectionStatus === 'connected' ? '#10b981' : 
+                     connectionStatus === 'connecting' ? '#f59e0b' : '#ef4444',
+              fontWeight: '600'
+            }}>
+              {connectionStatus}
+            </span>
           </div>
 
-          {/* Center: Project Selector */}
-          <div className="header-center-professional">
-            <div className="project-selector">
-              <Code size={18} />
-              <span className="project-name">{project.name}</span>
-            </div>
-          </div>
-
-          {/* Right: Credits and Profile */}
-          <div className="header-right-professional">
-            <div className="credits-display-workspace">
-              <CreditCard size={16} />
-              <span>{userCredits} Credits</span>
-              <Button className="buy-credits-workspace" onClick={() => navigate('/credits')}>
-                Buy More
-              </Button>
-            </div>
-            
-            <div className="user-menu-workspace">
-              <div className="user-avatar-workspace">
-                {localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')).username?.[0]?.toUpperCase() || 'U' : 'U'}
-              </div>
-              <div className="user-dropdown">
-                <div className="user-dropdown-header">
-                  <div className="user-dropdown-name">
-                    {localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')).username || 'User' : 'User'}
-                  </div>
-                  <div className="user-dropdown-email">
-                    {localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')).email : 'email@example.com'}
-                  </div>
-                </div>
-                <button className="logout-btn-workspace" onClick={handleLogout}>
-                  <LogOut size={16} />
-                  Logout
-                </button>
-              </div>
-            </div>
+          <div style={{
+            background: '#1a1a1a',
+            padding: '8px 16px',
+            borderRadius: '6px',
+            border: '1px solid #333'
+          }}>
+            <span style={{ color: '#888', marginRight: '8px' }}>Credits:</span>
+            <span style={{ color: '#fff', fontWeight: '600' }}>{userCredits}</span>
           </div>
         </div>
       </header>
 
-      {/* Main Content Area */}
-      <div className="workspace-main-professional">
-        {/* Chat Section */}
-        <div className="chat-section-professional">
-          <ScrollArea className="messages-area-professional">
+      {/* Main Content */}
+      <div style={{ flex: 1, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 0 }}>
+        {/* Chat */}
+        <div style={{ 
+          background: '#0a0a0a',
+          borderRight: '1px solid #222',
+          display: 'flex',
+          flexDirection: 'column'
+        }}>
+          {/* Messages */}
+          <div style={{
+            flex: 1,
+            overflowY: 'auto',
+            padding: '24px',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '16px'
+          }}>
             {messages.length === 0 && (
-              <div className="empty-state-professional">
-                <div className="empty-icon">🤖</div>
-                <h2>Start Building</h2>
-                <p>Describe your website and AI will generate it</p>
+              <div style={{ textAlign: 'center', padding: '40px', color: '#666' }}>
+                <Sparkles size={48} style={{ margin: '0 auto 16px', opacity: 0.5 }} />
+                <p>Start by describing your website idea...</p>
               </div>
             )}
-            
+
             {messages.map((msg, idx) => (
-              <div key={idx} className={`message-professional ${msg.role}`}>
-                <div className="message-avatar-professional">
-                  {msg.role === 'user' ? (
-                    <div className="avatar-circle user-avatar-circle">
-                      {localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')).username?.[0]?.toUpperCase() || 'U' : 'U'}
-                    </div>
-                  ) : (
-                    <div className="avatar-circle ai-avatar-circle">AI</div>
-                  )}
-                </div>
-                <div className="message-content-professional">
-                  <ReactMarkdown>{msg.content}</ReactMarkdown>
-                </div>
+              <div
+                key={idx}
+                style={{
+                  padding: '16px',
+                  borderRadius: '8px',
+                  background: msg.role === 'user' ? '#1a1a1a' : '#0f0f0f',
+                  border: `1px solid ${msg.role === 'user' ? '#333' : '#222'}`,
+                  color: '#fff'
+                }}
+              >
+                {msg.content}
               </div>
             ))}
-            
-            {loading && (
-              <div className="message-professional assistant">
-                <div className="message-avatar-professional">
-                  <div className="avatar-circle ai-avatar-circle">AI</div>
-                </div>
-                <div className="message-content-professional">
-                  <div className="loading-dots-professional">
-                    <span></span>
-                    <span></span>
-                    <span></span>
-                  </div>
-                </div>
+
+            {(loading || buildingAsync) && (
+              <div style={{
+                padding: '16px',
+                borderRadius: '8px',
+                background: '#0f0f0f',
+                border: '1px solid #222',
+                color: '#888',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px'
+              }}>
+                <Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} />
+                <span>{buildingAsync ? 'Building (async)...' : 'Processing...'}</span>
               </div>
             )}
-            
-            <div ref={messagesEndRef} />
-          </ScrollArea>
 
-          {/* Input Area */}
-          <div className="input-area-professional">
-            <Textarea
-              placeholder="Describe what you want to build..."
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                  e.preventDefault();
-                  buildWithAgents();
-                }
-              }}
-              disabled={loading}
-              className="input-textarea-professional"
-            />
-            <Button 
-              onClick={buildWithAgents}
-              disabled={loading || !input.trim()}
-              className="send-btn-professional"
-            >
-              {loading ? <Loader2 className="animate-spin" size={20} /> : <Send size={20} />}
-            </Button>
+            <div ref={messagesEndRef} />
+          </div>
+
+          {/* Input */}
+          <div style={{
+            padding: '16px 24px',
+            borderTop: '1px solid #222',
+            background: '#111'
+          }}>
+            <div style={{ display: 'flex', gap: '12px' }}>
+              <textarea
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyPress={handleKeyPress}
+                placeholder="Describe your website..."
+                disabled={loading || buildingAsync}
+                style={{
+                  flex: 1,
+                  background: '#1a1a1a',
+                  border: '1px solid #333',
+                  borderRadius: '8px',
+                  padding: '12px',
+                  color: '#fff',
+                  resize: 'none',
+                  minHeight: '60px',
+                  fontFamily: 'inherit'
+                }}
+              />
+              <button
+                onClick={handleSendMessage}
+                disabled={!input.trim() || loading || buildingAsync}
+                style={{
+                  background: input.trim() && !loading && !buildingAsync ? '#7c3aed' : '#333',
+                  border: 'none',
+                  borderRadius: '8px',
+                  padding: '12px 24px',
+                  color: '#fff',
+                  cursor: input.trim() && !loading && !buildingAsync ? 'pointer' : 'not-allowed',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px'
+                }}
+              >
+                <Send size={18} />
+              </button>
+            </div>
           </div>
         </div>
 
-        {/* Preview Section */}
-        <div className="preview-section-professional">
-          <div className="preview-toolbar-professional">
-            <div className="preview-tabs-professional">
-              <button
-                className={previewMode === 'preview' ? 'active' : ''}
-                onClick={() => setPreviewMode('preview')}
-              >
-                <Eye size={16} />
-                Preview
-              </button>
-              <button
-                className={previewMode === 'code' ? 'active' : ''}
-                onClick={() => setPreviewMode('code')}
-              >
-                <Code size={16} />
-                Code
-              </button>
-            </div>
-            {project.generated_code && (
-              <Button className="open-new-tab-professional" onClick={openInNewTab}>
-                <ExternalLink size={16} />
-                Open in Tab
-              </Button>
-            )}
+        {/* Preview */}
+        <div style={{
+          background: '#fff',
+          display: 'flex',
+          flexDirection: 'column'
+        }}>
+          <div style={{
+            padding: '16px 24px',
+            borderBottom: '1px solid #e5e7eb',
+            background: '#f9fafb'
+          }}>
+            <h3 style={{ fontSize: '0.875rem', fontWeight: '600', color: '#374151' }}>
+              Live Preview
+            </h3>
           </div>
 
-          <div className="preview-content-professional">
-            {!project.generated_code ? (
-              <div className="preview-empty-professional">
-                <Code size={64} />
-                <p>Your website will appear here</p>
-              </div>
+          <div style={{ flex: 1, overflow: 'auto' }}>
+            {project?.generated_code ? (
+              <iframe
+                srcDoc={project.generated_code}
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  border: 'none'
+                }}
+                title="preview"
+              />
             ) : (
-              <>
-                {previewMode === 'preview' && (
-                  <iframe
-                    ref={iframeRef}
-                    srcDoc={project.generated_code}
-                    title="Website Preview"
-                    className="preview-iframe-professional"
-                  />
-                )}
-                {previewMode === 'code' && (
-                  <Editor
-                    height="100%"
-                    defaultLanguage="html"
-                    value={project.generated_code}
-                    theme="vs-dark"
-                    options={{
-                      readOnly: !editMode,
-                      minimap: { enabled: false },
-                      fontSize: 14
-                    }}
-                    onChange={(value) => setEditedCode(value)}
-                  />
-                )}
-              </>
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                height: '100%',
+                color: '#9ca3af'
+              }}>
+                <p>No preview available yet</p>
+              </div>
             )}
           </div>
         </div>
@@ -631,4 +441,4 @@ const Workspace = () => {
   );
 };
 
-export default Workspace;
+export default WorkspaceV2;
