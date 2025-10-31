@@ -162,6 +162,40 @@ async def get_user_credits(
 
 # ==================== Project Endpoints ====================
 
+class CreateProjectRequest(BaseModel):
+    name: str
+    description: Optional[str] = None
+
+@router_v2.post("/projects")
+async def create_project(
+    project_data: CreateProjectRequest,
+    current_user: User = Depends(get_current_user),
+    session: AsyncSession = Depends(get_db)
+):
+    """Create a new project"""
+    project = Project(
+        id=str(uuid.uuid4()),
+        user_id=current_user.id,
+        name=project_data.name,
+        description=project_data.description,
+        status='draft',
+        created_at=datetime.now(timezone.utc),
+        updated_at=datetime.now(timezone.utc)
+    )
+    
+    session.add(project)
+    await session.commit()
+    
+    return {
+        'id': project.id,
+        'name': project.name,
+        'description': project.description,
+        'status': project.status,
+        'created_at': project.created_at.isoformat(),
+        'updated_at': project.updated_at.isoformat()
+    }
+
+
 @router_v2.get("/projects")
 async def list_projects(
     current_user: User = Depends(get_current_user),
