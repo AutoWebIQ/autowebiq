@@ -630,6 +630,25 @@ h1, h2, h3, h4, h5, h6 {
   gap: 1.5rem;
 }
 
+.create-project-form input,
+.create-project-form textarea {
+  color: #1F2937 !important;
+  background: white !important;
+  border: 1px solid #E5E7EB !important;
+}
+
+.create-project-form input::placeholder,
+.create-project-form textarea::placeholder {
+  color: #9CA3AF !important;
+}
+
+.create-project-form input:focus,
+.create-project-form textarea:focus {
+  border-color: #8B5CF6 !important;
+  outline: none !important;
+  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1) !important;
+}
+
 /* Workspace - Split Screen */
 .workspace-container {
   display: flex;
