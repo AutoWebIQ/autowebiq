@@ -13,6 +13,15 @@ from datetime import datetime, timezone
 import uuid
 from typing import Dict, List
 
+def parse_datetime(value):
+    """Parse datetime from MongoDB (could be string or datetime)"""
+    if value is None:
+        return datetime.now(timezone.utc)
+    if isinstance(value, str):
+        from dateutil import parser
+        return parser.isoparse(value)
+    return value
+
 class DataMigrator:
     """Handles migration from MongoDB to PostgreSQL"""
     
