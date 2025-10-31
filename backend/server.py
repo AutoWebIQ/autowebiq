@@ -24,6 +24,7 @@ from openai import AsyncOpenAI
 from emergentintegrations.llm.chat import LlmChat, UserMessage
 import httpx
 from agents_v2 import OptimizedAgentOrchestrator
+from template_orchestrator import TemplateBasedOrchestrator
 from docker_manager import docker_manager
 from github_manager import github_manager
 from gke_manager import gke_manager
