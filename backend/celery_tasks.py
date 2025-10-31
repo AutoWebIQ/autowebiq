@@ -205,50 +205,50 @@ class GenerateImagesTask(AsyncTask):
         Returns:
             Dict with status and generated images
         """
-    
-    try:
-        print(f"🎨 Generating images for project {project_id}...")
         
-        # Import here
-        from agents_v2 import ImprovedImageAgent
-        from openai import AsyncOpenAI
-        import os
-        
-        # Initialize image agent
-        openai_key = os.environ.get('OPENAI_API_KEY')
-        client = AsyncOpenAI(api_key=openai_key)
-        image_agent = ImprovedImageAgent(client)
-        
-        # Update state
-        self.update_state(
-            state='PROGRESS',
-            meta={'stage': 'generating_images', 'progress': 50}
-        )
-        
-        # Generate images
-        plan = {
-            'image_requirements': image_requirements,
-            'project_id': project_id
-        }
-        
-        images = await image_agent.think(plan, {})
-        
-        print(f"✅ Generated {len(images)} images")
-        
-        return {
-            'status': 'success',
-            'images': images,
-            'count': len(images)
-        }
-        
-    except Exception as e:
-        error_msg = str(e)
-        print(f"❌ Image generation failed: {error_msg}")
-        
-        return {
-            'status': 'failed',
-            'error': error_msg
-        }
+        try:
+            print(f"🎨 Generating images for project {project_id}...")
+            
+            # Import here
+            from agents_v2 import ImprovedImageAgent
+            from openai import AsyncOpenAI
+            import os
+            
+            # Initialize image agent
+            openai_key = os.environ.get('OPENAI_API_KEY')
+            client = AsyncOpenAI(api_key=openai_key)
+            image_agent = ImprovedImageAgent(client)
+            
+            # Update state
+            self.update_state(
+                state='PROGRESS',
+                meta={'stage': 'generating_images', 'progress': 50}
+            )
+            
+            # Generate images
+            plan = {
+                'image_requirements': image_requirements,
+                'project_id': project_id
+            }
+            
+            images = await image_agent.think(plan, {})
+            
+            print(f"✅ Generated {len(images)} images")
+            
+            return {
+                'status': 'success',
+                'images': images,
+                'count': len(images)
+            }
+            
+        except Exception as e:
+            error_msg = str(e)
+            print(f"❌ Image generation failed: {error_msg}")
+            
+            return {
+                'status': 'failed',
+                'error': error_msg
+            }
 
 
 # Register the task
