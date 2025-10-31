@@ -2358,6 +2358,8 @@ h1, h2, h3, h4, h5, h6 {
   flex-direction: column;
   background: white;
   border-right: 1px solid #E5E7EB;
+  height: 100%;
+  overflow: hidden;
 }
 
 .messages-area-professional {
