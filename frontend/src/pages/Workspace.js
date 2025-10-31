@@ -287,6 +287,56 @@ const WorkspaceV2 = () => {
     }
   };
 
+  const handleValidate = async () => {
+    if (!project?.generated_code) {
+      toast.error('Please build your website first');
+      return;
+    }
+
+    setValidating(true);
+    
+    try {
+      toast.info('🔍 Running 9-point validation...');
+      
+      const result = await validateWebsite(id, deploymentUrl);
+      
+      setValidationResults(result);
+      setShowValidationModal(true);
+      
+      const statusEmoji = result.all_passed ? '✅' : result.overall_score >= 75 ? '⚠️' : '❌';
+      const statusText = result.overall_score >= 90 ? 'EXCELLENT' : 
+                        result.overall_score >= 75 ? 'GOOD' : 
+                        result.overall_score >= 60 ? 'NEEDS IMPROVEMENT' : 'POOR';
+      
+      toast.success(
+        <div>
+          <div>{statusEmoji} Validation Complete!</div>
+          <div>Score: {result.overall_score}/100 ({statusText})</div>
+          <div>{result.passed_checks}/{result.total_checks} checks passed</div>
+        </div>,
+        { duration: 5000 }
+      );
+
+      setMessages(prev => [...prev, {
+        role: 'system',
+        content: `${statusEmoji} **Validation Complete**: ${result.passed_checks}/${result.total_checks} checks passed. Overall Score: ${result.overall_score}/100 (${statusText})`,
+        created_at: new Date().toISOString()
+      }]);
+
+    } catch (error) {
+      console.error('Validation error:', error);
+      toast.error(error.response?.data?.detail || 'Validation failed');
+      
+      setMessages(prev => [...prev, {
+        role: 'system',
+        content: `❌ **Validation Failed**: ${error.response?.data?.detail || error.message}`,
+        created_at: new Date().toISOString()
+      }]);
+    } finally {
+      setValidating(false);
+    }
+  };
+
   return (
     <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', background: '#0a0a0a' }}>
       {/* Header */}
