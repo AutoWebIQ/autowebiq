@@ -2363,7 +2363,35 @@ h1, h2, h3, h4, h5, h6 {
 .messages-area-professional {
   flex: 1;
   overflow-y: auto;
+  overflow-x: hidden;
   padding: 2rem;
+  height: 100%;
+}
+
+/* Custom scrollbar for chat area */
+.messages-area-professional::-webkit-scrollbar {
+  width: 8px;
+}
+
+.messages-area-professional::-webkit-scrollbar-track {
+  background: #F9FAFB;
+  border-radius: 4px;
+}
+
+.messages-area-professional::-webkit-scrollbar-thumb {
+  background: #D1D5DB;
+  border-radius: 4px;
+  transition: background 0.2s;
+}
+
+.messages-area-professional::-webkit-scrollbar-thumb:hover {
+  background: #9CA3AF;
+}
+
+/* Firefox scrollbar */
+.messages-area-professional {
+  scrollbar-width: thin;
+  scrollbar-color: #D1D5DB #F9FAFB;
 }
 
 .empty-state-professional {
