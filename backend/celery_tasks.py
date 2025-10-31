@@ -102,17 +102,17 @@ async def _build_website_async(task_self, user_prompt, project_id, user_id, uplo
             gemini_key=gemini_key,
             db=mongo_db
         )
-            
-            # Set up progress callback with WebSocket updates
-            async def progress_callback(stage: str, progress: int, message: str):
-                task_self.update_state(
-                    state='PROGRESS',
-                    meta={
-                        'stage': stage,
-                        'progress': progress,
-                        'message': message
-                    }
-                )
+        
+        # Set up progress callback with WebSocket updates
+        async def progress_callback(stage: str, progress: int, message: str):
+            task_self.update_state(
+                state='PROGRESS',
+                meta={
+                    'stage': stage,
+                    'progress': progress,
+                    'message': message
+                }
+            )
                 
                 # Send WebSocket update
                 await ws_manager.send_agent_message(
