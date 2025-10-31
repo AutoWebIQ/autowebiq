@@ -401,6 +401,58 @@ class ImprovedFrontendAgent:
         generated_images = context.get('images', [])
         uploaded_images = context.get('uploaded_images', [])
         
+        # Try GPT-5 first, then fallback to GPT-4o
+        models_to_try = ["gpt-5", "gpt-4o", "gpt-4o-mini"]
+        
+        for attempt, model in enumerate(models_to_try):
+            try:
+                print(f"🎨 Frontend Agent - Attempt {attempt + 1} with {model}")
+                html_code = await self._generate_with_model(model, plan, context, generated_images, uploaded_images)
+                
+                # Validate output
+                if self._validate_html(html_code):
+                    print(f"✅ Frontend generation successful with {model}")
+                    await self.send_message("✅ Frontend code generated and optimized!", AgentStatus.COMPLETED, 100)
+                    return html_code
+                else:
+                    print(f"⚠️ Invalid HTML from {model}, trying next model...")
+                    continue
+                    
+            except Exception as e:
+                import traceback
+                error_details = traceback.format_exc()
+                print(f"❌ FRONTEND AGENT ERROR with {model}: {str(e)}")
+                print(f"Full traceback: {error_details}")
+                
+                if attempt < len(models_to_try) - 1:
+                    print(f"Retrying with next model...")
+                    continue
+                else:
+                    await self.send_message(f"❌ All models failed, using fallback", AgentStatus.COMPLETED, 100)
+                    return self._create_fallback_html(plan)
+        
+        # If all attempts fail, use fallback
+        return self._create_fallback_html(plan)
+    
+    def _validate_html(self, html_code: str) -> bool:
+        """Validate HTML output quality"""
+        if not html_code or len(html_code) < 1000:
+            print("❌ HTML too short")
+            return False
+        if "<!DOCTYPE html>" not in html_code:
+            print("❌ Missing DOCTYPE")
+            return False
+        if "<body>" not in html_code:
+            print("❌ Missing body tag")
+            return False
+        if html_code.count('<div') < 5:
+            print("❌ Too few divs - likely incomplete")
+            return False
+        return True
+    
+    async def _generate_with_model(self, model: str, plan: Dict, context: Dict, generated_images: List[Dict], uploaded_images: List[str]) -> str:
+        """Generate frontend code with a specific model"""
+        
         system_prompt = """You are an ELITE frontend developer and UI/UX designer with 15 years of experience building award-winning websites. You have worked for companies like Apple, Airbnb, and Stripe.
 
 Your mission: Create a STUNNING, PIXEL-PERFECT, PRODUCTION-READY website that looks like it was designed by a top design agency.
