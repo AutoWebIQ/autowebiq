@@ -644,8 +644,8 @@ async def validate_website(
 
 
 @router_v2.get("/validate/checks")
-async def get_validation_checks(current_user: User = Depends(get_current_user)):
-    """Get information about available validation checks"""
+async def get_validation_checks():
+    """Get information about available validation checks (public endpoint)"""
     
     return {
         'total_checks': 9,
