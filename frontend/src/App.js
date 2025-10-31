@@ -662,104 +662,173 @@ const Dashboard = () => {
   }
 
   return (
-    <div className="dashboard-container" data-testid="dashboard">
-      <nav className="dashboard-nav">
-        <div className="nav-content">
-          <div className="logo" onClick={() => navigate('/dashboard')} style={{cursor: 'pointer'}}>
-            <Sparkles className="logo-icon" />
+    <div className="new-dashboard">
+      {/* Left Sidebar */}
+      <aside className="dashboard-sidebar">
+        <div className="sidebar-header">
+          <div className="sidebar-logo">
+            <Sparkles size={32} />
             <span>AutoWebIQ</span>
           </div>
-          <div className="nav-buttons">
-            <div className="user-info-badge" style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '12px',
-              padding: '8px 16px',
-              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-              borderRadius: '8px',
-              color: 'white',
-              fontSize: '14px',
-              fontWeight: '500'
-            }}>
-              <div style={{display: 'flex', flexDirection: 'column', alignItems: 'flex-start'}}>
-                <span style={{fontSize: '13px', opacity: 0.9}}>👤 {user.username || user.email?.split('@')[0]}</span>
-                <span style={{fontSize: '11px', opacity: 0.8}}>{user.email}</span>
-              </div>
+        </div>
+
+        <nav className="sidebar-nav">
+          <button className="sidebar-nav-item active">
+            <Rocket size={20} />
+            <span>Dashboard</span>
+          </button>
+          <button className="sidebar-nav-item" onClick={() => navigate('/credits')}>
+            <CreditCard size={20} />
+            <span>Credits</span>
+          </button>
+        </nav>
+
+        <div className="sidebar-footer">
+          <div className="sidebar-user">
+            <div className="user-avatar">
+              {user.username?.[0]?.toUpperCase() || user.email?.[0]?.toUpperCase() || 'U'}
             </div>
-            <div className="credits-badge" data-testid="credits-badge" style={{
-              padding: '8px 16px',
-              background: '#10b981',
-              borderRadius: '8px',
-              color: 'white',
-              fontWeight: 'bold',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px'
-            }}>
-              <CreditCard size={16} />
+            <div className="user-details">
+              <div className="user-name">{user.username || user.email?.split('@')[0]}</div>
+              <div className="user-email">{user.email}</div>
+            </div>
+          </div>
+          <button className="sidebar-logout" onClick={handleLogout}>
+            <LogOut size={18} />
+          </button>
+        </div>
+      </aside>
+
+      {/* Main Content */}
+      <main className="dashboard-main">
+        <div className="dashboard-main-content">
+          {/* Welcome Section */}
+          <div className="welcome-section">
+            <h1 className="welcome-title">
+              Welcome back, {user.username || user.email?.split('@')[0]} 👋
+            </h1>
+            <div className="credits-display">
+              <CreditCard size={20} />
               <span>{user.credits} Credits</span>
+              <Button className="buy-credits-mini" onClick={() => navigate('/credits')}>
+                Buy More
+              </Button>
             </div>
-            <Button data-testid="buy-credits-btn" onClick={() => navigate('/credits')} style={{background: '#f59e0b'}}>
-              Buy Credits
-            </Button>
-            <UserMenu user={user} onLogout={handleLogout} />
           </div>
-        </div>
-      </nav>
 
-      <div className="dashboard-content">
-        <div className="dashboard-header">
-          <div>
-            <h1 data-testid="dashboard-title">My Projects</h1>
-            <p data-testid="dashboard-subtitle">Create and manage your AI-generated websites</p>
+          {/* Build Prompt Section */}
+          <div className="build-section">
+            <h2 className="build-title">What will you build today?</h2>
+            <div className="build-input-wrapper">
+              <Input
+                placeholder="Describe your website idea..."
+                value={projectPrompt}
+                onChange={(e) => setProjectPrompt(e.target.value)}
+                className="build-input"
+              />
+              <Button 
+                className="generate-btn" 
+                onClick={() => {
+                  if (!projectPrompt.trim()) {
+                    toast.error('Please describe what you want to build');
+                    return;
+                  }
+                  setProjectName(projectPrompt.slice(0, 50));
+                  setShowCreateDialog(true);
+                }}
+              >
+                Generate
+              </Button>
+            </div>
+
+            {/* Quick Actions */}
+            <div className="quick-actions">
+              <button 
+                className="quick-action-btn"
+                onClick={() => {
+                  setProjectPrompt('Build an e-commerce store for selling products');
+                  setProjectName('E-commerce Store');
+                  setShowCreateDialog(true);
+                }}
+              >
+                <span className="action-icon">🛒</span>
+                Build a Store
+              </button>
+              <button 
+                className="quick-action-btn"
+                onClick={() => {
+                  setProjectPrompt('Create a professional portfolio website');
+                  setProjectName('Portfolio Website');
+                  setShowCreateDialog(true);
+                }}
+              >
+                <span className="action-icon">💼</span>
+                Portfolio
+              </button>
+              <button 
+                className="quick-action-btn"
+                onClick={() => {
+                  setProjectPrompt('Design a modern landing page for a SaaS product');
+                  setProjectName('Landing Page');
+                  setShowCreateDialog(true);
+                }}
+              >
+                <span className="action-icon">🚀</span>
+                Landing Page
+              </button>
+              <button 
+                className="quick-action-btn"
+                onClick={() => {
+                  const surprises = [
+                    'Build a blog website with modern design',
+                    'Create a restaurant menu website',
+                    'Design a fitness tracking app',
+                    'Build a real estate listing website'
+                  ];
+                  const random = surprises[Math.floor(Math.random() * surprises.length)];
+                  setProjectPrompt(random);
+                  setProjectName(random.split(' ').slice(0, 3).join(' '));
+                  setShowCreateDialog(true);
+                }}
+              >
+                <span className="action-icon">✨</span>
+                Surprise Me
+              </button>
+            </div>
           </div>
-          <Button data-testid="create-project-btn" size="lg" onClick={() => setShowCreateDialog(true)}>
-            <Plus className="mr-2" /> New Project
-          </Button>
-        </div>
 
-        <div className="projects-grid" data-testid="projects-grid">
-          {projects.map(project => (
-            <Card key={project.id} className="project-card" data-testid={`project-card-${project.id}`}>
-              <div className="project-card-header">
-                <h3 data-testid={`project-name-${project.id}`}>{project.name}</h3>
-                <div className="project-card-status" data-testid={`project-status-${project.id}`}>
-                  {project.status === 'completed' && <CheckCircle size={16} className="text-green-500" />}
-                  {project.status === 'generating' && <div className="spinner" />}
-                </div>
+          {/* Recent Projects */}
+          {projects.length > 0 && (
+            <div className="recent-projects">
+              <h3 className="section-title">Recent Projects</h3>
+              <div className="projects-list">
+                {projects.slice(0, 6).map(project => (
+                  <div key={project.id} className="project-item" onClick={() => navigate(`/workspace/${project.id}`)}>
+                    <div className="project-item-icon">
+                      <Code size={24} />
+                    </div>
+                    <div className="project-item-details">
+                      <div className="project-item-name">{project.name}</div>
+                      <div className="project-item-description">{project.prompt || project.description}</div>
+                    </div>
+                    <button 
+                      className="project-item-delete"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        deleteProject(project.id);
+                      }}
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
+                ))}
               </div>
-              <p className="project-prompt" data-testid={`project-prompt-${project.id}`}>{project.prompt}</p>
-              <div className="project-card-actions">
-                <Button
-                  data-testid={`view-project-btn-${project.id}`}
-                  size="sm"
-                  onClick={() => navigate(`/workspace/${project.id}`)}
-                >
-                  <Eye size={16} className="mr-1" /> Open
-                </Button>
-                <Button
-                  data-testid={`delete-project-btn-${project.id}`}
-                  size="sm"
-                  variant="ghost"
-                  onClick={() => deleteProject(project.id)}
-                >
-                  <Trash2 size={16} />
-                </Button>
-              </div>
-            </Card>
-          ))}
-          
-          {projects.length === 0 && (
-            <div className="empty-state" data-testid="empty-state">
-              <Sparkles size={48} className="empty-icon" />
-              <h3>No projects yet</h3>
-              <p>Create your first AI-generated website</p>
-              <Button onClick={() => setShowCreateDialog(true)}>Create Project</Button>
             </div>
           )}
         </div>
-      </div>
+      </main>
 
+      {/* Create Project Dialog */}
       <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
         <DialogContent data-testid="create-project-dialog" aria-describedby="create-project-description">
           <DialogHeader>
@@ -778,6 +847,20 @@ const Dashboard = () => {
             />
             <Textarea
               data-testid="project-prompt-input"
+              placeholder="Describe your website..."
+              value={projectPrompt}
+              onChange={(e) => setProjectPrompt(e.target.value)}
+              rows={4}
+              required
+            />
+            <Button type="submit" disabled={creating} data-testid="create-project-submit">
+              {creating ? <><Loader2 className="animate-spin mr-2" size={16} /> Creating...</> : 'Create Project'}
+            </Button>
+          </form>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
               placeholder="Describe your website... (e.g., 'A modern landing page for a coffee shop with menu, location, and contact form')"
               value={projectPrompt}
               onChange={(e) => setProjectPrompt(e.target.value)}
