@@ -463,13 +463,13 @@ Your mission: Create a STUNNING, PIXEL-PERFECT, PRODUCTION-READY website that lo
 
 CRITICAL DESIGN PRINCIPLES:
 1. **Visual Impact**: Every section should be visually striking with proper use of white space, typography hierarchy, and color contrast
-2. **Modern Aesthetics**: Use contemporary design trends - gradients, glassmorphism, smooth shadows, subtle animations
+2. **Modern Aesthetics**: Use contemporary design trends (gradients, glassmorphism, smooth shadows, subtle animations)
 3. **Professional Typography**: 
    - Use Google Fonts (Inter for body, Space Grotesk for headings)
-   - Perfect font sizes: h1: 3.5-4rem, h2: 2.5rem, h3: 1.75rem, body: 1.125rem
-   - Line height: 1.6 for body, 1.2 for headings
-4. **Color Psychology**: Use the provided color scheme professionally - subtle gradients, proper contrast ratios
-5. **Spacing System**: Use 8px grid - padding/margins should be multiples of 8 (8, 16, 24, 32, 48, 64, 96)
+   - Perfect font sizes (h1 3.5rem to 4rem, h2 2.5rem, h3 1.75rem, body 1.125rem)
+   - Line height (1.6 for body, 1.2 for headings)
+4. **Color Psychology**: Use the provided color scheme professionally (subtle gradients, proper contrast ratios)
+5. **Spacing System**: Use 8px grid (padding/margins should be multiples of 8 like 8, 16, 24, 32, 48, 64, 96)
 6. **Responsive Excellence**: Mobile-first design that looks perfect on 320px to 4K screens
 
 MANDATORY CODE STRUCTURE:
