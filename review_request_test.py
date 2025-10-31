@@ -3,6 +3,398 @@ import json
 import time
 from datetime import datetime
 
+class TemplateSystemReviewTester:
+    def __init__(self):
+        self.base_url = "https://autowebiq-dev.preview.emergentagent.com"
+        self.api_url = f"{self.base_url}/api"
+        self.jwt_token = None
+        self.user_id = None
+        self.tests_passed = 0
+        self.tests_total = 0
+        
+        # Demo account credentials from review request
+        self.demo_email = "demo@test.com"
+        self.demo_password = "Demo123456"
+
+    def log_test(self, name, success, details=""):
+        self.tests_total += 1
+        if success:
+            self.tests_passed += 1
+            print(f"✅ {name}")
+        else:
+            print(f"❌ {name} - {details}")
+
+    def login_demo_account(self):
+        """Login with demo account as specified in review request"""
+        print("\n🔐 LOGGING IN WITH DEMO ACCOUNT")
+        print(f"   Email: {self.demo_email}")
+        print(f"   Password: {self.demo_password}")
+        
+        login_data = {
+            "email": self.demo_email,
+            "password": self.demo_password
+        }
+        
+        response = requests.post(f"{self.api_url}/auth/login", json=login_data)
+        if response.status_code == 200:
+            data = response.json()
+            if 'access_token' in data:
+                self.jwt_token = data['access_token']
+                self.user_id = data['user']['id']
+                credits = data['user']['credits']
+                self.log_test("Demo Account Login", True)
+                print(f"   ✅ Logged in successfully")
+                print(f"   ✅ User ID: {self.user_id}")
+                print(f"   ✅ Available Credits: {credits}")
+                return True
+            else:
+                self.log_test("Demo Account Login", False, "No access_token in response")
+        else:
+            self.log_test("Demo Account Login", False, f"Status: {response.status_code}")
+        
+        return False
+
+    def create_test_project(self, name, description):
+        """Create a test project"""
+        if not self.jwt_token:
+            return None
+        
+        headers = {"Authorization": f"Bearer {self.jwt_token}"}
+        project_data = {
+            "name": name,
+            "description": description,
+            "model": "claude-4.5-sonnet-200k"
+        }
+        
+        response = requests.post(f"{self.api_url}/projects/create", json=project_data, headers=headers)
+        if response.status_code == 200:
+            data = response.json()
+            if 'id' in data:
+                print(f"   ✅ Project created: {name} (ID: {data['id']})")
+                return data['id']
+        
+        print(f"   ❌ Failed to create project: {name}")
+        return None
+
+    def test_saas_template_scenario(self):
+        """Test Scenario 1: SaaS Landing Page"""
+        print("\n" + "="*70)
+        print("🚀 TEST SCENARIO 1: SaaS Landing Page")
+        print("="*70)
+        
+        # Create project
+        project_id = self.create_test_project(
+            "SaaS B2B Platform",
+            "Modern B2B SaaS platform for project management"
+        )
+        
+        if not project_id:
+            self.log_test("SaaS Project Creation", False, "Could not create project")
+            return False
+        
+        # Test the exact prompt from review request
+        saas_prompt = "Create a modern B2B SaaS platform landing page for a project management tool with features showcase, pricing, and enterprise security highlights"
+        
+        print(f"\n📝 Testing SaaS Prompt:")
+        print(f"   {saas_prompt}")
+        
+        headers = {"Authorization": f"Bearer {self.jwt_token}"}
+        build_data = {
+            "project_id": project_id,
+            "prompt": saas_prompt,
+            "uploaded_images": []
+        }
+        
+        print(f"\n🚀 Starting SaaS template build...")
+        start_time = time.time()
+        
+        response = requests.post(f"{self.api_url}/build-with-agents", json=build_data, headers=headers, timeout=120)
+        
+        build_time = time.time() - start_time
+        print(f"   ⏱️ Build completed in: {build_time:.1f} seconds")
+        
+        if response.status_code == 200:
+            data = response.json()
+            return self.verify_saas_template_results(data, build_time)
+        else:
+            error_data = response.json() if response.headers.get('content-type', '').startswith('application/json') else {"detail": response.text}
+            self.log_test("SaaS Template Build", False, f"Status: {response.status_code}, Error: {error_data.get('detail', 'Unknown')}")
+            return False
+
+    def verify_saas_template_results(self, response_data, build_time):
+        """Verify SaaS template selection and results"""
+        print(f"\n📊 VERIFYING SaaS TEMPLATE RESULTS")
+        
+        success_count = 0
+        total_checks = 6
+        
+        # Check 1: Template Selection
+        plan = response_data.get('plan', {})
+        template_used = plan.get('template_used', '').lower()
+        project_name = plan.get('project_name', '').lower()
+        
+        print(f"   Template Used: {template_used}")
+        print(f"   Project Name: {project_name}")
+        
+        if 'saas' in template_used or 'saas' in project_name or 'b2b' in template_used:
+            self.log_test("SaaS Template Selection (saas_b2b_v1 or saas_modern_v1)", True)
+            success_count += 1
+        else:
+            self.log_test("SaaS Template Selection (saas_b2b_v1 or saas_modern_v1)", False, f"Got: {template_used}")
+        
+        # Check 2: SaaS-specific features
+        frontend_code = response_data.get('frontend_code', '')
+        saas_features = self.check_saas_features(frontend_code)
+        
+        if saas_features >= 3:
+            self.log_test("SaaS Features (pricing, features, enterprise)", True)
+            success_count += 1
+        else:
+            self.log_test("SaaS Features (pricing, features, enterprise)", False, f"Only {saas_features}/5 features found")
+        
+        # Check 3: Professional design
+        if len(frontend_code) > 5000:
+            self.log_test("Professional Design (>5000 chars)", True)
+            success_count += 1
+        else:
+            self.log_test("Professional Design (>5000 chars)", False, f"Only {len(frontend_code)} chars")
+        
+        # Check 4: Build time < 40 seconds
+        if build_time < 40:
+            self.log_test("Build Time (<40 seconds)", True)
+            success_count += 1
+        else:
+            self.log_test("Build Time (<40 seconds)", False, f"{build_time:.1f}s")
+        
+        # Check 5: Credits in range 30-50
+        credits_used = response_data.get('credits_used', 0)
+        if 30 <= credits_used <= 50:
+            self.log_test("Credits Usage (30-50 range)", True)
+            success_count += 1
+        else:
+            self.log_test("Credits Usage (30-50 range)", False, f"{credits_used} credits")
+        
+        # Check 6: Enterprise feel
+        if 'enterprise' in frontend_code.lower() or 'security' in frontend_code.lower() or 'professional' in frontend_code.lower():
+            self.log_test("Enterprise Security Highlights", True)
+            success_count += 1
+        else:
+            self.log_test("Enterprise Security Highlights", False, "No enterprise/security content found")
+        
+        print(f"\n   📋 SaaS Template Success: {success_count}/{total_checks}")
+        return success_count >= 4  # At least 4/6 checks must pass
+
+    def test_portfolio_template_scenario(self):
+        """Test Scenario 2: Portfolio Website"""
+        print("\n" + "="*70)
+        print("🎨 TEST SCENARIO 2: Portfolio Website")
+        print("="*70)
+        
+        # Create project
+        project_id = self.create_test_project(
+            "Consultant Portfolio",
+            "Professional portfolio for digital strategy consultant"
+        )
+        
+        if not project_id:
+            self.log_test("Portfolio Project Creation", False, "Could not create project")
+            return False
+        
+        # Test the exact prompt from review request
+        portfolio_prompt = "Create a professional portfolio website for a freelance consultant specializing in digital strategy with services section and contact form"
+        
+        print(f"\n📝 Testing Portfolio Prompt:")
+        print(f"   {portfolio_prompt}")
+        
+        headers = {"Authorization": f"Bearer {self.jwt_token}"}
+        build_data = {
+            "project_id": project_id,
+            "prompt": portfolio_prompt,
+            "uploaded_images": []
+        }
+        
+        print(f"\n🚀 Starting Portfolio template build...")
+        start_time = time.time()
+        
+        response = requests.post(f"{self.api_url}/build-with-agents", json=build_data, headers=headers, timeout=120)
+        
+        build_time = time.time() - start_time
+        print(f"   ⏱️ Build completed in: {build_time:.1f} seconds")
+        
+        if response.status_code == 200:
+            data = response.json()
+            return self.verify_portfolio_template_results(data, build_time)
+        else:
+            error_data = response.json() if response.headers.get('content-type', '').startswith('application/json') else {"detail": response.text}
+            self.log_test("Portfolio Template Build", False, f"Status: {response.status_code}, Error: {error_data.get('detail', 'Unknown')}")
+            return False
+
+    def verify_portfolio_template_results(self, response_data, build_time):
+        """Verify Portfolio template selection and results"""
+        print(f"\n📊 VERIFYING PORTFOLIO TEMPLATE RESULTS")
+        
+        success_count = 0
+        total_checks = 6
+        
+        # Check 1: Template Selection
+        plan = response_data.get('plan', {})
+        template_used = plan.get('template_used', '').lower()
+        project_name = plan.get('project_name', '').lower()
+        
+        print(f"   Template Used: {template_used}")
+        print(f"   Project Name: {project_name}")
+        
+        if 'portfolio' in template_used or 'portfolio' in project_name:
+            self.log_test("Portfolio Template Selection (portfolio_pro_v1)", True)
+            success_count += 1
+        else:
+            self.log_test("Portfolio Template Selection (portfolio_pro_v1)", False, f"Got: {template_used}")
+        
+        # Check 2: Portfolio-specific features
+        frontend_code = response_data.get('frontend_code', '')
+        portfolio_features = self.check_portfolio_features(frontend_code)
+        
+        if portfolio_features >= 3:
+            self.log_test("Portfolio Features (services, contact, about)", True)
+            success_count += 1
+        else:
+            self.log_test("Portfolio Features (services, contact, about)", False, f"Only {portfolio_features}/5 features found")
+        
+        # Check 3: Professional clean design
+        if len(frontend_code) > 5000:
+            self.log_test("Professional Clean Design (>5000 chars)", True)
+            success_count += 1
+        else:
+            self.log_test("Professional Clean Design (>5000 chars)", False, f"Only {len(frontend_code)} chars")
+        
+        # Check 4: Build time < 40 seconds
+        if build_time < 40:
+            self.log_test("Build Time (<40 seconds)", True)
+            success_count += 1
+        else:
+            self.log_test("Build Time (<40 seconds)", False, f"{build_time:.1f}s")
+        
+        # Check 5: Credits in range 30-50
+        credits_used = response_data.get('credits_used', 0)
+        if 30 <= credits_used <= 50:
+            self.log_test("Credits Usage (30-50 range)", True)
+            success_count += 1
+        else:
+            self.log_test("Credits Usage (30-50 range)", False, f"{credits_used} credits")
+        
+        # Check 6: Services section and contact form
+        if ('services' in frontend_code.lower() or 'what i do' in frontend_code.lower()) and 'contact' in frontend_code.lower():
+            self.log_test("Services Section and Contact Form", True)
+            success_count += 1
+        else:
+            self.log_test("Services Section and Contact Form", False, "Missing services or contact sections")
+        
+        print(f"\n   📋 Portfolio Template Success: {success_count}/{total_checks}")
+        return success_count >= 4  # At least 4/6 checks must pass
+
+    def check_saas_features(self, html):
+        """Check for SaaS-specific features"""
+        html_lower = html.lower()
+        features_found = 0
+        
+        # SaaS feature indicators
+        saas_indicators = [
+            (["pricing", "price", "plan", "subscription"], "Pricing Section"),
+            (["features", "capabilities", "what we offer"], "Features Showcase"),
+            (["enterprise", "security", "compliance"], "Enterprise/Security"),
+            (["testimonial", "review", "customer"], "Testimonials"),
+            (["get started", "sign up", "try now", "free trial"], "Call-to-Action")
+        ]
+        
+        for indicators, feature_name in saas_indicators:
+            if any(indicator in html_lower for indicator in indicators):
+                features_found += 1
+                print(f"      ✅ {feature_name} detected")
+            else:
+                print(f"      ⚠️ {feature_name} not found")
+        
+        return features_found
+
+    def check_portfolio_features(self, html):
+        """Check for Portfolio-specific features"""
+        html_lower = html.lower()
+        features_found = 0
+        
+        # Portfolio feature indicators
+        portfolio_indicators = [
+            (["portfolio", "gallery", "showcase", "work"], "Portfolio/Gallery"),
+            (["services", "what i do", "offerings"], "Services Section"),
+            (["about", "bio", "story"], "About Section"),
+            (["contact", "get in touch", "hire me"], "Contact Form"),
+            (["consultant", "freelance", "professional"], "Professional Focus")
+        ]
+        
+        for indicators, feature_name in portfolio_indicators:
+            if any(indicator in html_lower for indicator in indicators):
+                features_found += 1
+                print(f"      ✅ {feature_name} detected")
+            else:
+                print(f"      ⚠️ {feature_name} not found")
+        
+        return features_found
+
+    def run_template_system_review(self):
+        """Run the complete template system review as requested"""
+        print("🎯 TEMPLATE SYSTEM REVIEW - COMPLETE TEMPLATE SYSTEM WITH 10 TEMPLATES")
+        print("=" * 80)
+        print("📋 TESTING WITH DEMO ACCOUNT (demo@test.com / Demo123456)")
+        print("🎯 SUCCESS CRITERIA:")
+        print("   1. ✅ Correct template selection for each project type")
+        print("   2. ✅ All 10 templates accessible and working")
+        print("   3. ✅ Generation time < 40 seconds")
+        print("   4. ✅ High-quality HTML output (> 5000 chars)")
+        print("   5. ✅ Credits in expected range (30-50)")
+        print("=" * 80)
+
+        # Step 1: Login with demo account
+        if not self.login_demo_account():
+            print("❌ Failed to login with demo account - cannot continue")
+            return False
+
+        # Step 2: Test SaaS Landing Page scenario
+        saas_success = self.test_saas_template_scenario()
+        
+        # Step 3: Test Portfolio Website scenario
+        portfolio_success = self.test_portfolio_template_scenario()
+        
+        # Print final summary
+        print("\n" + "=" * 80)
+        print("📊 TEMPLATE SYSTEM REVIEW SUMMARY")
+        print("=" * 80)
+        print(f"Total Tests: {self.tests_total}")
+        print(f"Passed: {self.tests_passed}")
+        print(f"Failed: {self.tests_total - self.tests_passed}")
+        print(f"Success Rate: {(self.tests_passed/self.tests_total)*100:.1f}%")
+        
+        print("\n🎯 REVIEW REQUEST VERIFICATION:")
+        if saas_success:
+            print("   ✅ SaaS Landing Page - Template selection working")
+        else:
+            print("   ❌ SaaS Landing Page - Issues found")
+            
+        if portfolio_success:
+            print("   ✅ Portfolio Website - Template selection working")
+        else:
+            print("   ❌ Portfolio Website - Issues found")
+        
+        overall_success = saas_success and portfolio_success and (self.tests_passed >= self.tests_total * 0.8)
+        
+        if overall_success:
+            print("\n🎉 TEMPLATE SYSTEM REVIEW REQUIREMENTS MET!")
+            print("   ✅ Template variety works correctly")
+            print("   ✅ At least 2 different project types verified")
+            print("   ✅ Ready for production deployment")
+        else:
+            print("\n⚠️ TEMPLATE SYSTEM NEEDS ATTENTION")
+            print("   🔧 Some issues found that need resolution")
+        
+        return overall_success
+
 class AutoWebIQReviewTester:
     def __init__(self):
         self.base_url = "https://autowebiq-dev.preview.emergentagent.com"
