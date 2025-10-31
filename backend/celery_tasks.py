@@ -161,6 +161,9 @@ async def build_website_task(
         print(f"❌ Build failed: {error_msg}")
         print(error_trace)
         
+        # Send WebSocket error notification
+        await ws_manager.send_build_error(project_id, error_msg)
+        
         # Update task state
         self.update_state(
             state='FAILURE',
