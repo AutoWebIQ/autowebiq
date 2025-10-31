@@ -42,19 +42,16 @@ class AsyncTask(Task):
         raise NotImplementedError()
 
 
-@celery_app.task(
-    bind=True,
-    base=AsyncTask,
-    name='celery_tasks.build_website_task',
-    max_retries=0,  # No retries for builds (user can retry manually)
-)
-async def build_website_task(
-    self,
-    user_prompt: str,
-    project_id: str,
-    user_id: str,
-    uploaded_images: List[str] = []
-) -> Dict:
+class BuildWebsiteTask(AsyncTask):
+    """Async website generation task"""
+    
+    async def run_async(
+        self,
+        user_prompt: str,
+        project_id: str,
+        user_id: str,
+        uploaded_images: List[str] = []
+    ) -> Dict:
     """
     Async website generation task
     
