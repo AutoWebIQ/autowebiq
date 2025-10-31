@@ -199,18 +199,25 @@ def generate_images_task(
     image_requirements: List[Dict],
     project_id: str
 ) -> Dict:
-        """
-        Async image generation task
-        
-        Args:
-            image_requirements: List of image specs
-            project_id: Project ID
-        
-        Returns:
-            Dict with status and generated images
-        """
-        
-        try:
+    """
+    Async image generation task
+    
+    Args:
+        image_requirements: List of image specs
+        project_id: Project ID
+    
+    Returns:
+        Dict with status and generated images
+    """
+    
+    # Run async code
+    loop = asyncio.get_event_loop()
+    return loop.run_until_complete(
+        _generate_images_async(self, image_requirements, project_id)
+    )
+
+
+async def _generate_images_async(task_self, image_requirements, project_id):
             print(f"🎨 Generating images for project {project_id}...")
             
             # Import here
