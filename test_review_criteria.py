@@ -150,21 +150,15 @@ def test_review_criteria():
         print(f"❌ Generated HTML < 5000 chars ({len(frontend_code)} chars)")
     
     # Check credits deducted (check V2 system since V2 build uses V2 credits)
-    v2_credits_response = requests.get(f"{base_url}/v2/user/credits", headers=headers)
-    if v2_credits_response.status_code == 200:
-        v2_initial_credits = v2_credits_response.json()['credits']
-        print(f"   V2 Credits before build: {v2_initial_credits}")
-        
-        # Get V2 credits after build
-        v2_final_credits_response = requests.get(f"{base_url}/v2/user/credits", headers=headers)
-        if v2_final_credits_response.status_code == 200:
-            v2_final_credits = v2_final_credits_response.json()['credits']
-            v2_credits_used = v2_initial_credits - v2_final_credits
-            if v2_credits_used > 0:
-                success_criteria["credits_deducted"] = True
-                print(f"✅ Credits deducted correctly from V2 system ({v2_credits_used} credits used)")
-            else:
-                print(f"❌ No credits were deducted from V2 system")
+    v2_final_credits_response = requests.get(f"{base_url}/v2/user/credits", headers=headers)
+    if v2_final_credits_response.status_code == 200:
+        v2_final_credits = v2_final_credits_response.json()['credits']
+        v2_credits_used = v2_initial_credits - v2_final_credits
+        if v2_credits_used > 0:
+            success_criteria["credits_deducted"] = True
+            print(f"✅ Credits deducted correctly from V2 system ({v2_credits_used} credits used)")
+        else:
+            print(f"❌ No credits were deducted from V2 system")
     
     # Also check V1 credits for comparison
     credits_response = requests.get(f"{base_url}/credits/balance", headers=headers)
