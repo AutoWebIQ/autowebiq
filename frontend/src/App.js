@@ -861,20 +861,6 @@ const Dashboard = () => {
       </Dialog>
     </div>
   );
-              placeholder="Describe your website... (e.g., 'A modern landing page for a coffee shop with menu, location, and contact form')"
-              value={projectPrompt}
-              onChange={(e) => setProjectPrompt(e.target.value)}
-              rows={6}
-              required
-            />
-            <Button data-testid="generate-btn" type="submit" disabled={creating} className="w-full">
-              {creating ? 'Creating Project...' : 'Create Project (Free)'}
-            </Button>
-          </form>
-        </DialogContent>
-      </Dialog>
-    </div>
-  );
 };
 
 function App() {
