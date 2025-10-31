@@ -1418,6 +1418,15 @@ input:checked + .slider:before {
     display: none;
   }
 
+  .nav-buttons {
+    gap: 0.5rem;
+  }
+
+  .login-btn-purple {
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+  }
+
   .hero-title {
     font-size: 2.5rem;
   }
