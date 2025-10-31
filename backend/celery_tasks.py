@@ -52,18 +52,18 @@ class BuildWebsiteTask(AsyncTask):
         user_id: str,
         uploaded_images: List[str] = []
     ) -> Dict:
-    """
-    Async website generation task
-    
-    Args:
-        user_prompt: User's website description
-        project_id: Project ID
-        user_id: User ID
-        uploaded_images: List of uploaded image URLs
-    
-    Returns:
-        Dict with status, generated_code, build_time, etc.
-    """
+        """
+        Async website generation task
+        
+        Args:
+            user_prompt: User's website description
+            project_id: Project ID
+            user_id: User ID
+            uploaded_images: List of uploaded image URLs
+        
+        Returns:
+            Dict with status, generated_code, build_time, etc.
+        """
     
     try:
         print(f"🏗️  Building website for project {project_id}...")
