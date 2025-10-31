@@ -297,6 +297,13 @@ const AuthPage = () => {
   return (
     <div className="auth-container" data-testid="auth-page">
       <div className="auth-card">
+        <button 
+          className="auth-close-btn" 
+          onClick={() => navigate('/')}
+          aria-label="Close"
+        >
+          <X size={24} />
+        </button>
         <div className="auth-header">
           <div className="auth-logo">
             <Sparkles className="auth-icon" />
