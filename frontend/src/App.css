@@ -255,6 +255,34 @@ h1, h2, h3, h4, h5, h6 {
   animation: slideUp 0.5s ease-out;
 }
 
+.auth-close-btn {
+  position: absolute;
+  top: 1.5rem;
+  right: 1.5rem;
+  background: rgba(0, 0, 0, 0.05);
+  border: none;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s;
+  color: #64748b;
+  z-index: 10;
+}
+
+.auth-close-btn:hover {
+  background: rgba(0, 0, 0, 0.1);
+  color: #1e293b;
+  transform: rotate(90deg);
+}
+
+.auth-close-btn:active {
+  transform: rotate(90deg) scale(0.95);
+}
+
 @keyframes slideUp {
   from {
     opacity: 0;
