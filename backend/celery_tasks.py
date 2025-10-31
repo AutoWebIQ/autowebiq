@@ -257,7 +257,7 @@ generate_images_task = celery_app.task(
     base=GenerateImagesTask,
     name='celery_tasks.generate_images_task',
     max_retries=2,
-)(GenerateImagesTask.run_async)
+)(GenerateImagesTask())
 
 
 # Health check task
