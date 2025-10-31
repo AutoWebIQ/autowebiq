@@ -144,3 +144,4 @@ PRODUCTION_READY.md
 # ============================================
 
 .emergent/
+frontend/node_modules/.cache/default-development/0.pack

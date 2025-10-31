@@ -7,7 +7,7 @@ import json
 def test_v2_system():
     """Simple test of V2 system as requested in review"""
     
-    base_url = "https://autowebiq-dev-1.preview.emergentagent.com/api"
+    base_url = "https://autowebiq.preview.emergentagent.com/api"
     
     # Login with demo account
     print("🔐 Logging in with demo account...")
