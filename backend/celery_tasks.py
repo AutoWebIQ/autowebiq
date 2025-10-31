@@ -147,22 +147,22 @@ async def _build_website_async(task_self, user_prompt, project_id, user_id, uplo
         
         # Send WebSocket completion notification
         await ws_manager.send_build_complete(project_id, result)
-            
-            print(f"✅ Website built successfully in {build_time:.1f}s")
-            
-            # Update task state
-            task_self.update_state(
-                state='SUCCESS',
-                meta={
-                    'stage': 'completed',
-                    'progress': 100,
-                    'build_time': build_time
-                }
-            )
-            
-            return result
-            
-        except Exception as e:
+        
+        print(f"✅ Website built successfully in {build_time:.1f}s")
+        
+        # Update task state
+        task_self.update_state(
+            state='SUCCESS',
+            meta={
+                'stage': 'completed',
+                'progress': 100,
+                'build_time': build_time
+            }
+        )
+        
+        return result
+        
+    except Exception as e:
             error_msg = str(e)
             error_trace = traceback.format_exc()
             
