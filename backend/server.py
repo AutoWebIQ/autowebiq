@@ -1135,8 +1135,8 @@ async def build_with_agents(request: MultiAgentBuildRequest, user_id: str = Depe
     transaction_id = reservation['transaction_id']
     
     try:
-        # Use the multi-agent orchestrator
-        result = await agent_orchestrator.build_website(
+        # Use Template-Based Orchestrator (NEW - faster and better quality)
+        result = await template_orchestrator.build_website(
             request.prompt, 
             request.project_id,
             request.uploaded_images  # Pass uploaded images
