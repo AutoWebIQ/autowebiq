@@ -572,29 +572,21 @@ const Workspace = () => {
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && !e.shiftKey) {
                   e.preventDefault();
-                  sendMessage();
+                  buildWithAgents();
                 }
               }}
               disabled={loading}
+              style={{ color: '#1F2937', backgroundColor: 'white' }}
             />
             <div className="flex gap-2">
-              <Button 
-                onClick={sendMessage} 
-                disabled={loading || !input.trim()} 
-                data-testid="send-btn"
-                variant="outline"
-              >
-                {loading ? <Loader2 className="animate-spin" size={18} /> : <Send size={18} />}
-                <span className="ml-2">Chat</span>
-              </Button>
               <Button 
                 onClick={buildWithAgents} 
                 disabled={loading || !input.trim()} 
                 data-testid="build-agents-btn"
                 className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
               >
-                {loading ? <Loader2 className="animate-spin" size={18} /> : '🤖'}
-                <span className="ml-2">Build with AI Agents</span>
+                {loading ? <Loader2 className="animate-spin" size={18} /> : <Send size={18} />}
+                <span className="ml-2">Generate</span>
               </Button>
             </div>
           </div>
