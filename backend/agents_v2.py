@@ -315,7 +315,8 @@ Mood: {self._get_mood_from_type(plan.get('type', 'landing_page'))}"""
                 model="dall-e-3",
                 prompt=enhanced_prompt[:4000],  # DALL-E 3 prompt limit
                 size="1792x1024",
-                quality="hd",  # Use HD quality
+                quality="hd",  # Use HD quality for professional results
+                style="natural",  # Natural photographic style
                 n=1
             )
             
