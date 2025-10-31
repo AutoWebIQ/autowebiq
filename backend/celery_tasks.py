@@ -64,118 +64,118 @@ class BuildWebsiteTask(AsyncTask):
         Returns:
             Dict with status, generated_code, build_time, etc.
         """
-    
-    try:
-        print(f"🏗️  Building website for project {project_id}...")
-        start_time = datetime.now(timezone.utc)
         
-        # Update task state
-        self.update_state(
-            state='PROGRESS',
-            meta={'stage': 'initializing', 'progress': 0}
-        )
-        
-        # Import here to avoid circular dependencies
-        from template_orchestrator import TemplateBasedOrchestrator
-        from database import mongo_db
-        import os
-        
-        # Initialize orchestrator
-        openai_key = os.environ.get('OPENAI_API_KEY')
-        anthropic_key = os.environ.get('ANTHROPIC_API_KEY')
-        gemini_key = os.environ.get('GEMINI_API_KEY')
-        
-        orchestrator = TemplateBasedOrchestrator(
-            openai_key=openai_key,
-            anthropic_key=anthropic_key,
-            gemini_key=gemini_key,
-            db=mongo_db
-        )
-        
-        # Set up progress callback with WebSocket updates
-        async def progress_callback(stage: str, progress: int, message: str):
+        try:
+            print(f"🏗️  Building website for project {project_id}...")
+            start_time = datetime.now(timezone.utc)
+            
+            # Update task state
             self.update_state(
                 state='PROGRESS',
+                meta={'stage': 'initializing', 'progress': 0}
+            )
+            
+            # Import here to avoid circular dependencies
+            from template_orchestrator import TemplateBasedOrchestrator
+            from database import mongo_db
+            import os
+            
+            # Initialize orchestrator
+            openai_key = os.environ.get('OPENAI_API_KEY')
+            anthropic_key = os.environ.get('ANTHROPIC_API_KEY')
+            gemini_key = os.environ.get('GEMINI_API_KEY')
+            
+            orchestrator = TemplateBasedOrchestrator(
+                openai_key=openai_key,
+                anthropic_key=anthropic_key,
+                gemini_key=gemini_key,
+                db=mongo_db
+            )
+            
+            # Set up progress callback with WebSocket updates
+            async def progress_callback(stage: str, progress: int, message: str):
+                self.update_state(
+                    state='PROGRESS',
+                    meta={
+                        'stage': stage,
+                        'progress': progress,
+                        'message': message
+                    }
+                )
+                
+                # Send WebSocket update
+                await ws_manager.send_agent_message(
+                    project_id=project_id,
+                    agent_type=stage,
+                    message=message,
+                    status='working',
+                    progress=progress
+                )
+                
+                print(f"📊 [{progress}%] {stage}: {message}")
+            
+            # Generate website
+            self.update_state(
+                state='PROGRESS',
+                meta={'stage': 'building', 'progress': 10}
+            )
+            
+            result = await orchestrator.build_website(
+                user_prompt=user_prompt,
+                project_id=project_id,
+                uploaded_images=uploaded_images
+            )
+            
+            # Calculate build time
+            end_time = datetime.now(timezone.utc)
+            build_time = (end_time - start_time).total_seconds()
+            
+            # Update result
+            result['build_time'] = build_time
+            result['completed_at'] = end_time.isoformat()
+            
+            # Send WebSocket completion notification
+            await ws_manager.send_build_complete(project_id, result)
+            
+            print(f"✅ Website built successfully in {build_time:.1f}s")
+            
+            # Update task state
+            self.update_state(
+                state='SUCCESS',
                 meta={
-                    'stage': stage,
-                    'progress': progress,
-                    'message': message
+                    'stage': 'completed',
+                    'progress': 100,
+                    'build_time': build_time
                 }
             )
             
-            # Send WebSocket update
-            await ws_manager.send_agent_message(
-                project_id=project_id,
-                agent_type=stage,
-                message=message,
-                status='working',
-                progress=progress
+            return result
+            
+        except Exception as e:
+            error_msg = str(e)
+            error_trace = traceback.format_exc()
+            
+            print(f"❌ Build failed: {error_msg}")
+            print(error_trace)
+            
+            # Send WebSocket error notification
+            await ws_manager.send_build_error(project_id, error_msg)
+            
+            # Update task state
+            self.update_state(
+                state='FAILURE',
+                meta={
+                    'stage': 'failed',
+                    'error': error_msg,
+                    'traceback': error_trace
+                }
             )
             
-            print(f"📊 [{progress}%] {stage}: {message}")
-        
-        # Generate website
-        self.update_state(
-            state='PROGRESS',
-            meta={'stage': 'building', 'progress': 10}
-        )
-        
-        result = await orchestrator.build_website(
-            user_prompt=user_prompt,
-            project_id=project_id,
-            uploaded_images=uploaded_images
-        )
-        
-        # Calculate build time
-        end_time = datetime.now(timezone.utc)
-        build_time = (end_time - start_time).total_seconds()
-        
-        # Update result
-        result['build_time'] = build_time
-        result['completed_at'] = end_time.isoformat()
-        
-        # Send WebSocket completion notification
-        await ws_manager.send_build_complete(project_id, result)
-        
-        print(f"✅ Website built successfully in {build_time:.1f}s")
-        
-        # Update task state
-        self.update_state(
-            state='SUCCESS',
-            meta={
-                'stage': 'completed',
-                'progress': 100,
-                'build_time': build_time
-            }
-        )
-        
-        return result
-        
-    except Exception as e:
-        error_msg = str(e)
-        error_trace = traceback.format_exc()
-        
-        print(f"❌ Build failed: {error_msg}")
-        print(error_trace)
-        
-        # Send WebSocket error notification
-        await ws_manager.send_build_error(project_id, error_msg)
-        
-        # Update task state
-        self.update_state(
-            state='FAILURE',
-            meta={
-                'stage': 'failed',
+            return {
+                'status': 'failed',
                 'error': error_msg,
                 'traceback': error_trace
             }
-        )
-        
-        return {
-            'status': 'failed',
-            'error': error_msg,
-            'traceback': error_trace
-        }
 
 
 # Register the task
