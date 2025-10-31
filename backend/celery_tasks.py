@@ -75,14 +75,16 @@ def build_website_task(
 
 
 async def _build_website_async(task_self, user_prompt, project_id, user_id, uploaded_images):
-            print(f"🏗️  Building website for project {project_id}...")
-            start_time = datetime.now(timezone.utc)
-            
-            # Update task state
-            self.update_state(
-                state='PROGRESS',
-                meta={'stage': 'initializing', 'progress': 0}
-            )
+    """Internal async function for website building"""
+    try:
+        print(f"🏗️  Building website for project {project_id}...")
+        start_time = datetime.now(timezone.utc)
+        
+        # Update task state
+        task_self.update_state(
+            state='PROGRESS',
+            meta={'stage': 'initializing', 'progress': 0}
+        )
             
             # Import here to avoid circular dependencies
             from template_orchestrator import TemplateBasedOrchestrator
