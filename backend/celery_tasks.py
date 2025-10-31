@@ -8,6 +8,7 @@ import asyncio
 from typing import Dict, List
 import traceback
 from datetime import datetime, timezone
+from websocket_manager import ws_manager
 
 # Task state tracking
 @task_prerun.connect
