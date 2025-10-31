@@ -160,16 +160,7 @@ async def _build_website_async(task_self, user_prompt, project_id, user_id, uplo
         
         print(f"✅ Website built successfully in {build_time:.1f}s")
         
-        # Update task state
-        task_self.update_state(
-            state='SUCCESS',
-            meta={
-                'stage': 'completed',
-                'progress': 100,
-                'build_time': build_time
-            }
-        )
-        
+        # Return the actual result (don't update state for SUCCESS as it overrides the result)
         return result
         
     except Exception as e:
