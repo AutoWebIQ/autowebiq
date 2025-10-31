@@ -81,6 +81,29 @@ export const getCreditHistory = async (limit = 50, offset = 0) => {
   return response.data;
 };
 
+// ==================== Deployment Endpoints ====================
+
+export const deployToVercel = async (projectId, projectName = null, environment = 'preview') => {
+  const response = await axios.post(
+    `${API_V2}/deploy/vercel`,
+    {
+      project_id: projectId,
+      project_name: projectName,
+      environment: environment
+    },
+    getAxiosConfig()
+  );
+  return response.data;
+};
+
+export const checkDeploymentStatus = async (deploymentId) => {
+  const response = await axios.get(
+    `${API_V2}/deploy/vercel/status/${deploymentId}`,
+    getAxiosConfig()
+  );
+  return response.data;
+};
+
 // ==================== Helper Functions ====================
 
 export const connectWebSocket = (projectId, onMessage) => {
