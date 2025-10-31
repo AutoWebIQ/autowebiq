@@ -437,3 +437,122 @@ async def get_user_stats(
         'credits_spent': credits_spent,
         'member_since': current_user.created_at.isoformat()
     }
+
+
+
+# ==================== Deployment Endpoints ====================
+
+class VercelDeployRequest(BaseModel):
+    """Request to deploy a website to Vercel"""
+    project_id: str
+    project_name: Optional[str] = None
+    environment: str = "preview"  # preview or production
+
+
+@router_v2.post("/deploy/vercel")
+async def deploy_to_vercel(
+    deploy_request: VercelDeployRequest,
+    current_user: User = Depends(get_current_user),
+    session: AsyncSession = Depends(get_db)
+):
+    """
+    Deploy a project to Vercel.
+    
+    Deploys the generated website HTML/CSS/JS to Vercel and returns the live URL.
+    """
+    from vercel_service import VercelService, VercelDeploymentError
+    
+    # Verify project ownership
+    result = await session.execute(
+        select(Project)
+        .where(Project.id == deploy_request.project_id)
+        .where(Project.user_id == current_user.id)
+    )
+    
+    project = result.scalar_one_or_none()
+    
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+    
+    # Check if project has generated code
+    if not project.generated_html:
+        raise HTTPException(
+            status_code=400,
+            detail="Project has no generated code. Please build the website first."
+        )
+    
+    # Determine project name for Vercel
+    vercel_project_name = deploy_request.project_name or project.name or f"autowebiq-{project.id[:8]}"
+    vercel_project_name = vercel_project_name.lower().replace(' ', '-').replace('_', '-')
+    
+    try:
+        # Initialize Vercel service
+        vercel = VercelService()
+        
+        # Deploy the website
+        deployment_result = vercel.deploy_website(
+            project_name=vercel_project_name,
+            html_content=project.generated_html,
+            css_content=project.generated_css,
+            js_content=project.generated_js,
+            environment=deploy_request.environment
+        )
+        
+        # Update project with deployment URL
+        await session.execute(
+            update(Project)
+            .where(Project.id == project.id)
+            .values(
+                deployment_url=deployment_result['deployment_url'],
+                updated_at=datetime.now(timezone.utc)
+            )
+        )
+        await session.commit()
+        
+        return {
+            'success': True,
+            'deployment_id': deployment_result['deployment_id'],
+            'deployment_url': deployment_result['deployment_url'],
+            'preview_url': deployment_result['preview_url'],
+            'project_name': vercel_project_name,
+            'environment': deploy_request.environment,
+            'message': 'Website deployed successfully to Vercel!'
+        }
+        
+    except VercelDeploymentError as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Vercel deployment failed: {str(e)}"
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Deployment error: {str(e)}"
+        )
+
+
+@router_v2.get("/deploy/vercel/status/{deployment_id}")
+async def check_deployment_status(
+    deployment_id: str,
+    current_user: User = Depends(get_current_user)
+):
+    """Check the status of a Vercel deployment"""
+    from vercel_service import VercelService, VercelDeploymentError
+    
+    try:
+        vercel = VercelService()
+        status = vercel.get_deployment_status(deployment_id)
+        
+        return {
+            'deployment_id': deployment_id,
+            'state': status['state'],
+            'ready': status['ready'],
+            'url': status.get('url'),
+            'error_message': status.get('error_message')
+        }
+        
+    except VercelDeploymentError as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to check deployment status: {str(e)}"
+        )
