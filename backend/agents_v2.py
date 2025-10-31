@@ -746,7 +746,7 @@ Backend Requirements:
 Generate complete FastAPI backend with all endpoints and models."""
             
             completion = await self.client.chat.completions.create(
-                model="gpt-4o",
+                model=self.model,
                 messages=[
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": prompt}
