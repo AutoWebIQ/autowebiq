@@ -113,23 +113,23 @@ async def _build_website_async(task_self, user_prompt, project_id, user_id, uplo
                     'message': message
                 }
             )
-                
-                # Send WebSocket update
-                await ws_manager.send_agent_message(
-                    project_id=project_id,
-                    agent_type=stage,
-                    message=message,
-                    status='working',
-                    progress=progress
-                )
-                
-                print(f"📊 [{progress}%] {stage}: {message}")
             
-            # Generate website
-            task_self.update_state(
-                state='PROGRESS',
-                meta={'stage': 'building', 'progress': 10}
+            # Send WebSocket update
+            await ws_manager.send_agent_message(
+                project_id=project_id,
+                agent_type=stage,
+                message=message,
+                status='working',
+                progress=progress
             )
+            
+            print(f"📊 [{progress}%] {stage}: {message}")
+        
+        # Generate website
+        task_self.update_state(
+            state='PROGRESS',
+            meta={'stage': 'building', 'progress': 10}
+        )
             
             result = await orchestrator.build_website(
                 user_prompt=user_prompt,
