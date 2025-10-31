@@ -54,20 +54,27 @@ def build_website_task(
     user_id: str,
     uploaded_images: List[str] = []
 ) -> Dict:
-        """
-        Async website generation task
-        
-        Args:
-            user_prompt: User's website description
-            project_id: Project ID
-            user_id: User ID
-            uploaded_images: List of uploaded image URLs
-        
-        Returns:
-            Dict with status, generated_code, build_time, etc.
-        """
-        
-        try:
+    """
+    Async website generation task
+    
+    Args:
+        user_prompt: User's website description
+        project_id: Project ID
+        user_id: User ID
+        uploaded_images: List of uploaded image URLs
+    
+    Returns:
+        Dict with status, generated_code, build_time, etc.
+    """
+    
+    # Run async code
+    loop = asyncio.get_event_loop()
+    return loop.run_until_complete(
+        _build_website_async(self, user_prompt, project_id, user_id, uploaded_images)
+    )
+
+
+async def _build_website_async(task_self, user_prompt, project_id, user_id, uploaded_images):
             print(f"🏗️  Building website for project {project_id}...")
             start_time = datetime.now(timezone.utc)
             
