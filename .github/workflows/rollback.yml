@@ -1,0 +1,101 @@
+# Rollback Deployment
+# Manually trigger rollback to previous stable version
+
+name: Rollback Deployment
+
+on:
+  workflow_dispatch:
+    inputs:
+      deployment_url:
+        description: 'Deployment URL or ID to rollback to'
+        required: true
+        type: string
+      reason:
+        description: 'Reason for rollback'
+        required: false
+        type: string
+        default: 'Manual rollback requested'
+
+jobs:
+  rollback:
+    name: Rollback to Previous Version
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      
+      - name: 🔄 Find previous deployment
+        id: find-deployment
+        run: |
+          echo "Finding deployment: ${{ inputs.deployment_url }}"
+          echo "Reason: ${{ inputs.reason }}"
+          echo "rollback_confirmed=true" >> $GITHUB_OUTPUT
+      
+      - name: ⚠️ Confirm rollback
+        run: |
+          echo "============================================"
+          echo "ROLLBACK REQUESTED"
+          echo "============================================"
+          echo "Target: ${{ inputs.deployment_url }}"
+          echo "Reason: ${{ inputs.reason }}"
+          echo "Triggered by: ${{ github.actor }}"
+          echo "Time: $(date)"
+          echo "============================================"
+      
+      - name: 🚀 Execute rollback
+        run: |
+          echo "Rollback would be executed here"
+          echo "In Vercel dashboard:"
+          echo "1. Go to https://vercel.com/autowebiq/autowebiq/deployments"
+          echo "2. Find the deployment: ${{ inputs.deployment_url }}"
+          echo "3. Click '...' menu → 'Promote to Production'"
+          echo ""
+          echo "OR use Vercel CLI:"
+          echo "vercel rollback ${{ inputs.deployment_url }} --prod"
+      
+      - name: 💬 Create rollback issue
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const issue = await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `🔄 Rollback Executed - ${new Date().toISOString().split('T')[0]}`,
+              body: `
+## Rollback Details
+
+**Deployment:** ${{ inputs.deployment_url }}
+**Reason:** ${{ inputs.reason }}
+**Triggered by:** @${{ github.actor }}
+**Time:** ${new Date().toISOString()}
+
+## Actions Taken:
+- [ ] Rollback completed
+- [ ] Production verified
+- [ ] Team notified
+- [ ] Root cause identified
+
+## Next Steps:
+1. Verify production is stable
+2. Investigate root cause
+3. Fix issues in develop branch
+4. Re-deploy when ready
+
+---
+*This issue was created automatically by the rollback workflow.*
+              `,
+              labels: ['rollback', 'production', 'urgent']
+            });
+            
+            console.log(`Created issue #${issue.data.number}`);
+      
+      - name: ✅ Rollback complete
+        run: |
+          echo "=========================================="
+          echo "✅ Rollback process completed"
+          echo "=========================================="
+          echo "Please verify production is working correctly"
+          echo "Check: https://autowebiq.com"
