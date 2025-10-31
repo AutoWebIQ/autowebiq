@@ -90,18 +90,18 @@ async def _build_website_async(task_self, user_prompt, project_id, user_id, uplo
         from template_orchestrator import TemplateBasedOrchestrator
         from database import mongo_db
         import os
-            
-            # Initialize orchestrator
-            openai_key = os.environ.get('OPENAI_API_KEY')
-            anthropic_key = os.environ.get('ANTHROPIC_API_KEY')
-            gemini_key = os.environ.get('GEMINI_API_KEY')
-            
-            orchestrator = TemplateBasedOrchestrator(
-                openai_key=openai_key,
-                anthropic_key=anthropic_key,
-                gemini_key=gemini_key,
-                db=mongo_db
-            )
+        
+        # Initialize orchestrator
+        openai_key = os.environ.get('OPENAI_API_KEY')
+        anthropic_key = os.environ.get('ANTHROPIC_API_KEY')
+        gemini_key = os.environ.get('GEMINI_API_KEY')
+        
+        orchestrator = TemplateBasedOrchestrator(
+            openai_key=openai_key,
+            anthropic_key=anthropic_key,
+            gemini_key=gemini_key,
+            db=mongo_db
+        )
             
             # Set up progress callback with WebSocket updates
             async def progress_callback(stage: str, progress: int, message: str):
