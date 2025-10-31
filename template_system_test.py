@@ -9,7 +9,7 @@ import os
 class TemplateSystemTester:
     def __init__(self):
         # Use the production URL from the review request
-        self.base_url = "https://autowebiq-dev.preview.emergentagent.com"
+        self.base_url = "https://autowebiq-dev-1.preview.emergentagent.com"
         self.api_url = f"{self.base_url}/api"
         self.jwt_token = None
         self.user_id = None
