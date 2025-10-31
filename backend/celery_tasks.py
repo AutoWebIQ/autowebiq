@@ -195,16 +195,16 @@ class GenerateImagesTask(AsyncTask):
         image_requirements: List[Dict],
         project_id: str
     ) -> Dict:
-    """
-    Async image generation task
-    
-    Args:
-        image_requirements: List of image specs
-        project_id: Project ID
-    
-    Returns:
-        Dict with status and generated images
-    """
+        """
+        Async image generation task
+        
+        Args:
+            image_requirements: List of image specs
+            project_id: Project ID
+        
+        Returns:
+            Dict with status and generated images
+        """
     
     try:
         print(f"🎨 Generating images for project {project_id}...")
