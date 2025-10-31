@@ -87,9 +87,11 @@ async def _build_website_async(task_self, user_prompt, project_id, user_id, uplo
         )
         
         # Import here to avoid circular dependencies
+        import sys
+        import os
+        sys.path.append('/app/backend')
         from template_orchestrator import TemplateBasedOrchestrator
         from database import mongo_db
-        import os
         
         # Initialize orchestrator
         openai_key = os.environ.get('OPENAI_API_KEY')
