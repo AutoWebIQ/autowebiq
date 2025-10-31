@@ -223,7 +223,7 @@ def test_review_criteria():
     print(f"\n📊 Performance Metrics:")
     print(f"  • Build Time: {build_time:.1f}s")
     print(f"  • HTML Size: {len(frontend_code)} characters")
-    print(f"  • Credits Used: {credits_used}")
+    print(f"  • Credits Used: {v2_credits_used if 'v2_credits_used' in locals() else 'N/A'}")
     print(f"  • Template: {template_used}")
     
     return passed_criteria >= 6  # At least 6/7 criteria must pass
