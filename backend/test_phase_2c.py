@@ -20,9 +20,15 @@ async def test_phase_2c():
         # Test 1: Health Check (existing endpoint)
         print("\n1️⃣  Testing existing health endpoint...")
         try:
-            response = await client.get(f"{BASE_URL}/health")
+            response = await client.get(f"{BASE_URL}/api/health")
             if response.status_code == 200:
+                data = response.json()
                 print("✅ Health check passed")
+                print(f"   Status: {data.get('status')}")
+                print(f"   MongoDB: {data.get('databases', {}).get('mongodb')}")
+                print(f"   PostgreSQL: {data.get('databases', {}).get('postgresql')}")
+                print(f"   Redis: {data.get('services', {}).get('redis')}")
+                print(f"   Celery: {data.get('services', {}).get('celery')}")
             else:
                 print(f"❌ Health check failed: {response.status_code}")
         except Exception as e:
