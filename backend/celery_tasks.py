@@ -218,23 +218,25 @@ def generate_images_task(
 
 
 async def _generate_images_async(task_self, image_requirements, project_id):
-            print(f"🎨 Generating images for project {project_id}...")
-            
-            # Import here
-            from agents_v2 import ImprovedImageAgent
-            from openai import AsyncOpenAI
-            import os
-            
-            # Initialize image agent
-            openai_key = os.environ.get('OPENAI_API_KEY')
-            client = AsyncOpenAI(api_key=openai_key)
-            image_agent = ImprovedImageAgent(client)
-            
-            # Update state
-            task_self.update_state(
-                state='PROGRESS',
-                meta={'stage': 'generating_images', 'progress': 50}
-            )
+    """Internal async function for image generation"""
+    try:
+        print(f"🎨 Generating images for project {project_id}...")
+        
+        # Import here
+        from agents_v2 import ImprovedImageAgent
+        from openai import AsyncOpenAI
+        import os
+        
+        # Initialize image agent
+        openai_key = os.environ.get('OPENAI_API_KEY')
+        client = AsyncOpenAI(api_key=openai_key)
+        image_agent = ImprovedImageAgent(client)
+        
+        # Update state
+        task_self.update_state(
+            state='PROGRESS',
+            meta={'stage': 'generating_images', 'progress': 50}
+        )
             
             # Generate images
             plan = {
