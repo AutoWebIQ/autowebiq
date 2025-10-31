@@ -635,6 +635,9 @@ h1, h2, h3, h4, h5, h6 {
   color: #1F2937 !important;
   background: white !important;
   border: 1px solid #E5E7EB !important;
+  padding: 0.75rem 1rem !important;
+  border-radius: 8px !important;
+  font-size: 1rem !important;
 }
 
 .create-project-form input::placeholder,
@@ -647,6 +650,18 @@ h1, h2, h3, h4, h5, h6 {
   border-color: #8B5CF6 !important;
   outline: none !important;
   box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1) !important;
+}
+
+/* General dialog input fix */
+[role="dialog"] input,
+[role="dialog"] textarea {
+  color: #1F2937 !important;
+  background: white !important;
+}
+
+[role="dialog"] input::placeholder,
+[role="dialog"] textarea::placeholder {
+  color: #9CA3AF !important;
 }
 
 /* Workspace - Split Screen */
