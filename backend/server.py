@@ -1599,6 +1599,10 @@ async def get_credit_pricing():
 
 app.include_router(api_router)
 
+# Import and include v2 routes (PostgreSQL + Celery + WebSocket)
+from routes_v2 import router_v2
+app.include_router(router_v2)
+
 # Health check endpoint
 @app.get("/api/health")
 async def health_check():
