@@ -70,6 +70,8 @@ frontend/.env
 *.key
 *.p12
 gcp-service-account.json
+k8s/secrets.yaml
+k8s/*-secret.yaml
 
 # ============================================
 # DATABASES
