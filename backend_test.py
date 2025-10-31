@@ -841,6 +841,297 @@ print("Test data cleaned up");
         # This test passes if it returns an error (expected without GKE cluster)
         return True
 
+    def test_v2_complete_build_flow_with_demo_account(self):
+        """Test complete V2 build flow with Celery async tasks as requested in review"""
+        print("\n🚀 Testing V2 Complete Build Flow with Celery & PostgreSQL")
+        
+        # Use demo account as specified in review request
+        demo_email = "demo@test.com"
+        demo_password = "Demo123456"
+        
+        # Login with demo account
+        success, response, _ = self.run_test(
+            "Demo Account Login (V2 Testing)",
+            "POST",
+            "auth/login",
+            200,
+            data={
+                "email": demo_email,
+                "password": demo_password
+            }
+        )
+        
+        if not success or 'access_token' not in response:
+            self.log_test("V2 Build Flow Testing", False, "Failed to login with demo account")
+            return False
+        
+        demo_token = response['access_token']
+        demo_user_id = response['user']['id']
+        initial_credits = response['user']['credits']
+        
+        print(f"   ✅ Demo account logged in with {initial_credits} credits")
+        
+        # Test V2 User Endpoints
+        success, response, _ = self.run_test(
+            "V2 Get User Info",
+            "GET",
+            "v2/user/me",
+            200,
+            headers={"Authorization": f"Bearer {demo_token}"}
+        )
+        
+        if not success:
+            return False
+        
+        success, response, _ = self.run_test(
+            "V2 Get User Credits",
+            "GET",
+            "v2/user/credits",
+            200,
+            headers={"Authorization": f"Bearer {demo_token}"}
+        )
+        
+        if not success:
+            return False
+        
+        user_credits = response.get('credits', 0)
+        print(f"   💰 User has {user_credits} credits available")
+        
+        # Create new project via V2 API
+        project_data = {
+            "name": "V2 Async Build Test Project",
+            "description": "Testing V2 async build system with Celery and PostgreSQL"
+        }
+        
+        success, response, _ = self.run_test(
+            "V2 Create Project",
+            "POST",
+            "v2/projects",
+            200,
+            data=project_data,
+            headers={"Authorization": f"Bearer {demo_token}"}
+        )
+        
+        if not success or 'id' not in response:
+            return False
+        
+        project_id = response['id']
+        print(f"   📁 Created project: {project_id}")
+        
+        # Verify project in V2 list
+        success, response, _ = self.run_test(
+            "V2 List Projects",
+            "GET",
+            "v2/projects",
+            200,
+            headers={"Authorization": f"Bearer {demo_token}"}
+        )
+        
+        if not success:
+            return False
+        
+        # Get specific project
+        success, response, _ = self.run_test(
+            "V2 Get Project Details",
+            "GET",
+            f"v2/projects/{project_id}",
+            200,
+            headers={"Authorization": f"Bearer {demo_token}"}
+        )
+        
+        if not success:
+            return False
+        
+        # Start async build via V2 API
+        build_data = {
+            "prompt": "Create a modern business landing page with hero section, features, and contact form",
+            "uploaded_images": []
+        }
+        
+        print(f"   🚀 Starting async build...")
+        build_start_time = time.time()
+        
+        success, response, _ = self.run_test(
+            "V2 Start Async Build",
+            "POST",
+            f"v2/projects/{project_id}/build",
+            200,
+            data=build_data,
+            headers={"Authorization": f"Bearer {demo_token}"}
+        )
+        
+        if not success:
+            return False
+        
+        # Verify task_id returned
+        task_id = response.get('task_id')
+        if not task_id:
+            self.log_test("V2 Async Build Task ID", False, "No task_id returned")
+            return False
+        
+        print(f"   🎯 Build task started: {task_id}")
+        self.log_test("V2 Async Build Task ID", True)
+        
+        # Check build status multiple times
+        max_wait_time = 120  # 2 minutes max
+        check_interval = 5   # Check every 5 seconds
+        checks = 0
+        max_checks = max_wait_time // check_interval
+        
+        build_completed = False
+        final_result = None
+        
+        while checks < max_checks and not build_completed:
+            time.sleep(check_interval)
+            checks += 1
+            
+            success, response, _ = self.run_test(
+                f"V2 Check Build Status (Check {checks})",
+                "GET",
+                f"v2/projects/{project_id}/build/status/{task_id}",
+                200,
+                headers={"Authorization": f"Bearer {demo_token}"}
+            )
+            
+            if success:
+                status = response.get('status', 'UNKNOWN')
+                print(f"   📊 Build status: {status}")
+                
+                if status == 'SUCCESS':
+                    build_completed = True
+                    final_result = response.get('result', {})
+                    build_end_time = time.time()
+                    build_duration = build_end_time - build_start_time
+                    print(f"   ✅ Build completed in {build_duration:.1f}s")
+                    break
+                elif status == 'FAILURE':
+                    error = response.get('error', 'Unknown error')
+                    self.log_test("V2 Async Build Completion", False, f"Build failed: {error}")
+                    return False
+                elif status in ['PENDING', 'PROGRESS']:
+                    # Still building, continue waiting
+                    progress_info = response.get('progress', {})
+                    if progress_info:
+                        print(f"   ⏳ Progress: {progress_info}")
+                else:
+                    print(f"   ⚠️ Unknown status: {status}")
+        
+        if not build_completed:
+            self.log_test("V2 Async Build Completion", False, f"Build did not complete within {max_wait_time}s")
+            return False
+        
+        self.log_test("V2 Async Build Completion", True)
+        
+        # Verify build results
+        if final_result:
+            frontend_code = final_result.get('frontend_code', '')
+            build_time = final_result.get('build_time', 0)
+            
+            # Success criteria verification
+            criteria_met = 0
+            total_criteria = 6
+            
+            # 1. Build completes without errors
+            if final_result.get('status') == 'completed':
+                criteria_met += 1
+                print(f"   ✅ Build status: Completed successfully")
+            else:
+                print(f"   ❌ Build status: {final_result.get('status', 'Unknown')}")
+            
+            # 2. Generated HTML is valid and > 5000 chars
+            if len(frontend_code) > 5000:
+                criteria_met += 1
+                print(f"   ✅ HTML quality: {len(frontend_code)} chars (> 5000 target)")
+            else:
+                print(f"   ❌ HTML quality: {len(frontend_code)} chars (< 5000 target)")
+            
+            # 3. Build time reasonable (< 60 seconds)
+            if build_time < 60:
+                criteria_met += 1
+                print(f"   ✅ Build performance: {build_time:.1f}s (< 60s target)")
+            else:
+                print(f"   ❌ Build performance: {build_time:.1f}s (> 60s target)")
+            
+            # 4. Proper HTML structure
+            has_doctype = "<!DOCTYPE html>" in frontend_code
+            has_html_tags = "<html" in frontend_code and "</html>" in frontend_code
+            has_head = "<head>" in frontend_code and "</head>" in frontend_code
+            has_body = "<body>" in frontend_code and "</body>" in frontend_code
+            
+            if has_doctype and has_html_tags and has_head and has_body:
+                criteria_met += 1
+                print(f"   ✅ HTML structure: Valid")
+            else:
+                print(f"   ❌ HTML structure: Invalid")
+            
+            # 5. Template selection working
+            if final_result.get('plan'):
+                criteria_met += 1
+                print(f"   ✅ Template selection: Working")
+            else:
+                print(f"   ❌ Template selection: No plan found")
+            
+            # 6. AI agents working
+            if 'frontend_code' in final_result:
+                criteria_met += 1
+                print(f"   ✅ AI agents: Generated content successfully")
+            else:
+                print(f"   ❌ AI agents: No generated content")
+            
+            success_rate = (criteria_met / total_criteria) * 100
+            print(f"   📈 Success criteria: {criteria_met}/{total_criteria} ({success_rate:.1f}%)")
+            
+            self.log_test("V2 Build Quality Assessment", 
+                        criteria_met >= 4, 
+                        f"{criteria_met}/{total_criteria} criteria met ({success_rate:.1f}%)")
+        
+        # Check credits deducted
+        success, response, _ = self.run_test(
+            "V2 Check Credits After Build",
+            "GET",
+            "v2/user/credits",
+            200,
+            headers={"Authorization": f"Bearer {demo_token}"}
+        )
+        
+        if success:
+            final_credits = response.get('credits', 0)
+            credits_used = user_credits - final_credits
+            print(f"   💰 Credits used: {credits_used} (from {user_credits} to {final_credits})")
+            
+            if credits_used > 0:
+                self.log_test("V2 Credits Deducted", True)
+            else:
+                self.log_test("V2 Credits Deducted", False, "No credits were deducted")
+        
+        # Test V2 Stats endpoint
+        success, response, _ = self.run_test(
+            "V2 Get User Stats",
+            "GET",
+            "v2/stats",
+            200,
+            headers={"Authorization": f"Bearer {demo_token}"}
+        )
+        
+        if success:
+            stats = response
+            print(f"   📊 User stats: {stats.get('total_projects', 0)} projects, {stats.get('credits_spent', 0)} credits spent")
+        
+        # Test V2 Credit History
+        success, response, _ = self.run_test(
+            "V2 Get Credit History",
+            "GET",
+            "v2/credits/history",
+            200,
+            headers={"Authorization": f"Bearer {demo_token}"}
+        )
+        
+        if success:
+            transactions = response.get('transactions', [])
+            print(f"   💳 Credit history: {len(transactions)} transactions")
+        
+        return True
+
     def test_template_system_with_demo_account(self):
         """Test expanded template and component library system with demo account"""
         print("\n🎨 Testing Expanded Template & Component Library System")
