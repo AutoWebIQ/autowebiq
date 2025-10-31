@@ -172,23 +172,13 @@ async def _build_website_async(task_self, user_prompt, project_id, user_id, uplo
         print(error_trace)
         
         # Send WebSocket error notification
-        await ws_manager.send_build_error(project_id, error_msg)
+        try:
+            await ws_manager.send_build_error(project_id, error_msg)
+        except:
+            pass  # Don't fail on WebSocket error
         
-        # Update task state
-        task_self.update_state(
-            state='FAILURE',
-            meta={
-                'stage': 'failed',
-                'error': error_msg,
-                'traceback': error_trace
-            }
-        )
-        
-        return {
-            'status': 'failed',
-            'error': error_msg,
-            'traceback': error_trace
-        }
+        # Re-raise the exception for proper Celery error handling
+        raise e
 
 
 @celery_app.task(
