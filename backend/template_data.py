@@ -300,9 +300,6 @@ TEMPLATES = [
     </script>
 </body>
 </html>"""
-    }
-]
-
     },
     
     # SAAS TEMPLATE (1)
