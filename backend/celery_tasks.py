@@ -81,7 +81,7 @@ async def _build_website_async(task_self, user_prompt, project_id, user_id, uplo
         start_time = datetime.now(timezone.utc)
         
         # Update task state
-        task_self.update_state(
+        task_task_self.update_state(
             state='PROGRESS',
             meta={'stage': 'initializing', 'progress': 0}
         )
@@ -105,7 +105,7 @@ async def _build_website_async(task_self, user_prompt, project_id, user_id, uplo
             
             # Set up progress callback with WebSocket updates
             async def progress_callback(stage: str, progress: int, message: str):
-                self.update_state(
+                task_self.update_state(
                     state='PROGRESS',
                     meta={
                         'stage': stage,
@@ -126,7 +126,7 @@ async def _build_website_async(task_self, user_prompt, project_id, user_id, uplo
                 print(f"📊 [{progress}%] {stage}: {message}")
             
             # Generate website
-            self.update_state(
+            task_self.update_state(
                 state='PROGRESS',
                 meta={'stage': 'building', 'progress': 10}
             )
@@ -151,7 +151,7 @@ async def _build_website_async(task_self, user_prompt, project_id, user_id, uplo
             print(f"✅ Website built successfully in {build_time:.1f}s")
             
             # Update task state
-            self.update_state(
+            task_self.update_state(
                 state='SUCCESS',
                 meta={
                     'stage': 'completed',
@@ -173,7 +173,7 @@ async def _build_website_async(task_self, user_prompt, project_id, user_id, uplo
             await ws_manager.send_build_error(project_id, error_msg)
             
             # Update task state
-            self.update_state(
+            task_self.update_state(
                 state='FAILURE',
                 meta={
                     'stage': 'failed',
@@ -231,7 +231,7 @@ class GenerateImagesTask(AsyncTask):
             image_agent = ImprovedImageAgent(client)
             
             # Update state
-            self.update_state(
+            task_self.update_state(
                 state='PROGRESS',
                 meta={'stage': 'generating_images', 'progress': 50}
             )
