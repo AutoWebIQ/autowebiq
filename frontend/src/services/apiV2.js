@@ -104,6 +104,28 @@ export const checkDeploymentStatus = async (deploymentId) => {
   return response.data;
 };
 
+// ==================== Validation Endpoints ====================
+
+export const validateWebsite = async (projectId, url = null) => {
+  const response = await axios.post(
+    `${API_V2}/validate/website`,
+    {
+      project_id: projectId,
+      url: url
+    },
+    getAxiosConfig()
+  );
+  return response.data;
+};
+
+export const getValidationChecks = async () => {
+  const response = await axios.get(
+    `${API_V2}/validate/checks`,
+    getAxiosConfig()
+  );
+  return response.data;
+};
+
 // ==================== Helper Functions ====================
 
 export const connectWebSocket = (projectId, onMessage) => {
