@@ -1,0 +1,41 @@
+{
+  "version": 2,
+  "name": "autowebiq",
+  "builds": [
+    {
+      "src": "frontend/package.json",
+      "use": "@vercel/static-build",
+      "config": {
+        "distDir": "build"
+      }
+    }
+  ],
+  "routes": [
+    {
+      "src": "/static/(.*)",
+      "headers": {
+        "cache-control": "public, max-age=31536000, immutable"
+      },
+      "dest": "/static/$1"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/index.html"
+    }
+  ],
+  "env": {
+    "REACT_APP_BACKEND_URL": "@react_app_backend_url"
+  },
+  "build": {
+    "env": {
+      "REACT_APP_BACKEND_URL": "@react_app_backend_url"
+    }
+  },
+  "github": {
+    "enabled": true,
+    "autoAlias": true,
+    "silent": false
+  },
+  "regions": ["iad1"],
+  "public": false
+}
