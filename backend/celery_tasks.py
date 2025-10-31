@@ -178,6 +178,15 @@ class BuildWebsiteTask(AsyncTask):
         }
 
 
+# Register the task
+build_website_task = celery_app.task(
+    bind=True,
+    base=BuildWebsiteTask,
+    name='celery_tasks.build_website_task',
+    max_retries=0,
+)(BuildWebsiteTask())
+
+
 @celery_app.task(
     bind=True,
     base=AsyncTask,
