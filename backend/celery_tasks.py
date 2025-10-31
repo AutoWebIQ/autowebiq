@@ -130,23 +130,23 @@ async def _build_website_async(task_self, user_prompt, project_id, user_id, uplo
             state='PROGRESS',
             meta={'stage': 'building', 'progress': 10}
         )
-            
-            result = await orchestrator.build_website(
-                user_prompt=user_prompt,
-                project_id=project_id,
-                uploaded_images=uploaded_images
-            )
-            
-            # Calculate build time
-            end_time = datetime.now(timezone.utc)
-            build_time = (end_time - start_time).total_seconds()
-            
-            # Update result
-            result['build_time'] = build_time
-            result['completed_at'] = end_time.isoformat()
-            
-            # Send WebSocket completion notification
-            await ws_manager.send_build_complete(project_id, result)
+        
+        result = await orchestrator.build_website(
+            user_prompt=user_prompt,
+            project_id=project_id,
+            uploaded_images=uploaded_images
+        )
+        
+        # Calculate build time
+        end_time = datetime.now(timezone.utc)
+        build_time = (end_time - start_time).total_seconds()
+        
+        # Update result
+        result['build_time'] = build_time
+        result['completed_at'] = end_time.isoformat()
+        
+        # Send WebSocket completion notification
+        await ws_manager.send_build_complete(project_id, result)
             
             print(f"✅ Website built successfully in {build_time:.1f}s")
             
