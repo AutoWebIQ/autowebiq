@@ -535,23 +535,141 @@ TEMPLATES = [
     }
 ]
 
-# Component definitions
-COMPONENTS = [
+# Additional Templates (4-10)
+TEMPLATES.extend([
+    # E-COMMERCE TEMPLATE 2 - Modern Minimal
     {
-        "component_id": "nav_minimal",
-        "name": "Minimal Navigation",
-        "category": "navigation",
-        "tags": ["nav", "minimal", "fixed"],
-        "html": """<nav style="position: fixed; top: 0; width: 100%; background: rgba(255,255,255,0.95); backdrop-filter: blur(10px); padding: 20px 0; border-bottom: 1px solid #eee; z-index: 1000;">
-    <div style="max-width: 1200px; margin: 0 auto; padding: 0 24px; display: flex; justify-content: space-between; align-items: center;">
-        <div style="font-size: 1.5rem; font-weight: 700;">Logo</div>
-        <ul style="display: flex; gap: 32px; list-style: none;">
-            <li><a href="#" style="color: #333; text-decoration: none;">Home</a></li>
-            <li><a href="#" style="color: #333; text-decoration: none;">About</a></li>
-            <li><a href="#" style="color: #333; text-decoration: none;">Contact</a></li>
-        </ul>
-    </div>
-</nav>""",
-        "props": ["logo_text", "nav_items"]
+        "template_id": "ecom_minimal_v1",
+        "name": "Minimal E-commerce",
+        "category": "ecommerce",
+        "style": "minimal",
+        "description": "Clean, minimalist e-commerce with focus on products",
+        "tags": ["ecommerce", "minimal", "clean", "simple", "modern", "shop"],
+        "features": ["product_grid", "cart", "search", "filters"],
+        "color_scheme": {"primary": "#2d3436", "secondary": "#636e72", "accent": "#00b894", "background": "#ffffff", "text": "#2d3436"},
+        "use_count": 0,
+        "lighthouse_score": 95,
+        "wcag_compliant": True,
+        "customization_zones": [
+            {"zone_id": "hero", "type": "text", "editable": ["headline", "tagline"], "ai_customizable": True}
+        ],
+        "html": """<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>{{ hero.headline }}</title><link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet"><style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Inter',sans-serif;color:{{ color.text }};line-height:1.6}.nav{position:fixed;top:0;width:100%;background:#fff;padding:20px 40px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #eee;z-index:1000}.logo{font-size:1.25rem;font-weight:600}.nav-links{display:flex;gap:30px;list-style:none}.nav-links a{color:#333;text-decoration:none}.hero{min-height:80vh;display:flex;align-items:center;justify-content:center;text-align:center;padding:120px 40px 60px}.hero h1{font-size:3.5rem;font-weight:300;margin-bottom:16px}.hero p{font-size:1.125rem;color:#666}.products{padding:80px 40px;max-width:1400px;margin:0 auto}.product-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:40px}.product-card{border:1px solid #eee;padding:20px;transition:all 0.3s}.product-card:hover{box-shadow:0 8px 30px rgba(0,0,0,0.08)}.product-image{width:100%;height:300px;background:#f5f5f5;margin-bottom:16px}.product-info h3{font-size:1.125rem;margin-bottom:8px;font-weight:600}.product-price{font-size:1.25rem;font-weight:600;color:{{ color.accent }};margin:16px 0}.add-btn{width:100%;padding:12px;background:{{ color.primary }};color:#fff;border:none;cursor:pointer;font-weight:500;transition:background 0.3s}.add-btn:hover{background:{{ color.secondary }}}.footer{background:#f9f9f9;padding:60px 40px;text-align:center}@media(max-width:768px){.hero h1{font-size:2.5rem}.product-grid{grid-template-columns:1fr}}</style></head><body><nav class="nav"><div class="logo">{{ hero.headline }}</div><ul class="nav-links"><li><a href="#shop">Shop</a></li><li><a href="#about">About</a></li><li><a href="#cart">Cart</a></li></ul></nav><section class="hero"><div><h1>{{ hero.headline }}</h1><p>{{ hero.tagline }}</p></div></section><section class="products" id="shop"><div class="product-grid"><div class="product-card"><div class="product-image"></div><div class="product-info"><h3>Product Name</h3><p>Simple, elegant design</p><div class="product-price">$99</div><button class="add-btn">Add to Cart</button></div></div><div class="product-card"><div class="product-image"></div><div class="product-info"><h3>Product Name</h3><p>Quality craftsmanship</p><div class="product-price">$149</div><button class="add-btn">Add to Cart</button></div></div><div class="product-card"><div class="product-image"></div><div class="product-info"><h3>Product Name</h3><p>Timeless style</p><div class="product-price">$199</div><button class="add-btn">Add to Cart</button></div></div></div></section><footer class="footer"><p>&copy; 2025 {{ hero.headline }}</p></footer></body></html>"""
+    },
+    
+    # SAAS TEMPLATE 2 - B2B Platform
+    {
+        "template_id": "saas_b2b_v1",
+        "name": "B2B SaaS Platform",
+        "category": "saas",
+        "style": "professional",
+        "description": "Professional B2B SaaS platform landing page",
+        "tags": ["saas", "b2b", "platform", "professional", "enterprise", "business"],
+        "features": ["features", "integrations", "pricing", "testimonials", "demo"],
+        "color_scheme": {"primary": "#1e3a8a", "secondary": "#3b82f6", "accent": "#10b981", "background": "#ffffff", "text": "#1f2937"},
+        "use_count": 0,
+        "lighthouse_score": 94,
+        "wcag_compliant": True,
+        "customization_zones": [
+            {"zone_id": "hero", "type": "text", "editable": ["headline", "subheadline", "cta"], "ai_customizable": True}
+        ],
+        "html": """<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>{{ hero.headline }}</title><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"><style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Inter',sans-serif;color:{{ color.text }}}.nav{position:fixed;top:0;width:100%;background:rgba(255,255,255,0.98);padding:16px 40px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #e5e7eb;z-index:1000}.logo{font-size:1.5rem;font-weight:700;color:{{ color.primary }}}.nav-links{display:flex;gap:32px;list-style:none}.nav-links a{color:#374151;text-decoration:none;font-weight:500}.btn{background:{{ color.primary }};color:#fff;padding:10px 24px;border-radius:6px;text-decoration:none;font-weight:600}.hero{min-height:90vh;display:flex;align-items:center;padding:100px 40px;background:linear-gradient(135deg,#1e3a8a 0%,#3b82f6 100%);color:#fff}.hero-content{max-width:1200px;margin:0 auto;text-align:center}.hero h1{font-size:3.5rem;font-weight:700;line-height:1.1;margin-bottom:24px}.hero p{font-size:1.375rem;margin-bottom:32px;opacity:0.95}.hero-btns{display:flex;gap:16px;justify-content:center}.hero-btn{padding:16px 32px;border-radius:8px;font-weight:600;font-size:1.125rem;text-decoration:none;transition:all 0.3s}.hero-btn-primary{background:#fff;color:{{ color.primary }}}.hero-btn-secondary{background:transparent;color:#fff;border:2px solid #fff}.features{padding:100px 40px;max-width:1200px;margin:0 auto}.section-title{text-align:center;margin-bottom:60px}.section-title h2{font-size:2.5rem;font-weight:700;margin-bottom:16px}.section-title p{font-size:1.125rem;color:#6b7280}.features-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:40px}.feature{text-align:center;padding:32px}.feature-icon{font-size:2.5rem;margin-bottom:20px}.feature h3{font-size:1.375rem;font-weight:600;margin-bottom:12px}.feature p{color:#6b7280;line-height:1.6}.cta{padding:100px 40px;background:#f9fafb;text-align:center}.cta h2{font-size:2.5rem;font-weight:700;margin-bottom:24px}.cta p{font-size:1.25rem;color:#6b7280;margin-bottom:32px}.footer{background:{{ color.primary }};color:#fff;padding:40px;text-align:center}@media(max-width:768px){.hero h1{font-size:2.5rem}.features-grid{grid-template-columns:1fr}}</style></head><body><nav class="nav"><div class="logo">{{ hero.headline }}</div><ul class="nav-links"><li><a href="#features">Features</a></li><li><a href="#pricing">Pricing</a></li><li><a href="#demo">Demo</a></li></ul><a href="#signup" class="btn">Get Started</a></nav><section class="hero"><div class="hero-content"><h1>{{ hero.headline }}</h1><p>{{ hero.subheadline }}</p><div class="hero-btns"><a href="#demo" class="hero-btn hero-btn-primary">{{ hero.cta }}</a><a href="#features" class="hero-btn hero-btn-secondary">Learn More</a></div></div></section><section class="features" id="features"><div class="section-title"><h2>Powerful Features</h2><p>Everything your team needs to succeed</p></div><div class="features-grid"><div class="feature"><div class="feature-icon">⚡</div><h3>Lightning Fast</h3><p>Optimized performance for enterprise scale</p></div><div class="feature"><div class="feature-icon">🔒</div><h3>Enterprise Security</h3><p>Bank-level security and compliance</p></div><div class="feature"><div class="feature-icon">📊</div><h3>Advanced Analytics</h3><p>Real-time insights and reporting</p></div></div></section><section class="cta"><h2>Ready to Transform Your Business?</h2><p>Join thousands of companies already using our platform</p><a href="#demo" class="btn">Request Demo</a></section><footer class="footer"><p>&copy; 2025 {{ hero.headline }}. All rights reserved.</p></footer></body></html>"""
+    },
+    
+    # SAAS TEMPLATE 3 - App Showcase
+    {
+        "template_id": "saas_app_v1",
+        "name": "App Showcase",
+        "category": "saas",
+        "style": "modern",
+        "description": "Modern app showcase for mobile/web apps",
+        "tags": ["saas", "app", "mobile", "showcase", "modern", "startup"],
+        "features": ["hero", "features", "screenshots", "download"],
+        "color_scheme": {"primary": "#8b5cf6", "secondary": "#a78bfa", "accent": "#ec4899", "background": "#ffffff", "text": "#111827"},
+        "use_count": 0,
+        "lighthouse_score": 93,
+        "wcag_compliant": True,
+        "customization_zones": [
+            {"zone_id": "hero", "type": "text", "editable": ["headline", "description", "cta"], "ai_customizable": True}
+        ],
+        "html": """<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>{{ hero.headline }}</title><link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet"><style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Poppins',sans-serif;color:{{ color.text }}}.nav{position:fixed;top:0;width:100%;background:rgba(255,255,255,0.95);backdrop-filter:blur(10px);padding:20px 40px;display:flex;justify-content:space-between;align-items:center;z-index:1000}.logo{font-size:1.5rem;font-weight:700;background:linear-gradient(135deg,{{ color.primary }},{{ color.accent }});-webkit-background-clip:text;-webkit-text-fill-color:transparent}.btn{background:{{ color.primary }};color:#fff;padding:12px 28px;border-radius:30px;text-decoration:none;font-weight:600;transition:transform 0.3s}.btn:hover{transform:translateY(-2px)}.hero{min-height:100vh;display:flex;align-items:center;padding:100px 40px;background:linear-gradient(135deg,#f0f9ff 0%,#e0e7ff 100%)}.hero-content{max-width:1200px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:60px;align-items:center}.hero-text h1{font-size:3.5rem;font-weight:800;line-height:1.1;margin-bottom:24px;background:linear-gradient(135deg,{{ color.primary }},{{ color.accent }});-webkit-background-clip:text;-webkit-text-fill-color:transparent}.hero-text p{font-size:1.25rem;color:#6b7280;margin-bottom:32px}.hero-image{text-align:center}.hero-image img{max-width:100%;height:auto}.features{padding:100px 40px;max-width:1200px;margin:0 auto}.features-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:40px;margin-top:60px}.feature-card{background:#fff;padding:32px;border-radius:20px;box-shadow:0 4px 20px rgba(0,0,0,0.08);transition:transform 0.3s}.feature-card:hover{transform:translateY(-8px)}.feature-icon{width:60px;height:60px;background:linear-gradient(135deg,{{ color.primary }},{{ color.accent }});border-radius:15px;display:flex;align-items:center;justify-content:center;font-size:1.75rem;margin-bottom:20px}.feature-card h3{font-size:1.25rem;font-weight:600;margin-bottom:12px}.feature-card p{color:#6b7280;line-height:1.6}.footer{background:#111827;color:#fff;padding:60px 40px;text-align:center}@media(max-width:768px){.hero-content{grid-template-columns:1fr}.hero-text h1{font-size:2.5rem}.features-grid{grid-template-columns:1fr}}</style></head><body><nav class="nav"><div class="logo">{{ hero.headline }}</div><a href="#download" class="btn">Download App</a></nav><section class="hero"><div class="hero-content"><div class="hero-text"><h1>{{ hero.headline }}</h1><p>{{ hero.description }}</p><a href="#download" class="btn">{{ hero.cta }}</a></div><div class="hero-image"><img src="{{ image_1 }}" alt="App"></div></div></section><section class="features"><div style="text-align:center;margin-bottom:60px"><h2 style="font-size:2.5rem;font-weight:700">Amazing Features</h2><p style="font-size:1.125rem;color:#6b7280;margin-top:16px">Everything you need in one app</p></div><div class="features-grid"><div class="feature-card"><div class="feature-icon">⚡</div><h3>Super Fast</h3><p>Lightning-fast performance on all devices</p></div><div class="feature-card"><div class="feature-icon">🎨</div><h3>Beautiful Design</h3><p>Stunning interface that users love</p></div><div class="feature-card"><div class="feature-icon">🔒</div><h3>Secure</h3><p>Your data is always safe and encrypted</p></div></div></section><footer class="footer"><p>&copy; 2025 {{ hero.headline }}. All rights reserved.</p></footer></body></html>"""
+    },
+    
+    # PORTFOLIO TEMPLATE 2 - Professional
+    {
+        "template_id": "portfolio_pro_v1",
+        "name": "Professional Portfolio",
+        "category": "portfolio",
+        "style": "professional",
+        "description": "Clean professional portfolio for consultants and freelancers",
+        "tags": ["portfolio", "professional", "consultant", "freelance", "business"],
+        "features": ["about", "services", "projects", "contact"],
+        "color_scheme": {"primary": "#0f172a", "secondary": "#334155", "accent": "#3b82f6", "background": "#ffffff", "text": "#1e293b"},
+        "use_count": 0,
+        "lighthouse_score": 95,
+        "wcag_compliant": True,
+        "customization_zones": [
+            {"zone_id": "hero", "type": "text", "editable": ["name", "title", "tagline"], "ai_customizable": True}
+        ],
+        "html": """<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>{{ hero.name }} - {{ hero.title }}</title><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"><style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Inter',sans-serif;color:{{ color.text }};line-height:1.6}.nav{position:fixed;top:0;width:100%;background:rgba(255,255,255,0.98);padding:20px 40px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #e5e7eb;z-index:1000}.logo{font-weight:600;font-size:1.125rem}.nav-links{display:flex;gap:32px;list-style:none}.nav-links a{color:#64748b;text-decoration:none;font-weight:500;transition:color 0.3s}.nav-links a:hover{color:{{ color.accent }}}.hero{min-height:90vh;display:flex;align-items:center;padding:100px 40px;max-width:1200px;margin:0 auto}.hero-content{max-width:600px}.hero h1{font-size:3.5rem;font-weight:700;margin-bottom:16px;color:{{ color.primary }}}.hero h2{font-size:1.5rem;color:{{ color.accent }};margin-bottom:20px;font-weight:600}.hero p{font-size:1.125rem;color:#64748b;margin-bottom:32px}.hero-btn{display:inline-block;padding:14px 32px;background:{{ color.primary }};color:#fff;text-decoration:none;font-weight:600;border-radius:6px;transition:all 0.3s}.hero-btn:hover{background:{{ color.secondary }};transform:translateY(-2px)}.services{padding:100px 40px;background:#f8fafc}.services-container{max-width:1200px;margin:0 auto}.section-title{text-align:center;margin-bottom:60px}.section-title h2{font-size:2.5rem;font-weight:700;margin-bottom:16px}.section-title p{font-size:1.125rem;color:#64748b}.services-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:32px}.service-card{background:#fff;padding:40px;border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,0.1);transition:all 0.3s}.service-card:hover{box-shadow:0 10px 30px rgba(0,0,0,0.1);transform:translateY(-4px)}.service-card h3{font-size:1.375rem;font-weight:600;margin-bottom:16px}.service-card p{color:#64748b;line-height:1.7}.footer{background:{{ color.primary }};color:#fff;padding:60px 40px;text-align:center}@media(max-width:768px){.hero h1{font-size:2.5rem}.services-grid{grid-template-columns:1fr}}</style></head><body><nav class="nav"><div class="logo">{{ hero.name }}</div><ul class="nav-links"><li><a href="#about">About</a></li><li><a href="#services">Services</a></li><li><a href="#contact">Contact</a></li></ul></nav><section class="hero"><div class="hero-content"><h1>{{ hero.name }}</h1><h2>{{ hero.title }}</h2><p>{{ hero.tagline }}</p><a href="#contact" class="hero-btn">Get in Touch</a></div></section><section class="services" id="services"><div class="services-container"><div class="section-title"><h2>What I Do</h2><p>Professional services tailored to your needs</p></div><div class="services-grid"><div class="service-card"><h3>Service One</h3><p>High-quality professional service with attention to detail</p></div><div class="service-card"><h3>Service Two</h3><p>Expertise and experience you can rely on</p></div><div class="service-card"><h3>Service Three</h3><p>Results-driven approach to every project</p></div></div></div></section><footer class="footer"><p>&copy; 2025 {{ hero.name }}. All rights reserved.</p></footer></body></html>"""
+    },
+    
+    # LANDING PAGE TEMPLATE 1 - Campaign
+    {
+        "template_id": "landing_campaign_v1",
+        "name": "Campaign Landing",
+        "category": "landing",
+        "style": "bold",
+        "description": "Bold campaign landing page for product launches",
+        "tags": ["landing", "campaign", "launch", "marketing", "conversion"],
+        "features": ["hero", "benefits", "countdown", "cta"],
+        "color_scheme": {"primary": "#dc2626", "secondary": "#ef4444", "accent": "#fbbf24", "background": "#ffffff", "text": "#1f2937"},
+        "use_count": 0,
+        "lighthouse_score": 94,
+        "wcag_compliant": True,
+        "customization_zones": [
+            {"zone_id": "hero", "type": "text", "editable": ["headline", "subheadline", "cta"], "ai_customizable": True}
+        ],
+        "html": """<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>{{ hero.headline }}</title><link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800;900&display=swap" rel="stylesheet"><style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Montserrat',sans-serif;color:{{ color.text }}}.hero{min-height:100vh;display:flex;align-items:center;justify-content:center;text-align:center;padding:40px;background:linear-gradient(135deg,{{ color.primary }} 0%,{{ color.secondary }} 100%);color:#fff;position:relative;overflow:hidden}.hero::before{content:'';position:absolute;top:0;left:0;right:0;bottom:0;background:url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320"><path fill="rgba(255,255,255,0.1)" d="M0,96L48,112C96,128,192,160,288,160C384,160,480,128,576,122.7C672,117,768,139,864,149.3C960,160,1056,160,1152,138.7C1248,117,1344,75,1392,53.3L1440,32L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path></svg>') bottom no-repeat;background-size:cover}.hero-content{position:relative;z-index:1;max-width:800px}.hero h1{font-size:4rem;font-weight:900;line-height:1.1;margin-bottom:24px;text-transform:uppercase;letter-spacing:-1px}.hero p{font-size:1.5rem;margin-bottom:40px;font-weight:600;opacity:0.95}.hero-btn{display:inline-block;padding:20px 50px;background:{{ color.accent }};color:{{ color.primary }};text-decoration:none;font-weight:800;font-size:1.25rem;border-radius:50px;text-transform:uppercase;transition:all 0.3s;box-shadow:0 10px 30px rgba(0,0,0,0.3)}.hero-btn:hover{transform:translateY(-4px) scale(1.05);box-shadow:0 15px 40px rgba(0,0,0,0.4)}.benefits{padding:100px 40px;max-width:1200px;margin:0 auto}.benefits-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:40px;margin-top:60px}.benefit{text-align:center;padding:40px}.benefit-icon{width:80px;height:80px;background:{{ color.primary }};border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 24px;font-size:2rem}.benefit h3{font-size:1.5rem;font-weight:700;margin-bottom:16px}.benefit p{color:#6b7280;line-height:1.6}.cta{padding:100px 40px;background:{{ color.primary }};color:#fff;text-align:center}.cta h2{font-size:3rem;font-weight:900;margin-bottom:24px;text-transform:uppercase}.cta p{font-size:1.25rem;margin-bottom:40px;font-weight:600}.footer{background:#111827;color:#fff;padding:40px;text-align:center}@media(max-width:768px){.hero h1{font-size:2.5rem}.benefits-grid{grid-template-columns:1fr}}</style></head><body><section class="hero"><div class="hero-content"><h1>{{ hero.headline }}</h1><p>{{ hero.subheadline }}</p><a href="#signup" class="hero-btn">{{ hero.cta }}</a></div></section><section class="benefits"><div style="text-align:center;margin-bottom:60px"><h2 style="font-size:2.5rem;font-weight:700">Why You'll Love It</h2></div><div class="benefits-grid"><div class="benefit"><div class="benefit-icon">🚀</div><h3>Benefit One</h3><p>Amazing results you can see immediately</p></div><div class="benefit"><div class="benefit-icon">⚡</div><h3>Benefit Two</h3><p>Fast and powerful solution</p></div><div class="benefit"><div class="benefit-icon">💎</div><h3>Benefit Three</h3><p>Premium quality guaranteed</p></div></div></section><section class="cta"><h2>Ready to Get Started?</h2><p>Join thousands of satisfied customers</p><a href="#signup" class="hero-btn">Sign Up Now</a></section><footer class="footer"><p>&copy; 2025 {{ hero.headline }}</p></footer></body></html>"""
+    },
+    
+    # LANDING PAGE TEMPLATE 2 - Lead Gen
+    {
+        "template_id": "landing_leadgen_v1",
+        "name": "Lead Generation",
+        "category": "landing",
+        "style": "clean",
+        "description": "Conversion-focused lead generation landing page",
+        "tags": ["landing", "leadgen", "conversion", "form", "marketing"],
+        "features": ["hero", "form", "benefits", "social_proof"],
+        "color_scheme": {"primary": "#059669", "secondary": "#10b981", "accent": "#34d399", "background": "#ffffff", "text": "#111827"},
+        "use_count": 0,
+        "lighthouse_score": 95,
+        "wcag_compliant": True,
+        "customization_zones": [
+            {"zone_id": "hero", "type": "text", "editable": ["headline", "subheadline", "form_title"], "ai_customizable": True}
+        ],
+        "html": """<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>{{ hero.headline }}</title><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"><style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Inter',sans-serif;color:{{ color.text }}}.hero{min-height:100vh;display:flex;align-items:center;padding:60px 40px;background:linear-gradient(135deg,{{ color.primary }} 0%,{{ color.secondary }} 100%)}.hero-container{max-width:1200px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:60px;align-items:center}.hero-content{color:#fff}.hero-content h1{font-size:3rem;font-weight:800;line-height:1.2;margin-bottom:20px}.hero-content p{font-size:1.25rem;margin-bottom:32px;opacity:0.95}.benefits-list{list-style:none}.benefits-list li{padding:12px 0;font-size:1.125rem;display:flex;align-items:center}.benefits-list li::before{content:'✓';margin-right:12px;font-weight:800;font-size:1.5rem;color:{{ color.accent }}}.form-container{background:#fff;padding:40px;border-radius:12px;box-shadow:0 20px 60px rgba(0,0,0,0.3)}.form-container h2{font-size:1.75rem;font-weight:700;margin-bottom:24px;color:{{ color.primary }}}.form-group{margin-bottom:20px}.form-group label{display:block;margin-bottom:8px;font-weight:600;color:#374151}.form-group input{width:100%;padding:14px;border:2px solid #e5e7eb;border-radius:6px;font-size:1rem;transition:border 0.3s}.form-group input:focus{outline:none;border-color:{{ color.primary }}}.submit-btn{width:100%;padding:16px;background:{{ color.primary }};color:#fff;border:none;border-radius:6px;font-weight:700;font-size:1.125rem;cursor:pointer;transition:all 0.3s}.submit-btn:hover{background:{{ color.secondary }};transform:translateY(-2px);box-shadow:0 8px 20px rgba(5,150,105,0.3)}.trust{padding:60px 40px;text-align:center;background:#f9fafb}.trust p{color:#6b7280;font-weight:600;margin-bottom:24px}.trust-logos{display:flex;justify-content:center;gap:40px;flex-wrap:wrap}.footer{background:#111827;color:#fff;padding:40px;text-align:center}@media(max-width:768px){.hero-container{grid-template-columns:1fr}.hero-content h1{font-size:2.25rem}}</style></head><body><section class="hero"><div class="hero-container"><div class="hero-content"><h1>{{ hero.headline }}</h1><p>{{ hero.subheadline }}</p><ul class="benefits-list"><li>Immediate access to exclusive content</li><li>No credit card required</li><li>Join over 10,000 satisfied users</li></ul></div><div class="form-container"><h2>{{ hero.form_title }}</h2><form><div class="form-group"><label>Full Name</label><input type="text" placeholder="Enter your name" required></div><div class="form-group"><label>Email Address</label><input type="email" placeholder="Enter your email" required></div><div class="form-group"><label>Company</label><input type="text" placeholder="Your company name"></div><button type="submit" class="submit-btn">Get Started Free</button></form></div></div></section><section class="trust"><p>Trusted by leading companies worldwide</p><div class="trust-logos"><div style="padding:20px;color:#9ca3af;font-weight:600">Company 1</div><div style="padding:20px;color:#9ca3af;font-weight:600">Company 2</div><div style="padding:20px;color:#9ca3af;font-weight:600">Company 3</div></div></section><footer class="footer"><p>&copy; 2025 {{ hero.headline }}</p></footer></body></html>"""
+    },
+    
+    # BLOG TEMPLATE
+    {
+        "template_id": "blog_modern_v1",
+        "name": "Modern Blog",
+        "category": "blog",
+        "style": "modern",
+        "description": "Clean modern blog with article showcase",
+        "tags": ["blog", "content", "articles", "magazine", "news"],
+        "features": ["articles", "categories", "author", "newsletter"],
+        "color_scheme": {"primary": "#1f2937", "secondary": "#374151", "accent": "#f59e0b", "background": "#ffffff", "text": "#111827"},
+        "use_count": 0,
+        "lighthouse_score": 94,
+        "wcag_compliant": True,
+        "customization_zones": [
+            {"zone_id": "hero", "type": "text", "editable": ["blog_name", "tagline"], "ai_customizable": True}
+        ],
+        "html": """<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>{{ hero.blog_name }}</title><link href="https://fonts.googleapis.com/css2?family=Lora:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet"><style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Inter',sans-serif;color:{{ color.text }};line-height:1.7}.nav{position:fixed;top:0;width:100%;background:rgba(255,255,255,0.98);padding:20px 40px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #e5e7eb;z-index:1000}.logo{font-family:'Lora',serif;font-size:1.75rem;font-weight:700}.nav-links{display:flex;gap:32px;list-style:none}.nav-links a{color:#6b7280;text-decoration:none;font-weight:500}.header{padding:120px 40px 80px;text-align:center;max-width:800px;margin:0 auto}.header h1{font-family:'Lora',serif;font-size:3.5rem;font-weight:700;margin-bottom:16px}.header p{font-size:1.25rem;color:#6b7280}.articles{padding:60px 40px;max-width:1200px;margin:0 auto}.articles-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(350px,1fr));gap:40px}.article-card{background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.1);transition:all 0.3s}.article-card:hover{transform:translateY(-4px);box-shadow:0 8px 30px rgba(0,0,0,0.12)}.article-image{width:100%;height:220px;background:#f3f4f6;object-fit:cover}.article-content{padding:24px}.article-meta{color:#9ca3af;font-size:0.875rem;margin-bottom:12px}.article-title{font-family:'Lora',serif;font-size:1.5rem;font-weight:600;margin-bottom:12px;line-height:1.4}.article-excerpt{color:#6b7280;margin-bottom:16px;line-height:1.6}.read-more{color:{{ color.accent }};font-weight:600;text-decoration:none}.footer{background:#f9fafb;padding:60px 40px;text-align:center;margin-top:60px}@media(max-width:768px){.header h1{font-size:2.5rem}.articles-grid{grid-template-columns:1fr}}</style></head><body><nav class="nav"><div class="logo">{{ hero.blog_name }}</div><ul class="nav-links"><li><a href="#articles">Articles</a></li><li><a href="#about">About</a></li><li><a href="#contact">Contact</a></li></ul></nav><header class="header"><h1>{{ hero.blog_name }}</h1><p>{{ hero.tagline }}</p></header><section class="articles" id="articles"><div class="articles-grid"><article class="article-card"><img src="{{ image_1 }}" class="article-image" alt="Article"><div class="article-content"><div class="article-meta">May 15, 2025 · 5 min read</div><h2 class="article-title">Article Title Goes Here</h2><p class="article-excerpt">A compelling excerpt that draws readers into the full article...</p><a href="#" class="read-more">Read More →</a></div></article><article class="article-card"><div class="article-image"></div><div class="article-content"><div class="article-meta">May 12, 2025 · 8 min read</div><h2 class="article-title">Another Great Article</h2><p class="article-excerpt">Insights and stories that matter to you and your audience...</p><a href="#" class="read-more">Read More →</a></div></article><article class="article-card"><div class="article-image"></div><div class="article-content"><div class="article-meta">May 10, 2025 · 6 min read</div><h2 class="article-title">Featured Story</h2><p class="article-excerpt">Discover the latest trends and developments in our field...</p><a href="#" class="read-more">Read More →</a></div></article></div></section><footer class="footer"><p>&copy; 2025 {{ hero.blog_name }}. All rights reserved.</p></footer></body></html>"""
     }
-]
+])
+
+# Component definitions (40 components)
+COMPONENTS = []
