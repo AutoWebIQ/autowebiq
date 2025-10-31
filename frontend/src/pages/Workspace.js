@@ -457,11 +457,68 @@ const WorkspaceV2 = () => {
           <div style={{
             padding: '16px 24px',
             borderBottom: '1px solid #e5e7eb',
-            background: '#f9fafb'
+            background: '#f9fafb',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center'
           }}>
             <h3 style={{ fontSize: '0.875rem', fontWeight: '600', color: '#374151' }}>
               Live Preview
             </h3>
+            
+            <div style={{ display: 'flex', gap: '8px' }}>
+              {deploymentUrl && (
+                <a
+                  href={deploymentUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    background: '#10b981',
+                    color: '#fff',
+                    padding: '6px 12px',
+                    borderRadius: '6px',
+                    fontSize: '0.875rem',
+                    textDecoration: 'none',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    border: 'none'
+                  }}
+                >
+                  <ExternalLink size={14} />
+                  View Live
+                </a>
+              )}
+              
+              <button
+                onClick={handleDeploy}
+                disabled={deploying || !project?.generated_code}
+                style={{
+                  background: deploying ? '#9ca3af' : project?.generated_code ? '#7c3aed' : '#e5e7eb',
+                  color: project?.generated_code ? '#fff' : '#9ca3af',
+                  padding: '6px 12px',
+                  borderRadius: '6px',
+                  fontSize: '0.875rem',
+                  cursor: project?.generated_code && !deploying ? 'pointer' : 'not-allowed',
+                  border: 'none',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px'
+                }}
+              >
+                {deploying ? (
+                  <>
+                    <Loader2 size={14} style={{ animation: 'spin 1s linear infinite' }} />
+                    Deploying...
+                  </>
+                ) : (
+                  <>
+                    <Rocket size={14} />
+                    Deploy to Vercel
+                  </>
+                )}
+              </button>
+            </div>
           </div>
 
           <div style={{ flex: 1, overflow: 'auto' }}>
