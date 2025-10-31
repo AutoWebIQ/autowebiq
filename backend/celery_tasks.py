@@ -187,17 +187,14 @@ build_website_task = celery_app.task(
 )(BuildWebsiteTask())
 
 
-@celery_app.task(
-    bind=True,
-    base=AsyncTask,
-    name='celery_tasks.generate_images_task',
-    max_retries=2,
-)
-async def generate_images_task(
-    self,
-    image_requirements: List[Dict],
-    project_id: str
-) -> Dict:
+class GenerateImagesTask(AsyncTask):
+    """Async image generation task"""
+    
+    async def run_async(
+        self,
+        image_requirements: List[Dict],
+        project_id: str
+    ) -> Dict:
     """
     Async image generation task
     
