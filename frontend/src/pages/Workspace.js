@@ -24,6 +24,9 @@ const WorkspaceV2 = () => {
   const [userCredits, setUserCredits] = useState(0);
   const [deploying, setDeploying] = useState(false);
   const [deploymentUrl, setDeploymentUrl] = useState(null);
+  const [validating, setValidating] = useState(false);
+  const [validationResults, setValidationResults] = useState(null);
+  const [showValidationModal, setShowValidationModal] = useState(false);
   const messagesEndRef = useRef(null);
 
   const getAxiosConfig = () => ({
