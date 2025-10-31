@@ -143,16 +143,30 @@ def test_review_criteria():
     else:
         print(f"❌ Generated HTML < 5000 chars ({len(frontend_code)} chars)")
     
-    # Check credits deducted
-    credits_response = requests.get(f"{base_url}/v2/user/credits", headers=headers)
+    # Check credits deducted (check V2 system since V2 build uses V2 credits)
+    v2_credits_response = requests.get(f"{base_url}/v2/user/credits", headers=headers)
+    if v2_credits_response.status_code == 200:
+        v2_initial_credits = v2_credits_response.json()['credits']
+        print(f"   V2 Credits before build: {v2_initial_credits}")
+        
+        # Get V2 credits after build
+        v2_final_credits_response = requests.get(f"{base_url}/v2/user/credits", headers=headers)
+        if v2_final_credits_response.status_code == 200:
+            v2_final_credits = v2_final_credits_response.json()['credits']
+            v2_credits_used = v2_initial_credits - v2_final_credits
+            if v2_credits_used > 0:
+                success_criteria["credits_deducted"] = True
+                print(f"✅ Credits deducted correctly from V2 system ({v2_credits_used} credits used)")
+            else:
+                print(f"❌ No credits were deducted from V2 system")
+    
+    # Also check V1 credits for comparison
+    credits_response = requests.get(f"{base_url}/credits/balance", headers=headers)
     if credits_response.status_code == 200:
-        final_credits = credits_response.json()['credits']
-        credits_used = initial_credits - final_credits
-        if credits_used > 0:
-            success_criteria["credits_deducted"] = True
-            print(f"✅ Credits deducted correctly ({credits_used} credits used)")
-        else:
-            print(f"❌ No credits were deducted")
+        v1_final_credits = credits_response.json()['balance']
+        v1_credits_used = initial_credits - v1_final_credits
+        print(f"   V1 Credits: {v1_final_credits} (used: {v1_credits_used})")
+        print(f"   V2 Credits: {v2_final_credits} (used: {v2_credits_used})")
     
     # Check database updates (verify project exists in PostgreSQL)
     project_check = requests.get(f"{base_url}/v2/projects/{project_id}", headers=headers)
