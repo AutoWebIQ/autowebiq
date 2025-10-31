@@ -413,6 +413,12 @@ const Workspace = () => {
     }
   };
 
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    navigate('/');
+  };
+
   const openInNewTab = () => {
     if (!project.generated_code) {
       toast.error('No code generated yet');
