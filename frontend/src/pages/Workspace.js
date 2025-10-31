@@ -544,6 +544,35 @@ const WorkspaceV2 = () => {
               )}
               
               <button
+                onClick={handleValidate}
+                disabled={validating || !project?.generated_code}
+                style={{
+                  background: validating ? '#9ca3af' : project?.generated_code ? '#3b82f6' : '#e5e7eb',
+                  color: project?.generated_code ? '#fff' : '#9ca3af',
+                  padding: '6px 12px',
+                  borderRadius: '6px',
+                  fontSize: '0.875rem',
+                  cursor: project?.generated_code && !validating ? 'pointer' : 'not-allowed',
+                  border: 'none',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px'
+                }}
+              >
+                {validating ? (
+                  <>
+                    <Loader2 size={14} style={{ animation: 'spin 1s linear infinite' }} />
+                    Validating...
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle size={14} />
+                    Validate
+                  </>
+                )}
+              </button>
+              
+              <button
                 onClick={handleDeploy}
                 disabled={deploying || !project?.generated_code}
                 style={{
