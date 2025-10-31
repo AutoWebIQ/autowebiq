@@ -429,60 +429,100 @@ const Workspace = () => {
   }
 
   return (
-    <div className="modern-workspace">
-      {/* Header */}
-      <header className="workspace-header-modern">
-        <div className="header-left-modern">
-          <Button className="back-button-modern" onClick={() => navigate('/dashboard')}>
-            <ArrowLeft size={20} />
-          </Button>
-          <div className="project-title-modern">
-            <h1>{project.name}</h1>
+    <div className="workspace-modern">
+      {/* Professional Header */}
+      <header className="workspace-header-professional">
+        <div className="header-content-professional">
+          {/* Left: Logo and Navigation */}
+          <div className="header-left-professional">
+            <div className="workspace-logo" onClick={() => navigate('/dashboard')}>
+              <Sparkles size={24} />
+              <span>AutoWebIQ</span>
+            </div>
+            <Button className="home-btn-workspace" onClick={() => navigate('/dashboard')}>
+              <Rocket size={18} />
+              Home
+            </Button>
           </div>
-        </div>
-        <div className="header-right-modern">
-          <div className="credits-badge-modern">
-            <CreditCard size={16} />
-            <span>{userCredits} Credits</span>
+
+          {/* Center: Project Selector */}
+          <div className="header-center-professional">
+            <div className="project-selector">
+              <Code size={18} />
+              <span className="project-name">{project.name}</span>
+            </div>
+          </div>
+
+          {/* Right: Credits and Profile */}
+          <div className="header-right-professional">
+            <div className="credits-display-workspace">
+              <CreditCard size={16} />
+              <span>{userCredits} Credits</span>
+              <Button className="buy-credits-workspace" onClick={() => navigate('/credits')}>
+                Buy More
+              </Button>
+            </div>
+            
+            <div className="user-menu-workspace">
+              <div className="user-avatar-workspace">
+                {localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')).username?.[0]?.toUpperCase() || 'U' : 'U'}
+              </div>
+              <div className="user-dropdown">
+                <div className="user-dropdown-header">
+                  <div className="user-dropdown-name">
+                    {localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')).username || 'User' : 'User'}
+                  </div>
+                  <div className="user-dropdown-email">
+                    {localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')).email : 'email@example.com'}
+                  </div>
+                </div>
+                <button className="logout-btn-workspace" onClick={handleLogout}>
+                  <LogOut size={16} />
+                  Logout
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       </header>
 
-      {/* Main Content */}
-      <div className="workspace-layout-modern">
+      {/* Main Content Area */}
+      <div className="workspace-main-professional">
         {/* Chat Section */}
-        <div className="chat-section-modern">
-          <ScrollArea className="messages-container-modern">
+        <div className="chat-section-professional">
+          <ScrollArea className="messages-area-professional">
             {messages.length === 0 && (
-              <div className="empty-chat-modern">
-                <div className="empty-icon-modern">🤖</div>
-                <h2>Start Building Your Website</h2>
-                <p>Describe what you want to build and AI will generate it for you</p>
+              <div className="empty-state-professional">
+                <div className="empty-icon">🤖</div>
+                <h2>Start Building</h2>
+                <p>Describe your website and AI will generate it</p>
               </div>
             )}
             
             {messages.map((msg, idx) => (
-              <div key={idx} className={`message-modern ${msg.role}`}>
-                <div className="message-avatar-modern">
+              <div key={idx} className={`message-professional ${msg.role}`}>
+                <div className="message-avatar-professional">
                   {msg.role === 'user' ? (
-                    <div className="avatar-user">{localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')).username?.[0]?.toUpperCase() || 'U' : 'U'}</div>
+                    <div className="avatar-circle user-avatar-circle">
+                      {localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')).username?.[0]?.toUpperCase() || 'U' : 'U'}
+                    </div>
                   ) : (
-                    <div className="avatar-ai">AI</div>
+                    <div className="avatar-circle ai-avatar-circle">AI</div>
                   )}
                 </div>
-                <div className="message-bubble-modern">
+                <div className="message-content-professional">
                   <ReactMarkdown>{msg.content}</ReactMarkdown>
                 </div>
               </div>
             ))}
             
             {loading && (
-              <div className="message-modern assistant">
-                <div className="message-avatar-modern">
-                  <div className="avatar-ai">AI</div>
+              <div className="message-professional assistant">
+                <div className="message-avatar-professional">
+                  <div className="avatar-circle ai-avatar-circle">AI</div>
                 </div>
-                <div className="message-bubble-modern">
-                  <div className="typing-indicator">
+                <div className="message-content-professional">
+                  <div className="loading-dots-professional">
                     <span></span>
                     <span></span>
                     <span></span>
@@ -495,36 +535,34 @@ const Workspace = () => {
           </ScrollArea>
 
           {/* Input Area */}
-          <div className="input-section-modern">
-            <div className="input-wrapper-modern">
-              <Textarea
-                placeholder="Describe your website idea..."
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault();
-                    buildWithAgents();
-                  }
-                }}
-                disabled={loading}
-                className="chat-textarea-modern"
-              />
-              <Button 
-                onClick={buildWithAgents}
-                disabled={loading || !input.trim()}
-                className="send-button-modern"
-              >
-                {loading ? <Loader2 className="animate-spin" size={20} /> : <Send size={20} />}
-              </Button>
-            </div>
+          <div className="input-area-professional">
+            <Textarea
+              placeholder="Describe what you want to build..."
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  buildWithAgents();
+                }
+              }}
+              disabled={loading}
+              className="input-textarea-professional"
+            />
+            <Button 
+              onClick={buildWithAgents}
+              disabled={loading || !input.trim()}
+              className="send-btn-professional"
+            >
+              {loading ? <Loader2 className="animate-spin" size={20} /> : <Send size={20} />}
+            </Button>
           </div>
         </div>
 
         {/* Preview Section */}
-        <div className="preview-section-modern">
-          <div className="preview-header-modern">
-            <div className="preview-tabs-modern">
+        <div className="preview-section-professional">
+          <div className="preview-toolbar-professional">
+            <div className="preview-tabs-professional">
               <button
                 className={previewMode === 'preview' ? 'active' : ''}
                 onClick={() => setPreviewMode('preview')}
@@ -541,18 +579,18 @@ const Workspace = () => {
               </button>
             </div>
             {project.generated_code && (
-              <Button className="open-tab-btn" onClick={openInNewTab}>
+              <Button className="open-new-tab-professional" onClick={openInNewTab}>
                 <ExternalLink size={16} />
-                Open in New Tab
+                Open in Tab
               </Button>
             )}
           </div>
 
-          <div className="preview-content-modern">
+          <div className="preview-content-professional">
             {!project.generated_code ? (
-              <div className="preview-empty-modern">
-                <Code size={48} />
-                <p>Your generated website will appear here</p>
+              <div className="preview-empty-professional">
+                <Code size={64} />
+                <p>Your website will appear here</p>
               </div>
             ) : (
               <>
@@ -561,7 +599,7 @@ const Workspace = () => {
                     ref={iframeRef}
                     srcDoc={project.generated_code}
                     title="Website Preview"
-                    className="preview-iframe-modern"
+                    className="preview-iframe-professional"
                   />
                 )}
                 {previewMode === 'code' && (
