@@ -99,7 +99,7 @@ class CreditTransaction(Base):
     balance_after = Column(Integer, nullable=False)
     status = Column(String(50), default="completed", index=True)  # pending, completed, refunded, failed
     description = Column(Text)
-    metadata = Column(JSON)  # Additional data (agent breakdown, etc.)
+    extra_data = Column(JSON)  # Additional data (agent breakdown, etc.)
     created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), index=True)
     
     # Relationships
