@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-route
 import axios from 'axios';
 import Workspace from './pages/Workspace';
 import CreditsPage from './pages/CreditsPage';
+import TermsOfService from './pages/TermsOfService';
 import UserMenu from './components/UserMenu';
 import EmergentLanding from './components/EmergentLanding';
 import { Button } from '@/components/ui/button';
