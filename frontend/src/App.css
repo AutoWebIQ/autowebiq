@@ -836,6 +836,11 @@ h1, h2, h3, h4, h5, h6 {
   padding: 1rem;
   font-size: 0.95rem;
   background: white;
+  color: #1F2937 !important;
+}
+
+.chat-input-area textarea::placeholder {
+  color: #9CA3AF !important;
 }
 
 .chat-input-area textarea:focus {
