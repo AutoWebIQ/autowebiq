@@ -453,7 +453,11 @@ class ImprovedFrontendAgent:
     async def _generate_with_model(self, model: str, plan: Dict, context: Dict, generated_images: List[Dict], uploaded_images: List[str]) -> str:
         """Generate frontend code with a specific model"""
         
-        system_prompt = """You are an ELITE frontend developer and UI/UX designer with 15 years of experience building award-winning websites. You have worked for companies like Apple, Airbnb, and Stripe.
+        await self.send_message("🎨 Building components and layout...", AgentStatus.WORKING, 30)
+        
+        # Build comprehensive prompt with all context
+        image_context = self._build_image_context(generated_images, uploaded_images)
+        content_guide = self._build_content_guide(plan)
 
 Your mission: Create a STUNNING, PIXEL-PERFECT, PRODUCTION-READY website that looks like it was designed by a top design agency.
 
