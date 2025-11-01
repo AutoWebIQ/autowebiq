@@ -358,8 +358,17 @@ const WorkspaceV2 = () => {
     try {
       toast.info('🔍 Running 9-point validation...');
       
-      const result = await validateWebsite(id, deploymentUrl);
+      // Use V1 endpoint that works with MongoDB
+      const response = await axios.post(
+        `${API}/validate`,
+        {
+          project_id: id,
+          html_content: project.generated_code
+        },
+        getAxiosConfig()
+      );
       
+      const result = response.data;
       setValidationResults(result);
       setShowValidationModal(true);
       
@@ -389,12 +398,28 @@ const WorkspaceV2 = () => {
       
       setMessages(prev => [...prev, {
         role: 'system',
-        content: `❌ **Validation Failed**: ${error.response?.data?.detail || error.message}`,
+        content: `❌ **Validation Failed**: ${error.response?.data?.detail || error.message}. Running validation on generated code...`,
         created_at: new Date().toISOString()
       }]);
     } finally {
       setValidating(false);
     }
+  };
+
+  const openInNewTab = () => {
+    if (!project?.generated_code) {
+      toast.error('No website to open. Build your website first!');
+      return;
+    }
+
+    // Create a blob from the HTML
+    const blob = new Blob([project.generated_code], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    
+    // Open in new tab
+    window.open(url, '_blank');
+    
+    toast.success('✅ Opened in new tab!');
   };
 
   return (
