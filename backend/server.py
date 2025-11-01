@@ -315,7 +315,7 @@ async def register(user_data: UserRegister):
     await db.users.insert_one(user_dict)
     
     # Generate JWT token
-    token = create_jwt_token(user_dict['id'])
+    token = create_access_token({"sub": user_dict['id']})
     
     return {
         "access_token": token,
@@ -337,7 +337,7 @@ async def login(user_data: UserLogin):
         raise HTTPException(status_code=401, detail="Invalid credentials")
     
     # Generate JWT token
-    token = create_jwt_token(user['id'])
+    token = create_access_token({"sub": user['id']})
     
     return {
         "access_token": token,
