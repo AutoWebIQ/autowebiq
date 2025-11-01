@@ -28,6 +28,8 @@ const WorkspaceV2 = () => {
   const [validating, setValidating] = useState(false);
   const [validationResults, setValidationResults] = useState(null);
   const [showValidationModal, setShowValidationModal] = useState(false);
+  const [uploadedImages, setUploadedImages] = useState([]);
+  const [uploadingFile, setUploadingFile] = useState(false);
   const messagesEndRef = useRef(null);
 
   const getAxiosConfig = () => ({
