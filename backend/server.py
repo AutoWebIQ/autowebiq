@@ -60,6 +60,12 @@ cloudinary.config(
 
 # PostgreSQL is now the only database (initialized in database.py)
 # MongoDB has been removed - all data migrated to PostgreSQL
+# TEMPORARY: Re-add MongoDB for V1 endpoints until full PostgreSQL migration
+from motor.motor_asyncio import AsyncIOMotorClient
+
+# MongoDB connection for V1 endpoints
+mongo_client = AsyncIOMotorClient(os.environ.get('MONGO_URL', 'mongodb://localhost:27017'))
+db = mongo_client['autowebiq_db']
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 security = HTTPBearer()
