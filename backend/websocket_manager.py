@@ -107,15 +107,26 @@ class ConnectionManager:
         }
         await self.broadcast_to_project(project_id, message)
     
-    async def send_agent_message(self, project_id: str, agent_type: str, message: str, status: str = "working", progress: int = 0):
-        """Send agent status update"""
+    async def send_agent_message(self, project_id: str, agent_type: str, message: str, status: str = "working", progress: int = 0, **kwargs):
+        """
+        Send agent status update (Emergent-style)
+        
+        Args:
+            project_id: Project identifier
+            agent_type: Type of agent (planner, frontend, backend, image, testing)
+            message: Status message
+            status: Agent status (thinking, waiting, working, completed, warning, error)
+            progress: Progress percentage (0-100)
+            **kwargs: Additional metadata (tokens_used, credits_used, etc.)
+        """
         message_data = {
             'type': 'agent_message',
             'project_id': project_id,
             'agent_type': agent_type,
             'message': message,
             'status': status,
-            'progress': progress
+            'progress': progress,
+            **kwargs  # Include any additional data
         }
         await self.broadcast_to_project(project_id, message_data)
     
