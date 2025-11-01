@@ -1,6 +1,6 @@
-# Database Configuration - PostgreSQL + MongoDB Hybrid
-# PostgreSQL: Users, Projects, Credits, Transactions
-# MongoDB: Templates, Components
+# Database Configuration - PostgreSQL Only
+# Uses: FastAPI + PostgreSQL + Redis + Celery + WebSocket
+# All data stored in PostgreSQL for consistency with Emergent architecture
 
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 from sqlalchemy.orm import declarative_base
@@ -8,7 +8,6 @@ from sqlalchemy import Column, String, Integer, Float, DateTime, Boolean, Text, 
 from sqlalchemy.orm import relationship
 from datetime import datetime, timezone
 import os
-from motor.motor_asyncio import AsyncIOMotorClient
 
 # PostgreSQL Configuration
 DATABASE_URL = os.environ.get(
