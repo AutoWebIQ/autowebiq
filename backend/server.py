@@ -1662,6 +1662,93 @@ async def health_check():
     
     return health_status
 
+
+# ==================== Template & Component Endpoints ====================
+
+@app.get("/api/templates")
+async def get_templates():
+    """Get all available templates"""
+    try:
+        templates = await db.templates.find().to_list(length=None)
+        
+        # Convert ObjectId to string for JSON serialization
+        for template in templates:
+            template['_id'] = str(template['_id'])
+        
+        return {
+            "success": True,
+            "count": len(templates),
+            "templates": templates
+        }
+    except Exception as e:
+        logger.error(f"Error fetching templates: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error fetching templates: {str(e)}")
+
+
+@app.get("/api/templates/{template_id}")
+async def get_template(template_id: str):
+    """Get a specific template by ID"""
+    try:
+        template = await db.templates.find_one({"id": template_id})
+        
+        if not template:
+            raise HTTPException(status_code=404, detail="Template not found")
+        
+        template['_id'] = str(template['_id'])
+        
+        return {
+            "success": True,
+            "template": template
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error fetching template: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error fetching template: {str(e)}")
+
+
+@app.get("/api/components")
+async def get_components():
+    """Get all available UI components"""
+    try:
+        components = await db.components.find().to_list(length=None)
+        
+        # Convert ObjectId to string for JSON serialization
+        for component in components:
+            component['_id'] = str(component['_id'])
+        
+        return {
+            "success": True,
+            "count": len(components),
+            "components": components
+        }
+    except Exception as e:
+        logger.error(f"Error fetching components: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error fetching components: {str(e)}")
+
+
+@app.get("/api/components/category/{category}")
+async def get_components_by_category(category: str):
+    """Get components by category"""
+    try:
+        components = await db.components.find({"category": category}).to_list(length=None)
+        
+        # Convert ObjectId to string for JSON serialization
+        for component in components:
+            component['_id'] = str(component['_id'])
+        
+        return {
+            "success": True,
+            "category": category,
+            "count": len(components),
+            "components": components
+        }
+    except Exception as e:
+        logger.error(f"Error fetching components: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error fetching components: {str(e)}")
+
+
+
 app.add_middleware(
     CORSMiddleware,
     allow_credentials=True,
