@@ -1618,28 +1618,23 @@ async def list_gke_workspaces(user_id: str = Depends(get_current_user)):
 
 # Credit System Endpoints
 @api_router.get("/credits/balance")
-async def get_credit_balance(user_id: str = Depends(get_current_user)):
-    """Get current credit balance"""
-    credit_manager = get_credit_manager(db)
-    balance = await credit_manager.get_user_balance(user_id)
-    return {"balance": balance, "user_id": user_id}
+async def get_credit_balance(user_id: str = Depends(get_current_user), db=Depends(get_db)):
+    """Get current credit balance - PostgreSQL"""
+    return await get_credit_balance_endpoint(user_id, db)
 
 @api_router.get("/credits/transactions")
 async def get_credit_transactions(
     user_id: str = Depends(get_current_user),
-    limit: int = 50
+    limit: int = 50,
+    db=Depends(get_db)
 ):
-    """Get credit transaction history"""
-    credit_manager = get_credit_manager(db)
-    transactions = await credit_manager.get_transaction_history(user_id, limit)
-    return {"transactions": transactions}
+    """Get credit transaction history - PostgreSQL"""
+    return await get_credit_transactions_endpoint(user_id, db)
 
 @api_router.get("/credits/summary")
-async def get_credit_summary(user_id: str = Depends(get_current_user)):
-    """Get credit usage summary"""
-    credit_manager = get_credit_manager(db)
-    summary = await credit_manager.get_transaction_summary(user_id)
-    return summary
+async def get_credit_summary(user_id: str = Depends(get_current_user), db=Depends(get_db)):
+    """Get credit usage summary - PostgreSQL"""
+    return await get_credit_summary_endpoint(user_id, db)
 
 @api_router.get("/credits/pricing")
 async def get_credit_pricing():
