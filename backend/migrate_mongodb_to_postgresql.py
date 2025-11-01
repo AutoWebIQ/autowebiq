@@ -176,11 +176,12 @@ class MongoToPostgreSQLMigrator:
         """Migrate credit transactions from MongoDB to PostgreSQL"""
         print("💳 Migrating credit transactions...")
         
-        # Get all valid user IDs first
+        # Get valid user IDs from PostgreSQL (just migrated)
         valid_user_ids = set()
-        async for user_doc in self.mongo_db.users.find({}, {'id': 1, 'user_id': 1}):
-            user_id = user_doc.get('id') or user_doc.get('user_id') or str(user_doc.get('_id'))
-            valid_user_ids.add(user_id)
+        async with self.AsyncSessionLocal() as check_session:
+            result = await check_session.execute(text("SELECT id FROM users"))
+            for row in result:
+                valid_user_ids.add(row[0])
         
         skipped = 0
         async with self.AsyncSessionLocal() as session:
@@ -215,11 +216,12 @@ class MongoToPostgreSQLMigrator:
         """Migrate user sessions from MongoDB to PostgreSQL"""
         print("🔑 Migrating user sessions...")
         
-        # Get all valid user IDs first
+        # Get valid user IDs from PostgreSQL (just migrated)
         valid_user_ids = set()
-        async for user_doc in self.mongo_db.users.find({}, {'id': 1, 'user_id': 1}):
-            user_id = user_doc.get('id') or user_doc.get('user_id') or str(user_doc.get('_id'))
-            valid_user_ids.add(user_id)
+        async with self.AsyncSessionLocal() as check_session:
+            result = await check_session.execute(text("SELECT id FROM users"))
+            for row in result:
+                valid_user_ids.add(row[0])
         
         skipped = 0
         async with self.AsyncSessionLocal() as session:
