@@ -5,7 +5,8 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { toast } from 'sonner';
-import { Send, Loader2, Sparkles, Rocket, ExternalLink, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
+import { Send, Loader2, Sparkles, Rocket, ExternalLink, CheckCircle, XCircle, AlertCircle, Paperclip, X } from 'lucide-react';
+import { useDropzone } from 'react-dropzone';
 import { useBuildWebSocket } from '../hooks/useBuildWebSocket';
 import { startAsyncBuild, getBuildStatus, deployToVercel, validateWebsite } from '../services/apiV2';
 
