@@ -63,16 +63,21 @@ agent_orchestrator = OptimizedAgentOrchestrator(
     gemini_key=os.environ.get('GOOGLE_AI_API_KEY')
 )
 
-# Initialize Template-Based Orchestrator (NEW - uses templates)
+# Initialize Template-Based Orchestrator (Uses PostgreSQL)
 template_orchestrator = TemplateBasedOrchestrator(
     openai_key=os.environ.get('OPENAI_API_KEY'),
     anthropic_key=os.environ.get('ANTHROPIC_API_KEY'),
-    gemini_key=os.environ.get('GOOGLE_AI_API_KEY'),
-    db=db
+    gemini_key=os.environ.get('GOOGLE_AI_API_KEY')
 )
 
 app = FastAPI()
 api_router = APIRouter(prefix="/api")
+
+# Initialize PostgreSQL on startup
+@app.on_event("startup")
+async def startup_event():
+    await init_db()
+    logging.info("✅ PostgreSQL database initialized")
 
 # Models
 class User(BaseModel):
