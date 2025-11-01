@@ -32,6 +32,22 @@ from constants import INITIAL_FREE_CREDITS
 from database import init_db, get_db, AsyncSessionLocal, User as DBUser, Project as DBProject, Template as DBTemplate, Component as DBComponent
 from sqlalchemy import select
 
+# Import PostgreSQL endpoint functions
+from auth_endpoints_pg import (
+    register_endpoint, login_endpoint, get_current_user_endpoint,
+    google_auth_endpoint, firebase_sync_endpoint
+)
+from project_endpoints_pg import (
+    get_projects_endpoint, create_project_endpoint, get_project_endpoint,
+    get_project_messages_endpoint, create_project_message_endpoint,
+    update_project_code_endpoint, delete_project_endpoint
+)
+from credit_endpoints_pg import (
+    get_credit_balance_endpoint, deduct_credits_endpoint, add_credits_endpoint,
+    get_credit_transactions_endpoint, get_credit_summary_endpoint
+)
+from db_helpers import get_user_by_id, get_project_by_id
+
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
 
