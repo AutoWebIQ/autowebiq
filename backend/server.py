@@ -758,6 +758,119 @@ async def get_messages(project_id: str, user_id: str = Depends(get_current_user)
     ).sort("created_at", 1).to_list(1000)
     return messages
 
+
+@api_router.post("/projects/{project_id}/messages")
+async def create_message(project_id: str, request: Request, user_id: str = Depends(get_current_user)):
+    """Create a new message and trigger website generation"""
+    # Parse request body
+    body = await request.json()
+    message = body.get('message', '')
+    uploaded_images = body.get('uploaded_images', [])
+    
+    if not message:
+        raise HTTPException(status_code=400, detail="Message is required")
+    
+    # Verify project ownership
+    project = await db.projects.find_one({"id": project_id, "user_id": user_id})
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+    
+    # Save user message
+    user_message_id = str(uuid.uuid4())
+    user_message = {
+        "id": user_message_id,
+        "project_id": project_id,
+        "role": "user",
+        "content": message,
+        "images": uploaded_images,
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    await db.messages.insert_one(user_message)
+    
+    # Check user credits
+    user = await db.users.find_one({"id": user_id})
+    if not user or user.get('credits', 0) < 20:
+        error_message = {
+            "id": str(uuid.uuid4()),
+            "project_id": project_id,
+            "role": "assistant",
+            "content": "⚠️ Insufficient credits. You need at least 20 credits to generate a website.",
+            "created_at": datetime.now(timezone.utc).isoformat()
+        }
+        await db.messages.insert_one(error_message)
+        return {"message": error_message}
+    
+    try:
+        # Import template system
+        from template_orchestrator import TemplateOrchestrator
+        
+        # Initialize orchestrator
+        orchestrator = TemplateOrchestrator()
+        
+        # Generate website using template system
+        result = await orchestrator.generate_website(
+            prompt=message,
+            project_id=project_id,
+            user_id=user_id,
+            images=uploaded_images
+        )
+        
+        if result.get('success'):
+            # Save assistant response
+            assistant_message = {
+                "id": str(uuid.uuid4()),
+                "project_id": project_id,
+                "role": "assistant",
+                "content": result.get('message', 'Website generated successfully! 🎉'),
+                "created_at": datetime.now(timezone.utc).isoformat()
+            }
+            await db.messages.insert_one(assistant_message)
+            
+            # Update project with generated code
+            await db.projects.update_one(
+                {"id": project_id},
+                {"$set": {
+                    "generated_code": result.get('html', ''),
+                    "status": "completed",
+                    "updated_at": datetime.now(timezone.utc).isoformat()
+                }}
+            )
+            
+            # Deduct credits
+            await db.users.update_one(
+                {"id": user_id},
+                {"$inc": {"credits": -20}}
+            )
+            
+            return {
+                "message": assistant_message,
+                "generated_code": result.get('html', ''),
+                "credits_used": 20
+            }
+        else:
+            error_message = {
+                "id": str(uuid.uuid4()),
+                "project_id": project_id,
+                "role": "assistant",
+                "content": f"❌ Generation failed: {result.get('error', 'Unknown error')}",
+                "created_at": datetime.now(timezone.utc).isoformat()
+            }
+            await db.messages.insert_one(error_message)
+            return {"message": error_message}
+            
+    except Exception as e:
+        logger.error(f"Error generating website: {str(e)}")
+        error_message = {
+            "id": str(uuid.uuid4()),
+            "project_id": project_id,
+            "role": "assistant",
+            "content": f"❌ Error: {str(e)}",
+            "created_at": datetime.now(timezone.utc).isoformat()
+        }
+        await db.messages.insert_one(error_message)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @api_router.delete("/projects/{project_id}")
 async def delete_project(project_id: str, user_id: str = Depends(get_current_user)):
     result = await db.projects.update_one(
