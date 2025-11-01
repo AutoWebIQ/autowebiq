@@ -173,11 +173,25 @@ class MongoToPostgreSQLMigrator:
         """Migrate credit transactions from MongoDB to PostgreSQL"""
         print("💳 Migrating credit transactions...")
         
+        # Get all valid user IDs first
+        valid_user_ids = set()
+        async for user_doc in self.mongo_db.users.find({}, {'id': 1, 'user_id': 1}):
+            user_id = user_doc.get('id') or user_doc.get('user_id') or str(user_doc.get('_id'))
+            valid_user_ids.add(user_id)
+        
+        skipped = 0
         async with self.AsyncSessionLocal() as session:
             async for txn_doc in self.mongo_db.credit_transactions.find():
+                user_id = txn_doc.get('user_id')
+                
+                # Skip transactions with invalid user_id
+                if user_id not in valid_user_ids:
+                    skipped += 1
+                    continue
+                
                 transaction = CreditTransaction(
                     id=txn_doc.get('id') or txn_doc.get('transaction_id') or str(txn_doc.get('_id')),
-                    user_id=txn_doc.get('user_id'),
+                    user_id=user_id,
                     transaction_type=txn_doc.get('transaction_type') or txn_doc.get('type', 'deduction'),
                     amount=txn_doc.get('amount', 0),
                     balance_before=txn_doc.get('balance_before', 0),
@@ -192,7 +206,7 @@ class MongoToPostgreSQLMigrator:
             
             await session.commit()
         
-        print(f"✅ Migrated {self.stats['transactions']} transactions\n")
+        print(f"✅ Migrated {self.stats['transactions']} transactions ({skipped} skipped due to missing users)\n")
     
     async def migrate_sessions(self):
         """Migrate user sessions from MongoDB to PostgreSQL"""
