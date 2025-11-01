@@ -295,20 +295,76 @@ MODEL_COSTS = {
 
 # Auth endpoints
 @api_router.post("/auth/register")
-async def register(user_data: UserRegister, db=Depends(get_db)):
-    """Register a new user - PostgreSQL"""
-    return await register_endpoint(user_data, db)
+async def register(user_data: UserRegister):
+    """Register a new user - MongoDB"""
+    # Check if user exists
+    existing_user = await db.users.find_one({"email": user_data.email})
+    if existing_user:
+        raise HTTPException(status_code=400, detail="Email already registered")
+    
+    # Create new user
+    user_dict = {
+        "id": str(uuid.uuid4()),
+        "username": user_data.username,
+        "email": user_data.email,
+        "password_hash": hash_password(user_data.password),
+        "credits": INITIAL_FREE_CREDITS,
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    await db.users.insert_one(user_dict)
+    
+    # Generate JWT token
+    token = create_jwt_token(user_dict['id'])
+    
+    return {
+        "access_token": token,
+        "token_type": "bearer",
+        "user": {
+            "id": user_dict["id"],
+            "email": user_dict["email"],
+            "username": user_dict["username"],
+            "credits": user_dict["credits"]
+        }
+    }
 
 @api_router.post("/auth/login")
-async def login(user_data: UserLogin, db=Depends(get_db)):
-    """Login user - PostgreSQL"""
-    return await login_endpoint(user_data, db)
+async def login(user_data: UserLogin):
+    """Login user - MongoDB"""
+    # Find user
+    user = await db.users.find_one({"email": user_data.email})
+    if not user or not verify_password(user_data.password, user.get('password_hash', '')):
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+    
+    # Generate JWT token
+    token = create_jwt_token(user['id'])
+    
+    return {
+        "access_token": token,
+        "token_type": "bearer",
+        "user": {
+            "id": user["id"],
+            "email": user["email"],
+            "username": user.get("username", ""),
+            "credits": user.get("credits", 0)
+        }
+    }
 
 @api_router.get("/auth/me")
-async def get_me(request: Request, db=Depends(get_db)):
-    """Get current user data with projects - PostgreSQL"""
+async def get_me(request: Request):
+    """Get current user data - MongoDB"""
     user_id = await get_current_user_flexible(request)
-    return await get_current_user_endpoint(user_id, db)
+    user = await db.users.find_one({"id": user_id})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    return {
+        "id": user["id"],
+        "email": user["email"],
+        "username": user.get("username", ""),
+        "credits": user.get("credits", 0),
+        "created_at": user.get("created_at", "")
+    }
 
 @api_router.post("/auth/forgot-password")
 async def forgot_password(request: ForgotPasswordRequest):
