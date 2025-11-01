@@ -494,15 +494,18 @@ frontend:
   
   - task: "Multi-Agent Builder Image Integration"
     implemented: true
-    working: "NA"
+    working: false
     file: "frontend/src/pages/Workspace.js"
-    stuck_count: 0
+    stuck_count: 1
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
         - working: "NA"
           agent: "main"
           comment: "Updated buildWithAgents function to pass uploaded image URLs to backend. Images sent as array in uploaded_images field of build request. Seamless integration with existing multi-agent workflow."
+        - working: false
+          agent: "testing"
+          comment: "❌ IMAGE INTEGRATION NOT TESTABLE: While the backend multi-agent builder accepts uploaded_images parameter (confirmed in previous testing), the frontend image upload UI is not visible/accessible in the workspace interface. Cannot test the complete image integration workflow without the upload functionality being available in the UI. Backend integration is confirmed working but frontend UI component is missing or hidden."
   
   - task: "Google OAuth Login UI Integration"
     implemented: true
