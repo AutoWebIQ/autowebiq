@@ -136,11 +136,14 @@ class MongoToPostgreSQLMigrator:
         """Migrate project messages from MongoDB to PostgreSQL"""
         print("💬 Migrating messages...")
         
-        # Get all valid project IDs first
+        # Get valid project IDs that were actually migrated (check both sources)
         valid_project_ids = set()
-        async for project_doc in self.mongo_db.projects.find({}, {'id': 1, 'project_id': 1}):
-            project_id = project_doc.get('id') or project_doc.get('project_id') or str(project_doc.get('_id'))
-            valid_project_ids.add(project_id)
+        
+        # From PostgreSQL (just migrated)
+        async with self.AsyncSessionLocal() as check_session:
+            result = await check_session.execute(text("SELECT id FROM projects"))
+            for row in result:
+                valid_project_ids.add(row[0])
         
         skipped = 0
         async with self.AsyncSessionLocal() as session:
