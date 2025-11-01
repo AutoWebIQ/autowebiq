@@ -24,6 +24,20 @@ DATABASE_URL = os.environ.get(
     'postgresql+asyncpg://autowebiq:autowebiq_secure_pass@localhost/autowebiq_db'
 )
 
+def parse_datetime(value):
+    """Convert MongoDB datetime string to Python datetime object"""
+    if isinstance(value, datetime):
+        return value
+    elif isinstance(value, str):
+        try:
+            # Try parsing ISO format
+            return datetime.fromisoformat(value.replace('Z', '+00:00'))
+        except:
+            # Fallback to current time if parsing fails
+            return datetime.now(timezone.utc)
+    else:
+        return datetime.now(timezone.utc)
+
 class MongoToPostgreSQLMigrator:
     def __init__(self):
         self.mongo_client = AsyncIOMotorClient(MONGO_URL)
