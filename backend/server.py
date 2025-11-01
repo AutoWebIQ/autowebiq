@@ -287,47 +287,15 @@ MODEL_COSTS = {
 }
 
 # Auth endpoints
-@api_router.post("/auth/register", response_model=TokenResponse)
-async def register(user_data: UserRegister):
-    existing = await db.users.find_one({"$or": [{"username": user_data.username}, {"email": user_data.email}]})
-    if existing:
-        raise HTTPException(status_code=400, detail="Username or email already exists")
-    
-    user = User(
-        username=user_data.username,
-        email=user_data.email,
-        password_hash=hash_password(user_data.password),
-        credits=INITIAL_FREE_CREDITS,
-        initial_credits_granted=True  # Mark as granted
-    )
-    
-    user_dict = user.model_dump()
-    user_dict['created_at'] = user_dict['created_at'].isoformat()
-    await db.users.insert_one(user_dict)
-    
-    # Add signup bonus transaction
-    credit_manager = get_credit_manager(db)
-    await credit_manager.add_signup_bonus(user.id, INITIAL_FREE_CREDITS)
-    
-    token = create_access_token({"user_id": user.id})
-    
-    return TokenResponse(
-        access_token=token,
-        user={"id": user.id, "username": user.username, "email": user.email, "credits": user.credits}
-    )
+@api_router.post("/auth/register")
+async def register(user_data: UserRegister, db=Depends(get_db)):
+    """Register a new user - PostgreSQL"""
+    return await register_endpoint(user_data, db)
 
-@api_router.post("/auth/login", response_model=TokenResponse)
-async def login(user_data: UserLogin):
-    user_doc = await db.users.find_one({"email": user_data.email})
-    if not user_doc or not verify_password(user_data.password, user_doc['password_hash']):
-        raise HTTPException(status_code=401, detail="Invalid credentials")
-    
-    token = create_access_token({"user_id": user_doc['id']})
-    
-    return TokenResponse(
-        access_token=token,
-        user={"id": user_doc['id'], "username": user_doc['username'], "email": user_doc['email'], "credits": user_doc['credits']}
-    )
+@api_router.post("/auth/login")
+async def login(user_data: UserLogin, db=Depends(get_db)):
+    """Login user - PostgreSQL"""
+    return await login_endpoint(user_data, db)
 
 @api_router.get("/auth/me")
 async def get_me(request: Request):
