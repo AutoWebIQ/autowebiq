@@ -538,19 +538,19 @@ metadata:
 
 test_plan:
   current_focus:
-    - "GKE Workspace Manager"
-    - "GitHub Integration Manager"
     - "Image Upload with Visual Preview"
     - "Multi-Agent Builder Image Integration"
+    - "POST /api/projects/{id}/messages endpoint"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
   testing_notes: |
-    New features require:
-    1. GKE cluster deployment for workspace testing
-    2. GitHub OAuth token for repository operations
-    3. UI testing for image upload functionality
-    4. End-to-end test of image upload → agent build workflow
+    Image upload UI implementation completed in Workspace.js:
+    1. Clip icon (Paperclip) button added next to textarea
+    2. Uploaded images preview gallery with remove buttons
+    3. Integration with startAsyncBuild to pass image URLs
+    4. Need comprehensive UI testing with demo account
+    5. Test image upload flow: click clip → select image → preview appears → send message → images passed to backend
 
 agent_communication:
   current_focus:
