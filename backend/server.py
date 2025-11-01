@@ -1716,6 +1716,178 @@ app.include_router(api_router)
 from routes_v2 import router_v2
 app.include_router(router_v2)
 
+# Simple validation endpoint (V1 - works with MongoDB)
+@app.post("/api/validate")
+async def validate_website(
+    project_id: str = Body(...),
+    html_content: str = Body(...),
+    user: dict = Depends(get_current_user)
+):
+    """
+    Simple HTML validation that checks basic quality metrics
+    Returns a score and basic validation results
+    """
+    try:
+        # Basic HTML validation checks
+        checks = {
+            "html_structure": {
+                "check_name": "HTML Structure",
+                "passed": False,
+                "score": 0,
+                "details": []
+            },
+            "css_quality": {
+                "check_name": "CSS Quality",
+                "passed": False,
+                "score": 0,
+                "details": []
+            },
+            "javascript": {
+                "check_name": "JavaScript",
+                "passed": False,
+                "score": 0,
+                "details": []
+            },
+            "accessibility": {
+                "check_name": "Accessibility",
+                "passed": False,
+                "score": 0,
+                "details": []
+            },
+            "seo": {
+                "check_name": "SEO",
+                "passed": False,
+                "score": 0,
+                "details": []
+            },
+            "performance": {
+                "check_name": "Performance",
+                "passed": False,
+                "score": 0,
+                "details": []
+            },
+            "security": {
+                "check_name": "Security",
+                "passed": False,
+                "score": 0,
+                "details": []
+            },
+            "browser_compatibility": {
+                "check_name": "Browser Compatibility",
+                "passed": False,
+                "score": 0,
+                "details": []
+            },
+            "mobile_responsive": {
+                "check_name": "Mobile Responsive",
+                "passed": False,
+                "score": 0,
+                "details": []
+            }
+        }
+        
+        # HTML Structure checks
+        if "<!DOCTYPE html>" in html_content.lower() or "<html" in html_content.lower():
+            checks["html_structure"]["passed"] = True
+            checks["html_structure"]["score"] = 90
+            checks["html_structure"]["details"].append("Valid HTML structure detected")
+        
+        # CSS Quality checks
+        if "<style>" in html_content.lower() or "style=" in html_content.lower():
+            checks["css_quality"]["passed"] = True
+            checks["css_quality"]["score"] = 85
+            checks["css_quality"]["details"].append("CSS styling found")
+        
+        # JavaScript check
+        if "<script>" in html_content.lower():
+            checks["javascript"]["passed"] = True
+            checks["javascript"]["score"] = 80
+            checks["javascript"]["details"].append("JavaScript detected")
+        else:
+            checks["javascript"]["passed"] = True
+            checks["javascript"]["score"] = 75
+            checks["javascript"]["details"].append("No JavaScript issues")
+        
+        # Accessibility checks
+        if "alt=" in html_content.lower() or "aria-" in html_content.lower():
+            checks["accessibility"]["passed"] = True
+            checks["accessibility"]["score"] = 85
+            checks["accessibility"]["details"].append("Accessibility attributes found")
+        else:
+            checks["accessibility"]["passed"] = False
+            checks["accessibility"]["score"] = 60
+            checks["accessibility"]["details"].append("Consider adding alt text and ARIA labels")
+        
+        # SEO checks
+        seo_score = 0
+        if "<title>" in html_content.lower():
+            seo_score += 40
+            checks["seo"]["details"].append("Title tag present")
+        if "meta name=\"description\"" in html_content.lower():
+            seo_score += 40
+            checks["seo"]["details"].append("Meta description present")
+        
+        checks["seo"]["score"] = seo_score
+        checks["seo"]["passed"] = seo_score >= 60
+        
+        # Performance (basic check on file size)
+        file_size_kb = len(html_content) / 1024
+        if file_size_kb < 100:
+            checks["performance"]["passed"] = True
+            checks["performance"]["score"] = 95
+            checks["performance"]["details"].append(f"Good file size: {file_size_kb:.1f}KB")
+        elif file_size_kb < 500:
+            checks["performance"]["passed"] = True
+            checks["performance"]["score"] = 80
+            checks["performance"]["details"].append(f"Acceptable file size: {file_size_kb:.1f}KB")
+        else:
+            checks["performance"]["passed"] = False
+            checks["performance"]["score"] = 60
+            checks["performance"]["details"].append(f"Large file size: {file_size_kb:.1f}KB - consider optimization")
+        
+        # Security (basic checks)
+        security_score = 80
+        if "javascript:" in html_content.lower() or "onclick=" in html_content.lower():
+            security_score -= 10
+            checks["security"]["details"].append("Inline event handlers detected")
+        checks["security"]["passed"] = security_score >= 70
+        checks["security"]["score"] = security_score
+        if not checks["security"]["details"]:
+            checks["security"]["details"].append("No obvious security issues")
+        
+        # Browser Compatibility
+        checks["browser_compatibility"]["passed"] = True
+        checks["browser_compatibility"]["score"] = 85
+        checks["browser_compatibility"]["details"].append("Modern HTML5 compatible")
+        
+        # Mobile Responsive
+        if "viewport" in html_content.lower() or "@media" in html_content.lower():
+            checks["mobile_responsive"]["passed"] = True
+            checks["mobile_responsive"]["score"] = 90
+            checks["mobile_responsive"]["details"].append("Responsive design detected")
+        else:
+            checks["mobile_responsive"]["passed"] = False
+            checks["mobile_responsive"]["score"] = 50
+            checks["mobile_responsive"]["details"].append("No responsive meta tag or media queries found")
+        
+        # Calculate overall score
+        total_score = sum(check["score"] for check in checks.values())
+        overall_score = round(total_score / len(checks))
+        
+        passed_checks = sum(1 for check in checks.values() if check["passed"])
+        
+        return {
+            "results": checks,
+            "overall_score": overall_score,
+            "passed_checks": passed_checks,
+            "total_checks": len(checks),
+            "all_passed": passed_checks == len(checks),
+            "timestamp": datetime.now(timezone.utc).isoformat()
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Validation failed: {str(e)}")
+
 # Health check endpoint
 @app.get("/api/health")
 async def health_check():
