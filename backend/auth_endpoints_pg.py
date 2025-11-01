@@ -156,7 +156,7 @@ async def google_auth_endpoint(auth_data: GoogleAuthRequest, db: AsyncSession = 
     # Generate JWT
     token = jwt.encode(
         {"user_id": user.id, "exp": datetime.now(timezone.utc) + JWT_EXPIRATION},
-        JWT_SECRET,
+        get_jwt_secret(),
         algorithm=JWT_ALGORITHM
     )
     
@@ -195,7 +195,7 @@ async def firebase_sync_endpoint(sync_data: FirebaseSyncRequest, db: AsyncSessio
     # Generate JWT
     token = jwt.encode(
         {"user_id": user.id, "exp": datetime.now(timezone.utc) + JWT_EXPIRATION},
-        JWT_SECRET,
+        get_jwt_secret(),
         algorithm=JWT_ALGORITHM
     )
     
