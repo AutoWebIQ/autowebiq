@@ -3,7 +3,6 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from fastapi.responses import StreamingResponse, JSONResponse
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
-from motor.motor_asyncio import AsyncIOMotorClient
 import os
 import logging
 from pathlib import Path
@@ -30,6 +29,8 @@ from github_manager import github_manager
 from gke_manager import gke_manager
 from credit_system import get_credit_manager, AgentType, ModelType, MODEL_NAME_MAPPING
 from constants import INITIAL_FREE_CREDITS
+from database import init_db, get_db, AsyncSessionLocal, User as DBUser, Project as DBProject, Template as DBTemplate, Component as DBComponent
+from sqlalchemy import select
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
@@ -41,9 +42,8 @@ cloudinary.config(
     api_secret=os.environ.get('CLOUDINARY_API_SECRET')
 )
 
-mongo_url = os.environ['MONGO_URL']
-client = AsyncIOMotorClient(mongo_url, serverSelectionTimeoutMS=5000)
-db = client[os.environ['DB_NAME']]
+# PostgreSQL is now the only database (initialized in database.py)
+# MongoDB has been removed - all data migrated to PostgreSQL
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 security = HTTPBearer()
