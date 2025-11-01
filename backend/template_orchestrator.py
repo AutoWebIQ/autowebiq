@@ -23,7 +23,11 @@ class TemplateBasedOrchestrator:
         self.template_customizer = TemplateCustomizer(self.openai_client)
         self.image_agent = ImprovedImageAgent(self.openai_client)
         
+        # Token tracking for real-time credit deduction
+        self.token_tracker = get_token_tracker()
+        
         self.message_callback: Optional[Callable] = None
+        self.current_session_id: Optional[str] = None
     
     def set_message_callback(self, callback: Callable):
         """Set callback for real-time agent messages"""
