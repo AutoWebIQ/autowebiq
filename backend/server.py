@@ -676,61 +676,29 @@ async def create_project(project_data: ProjectCreate, user_id: str = Depends(get
     }
 
 @api_router.get("/projects")
-async def get_projects(user_id: str = Depends(get_current_user)):
-    projects = await db.projects.find(
-        {"user_id": user_id, "status": "active"},
-        {"_id": 0}
-    ).sort("updated_at", -1).to_list(100)
-    return projects
+async def get_projects(user_id: str = Depends(get_current_user), db=Depends(get_db)):
+    """Get all projects for user - PostgreSQL"""
+    return await get_projects_endpoint(user_id, db)
 
 @api_router.post("/projects/create")
-async def create_project(request: dict, user_id: str = Depends(get_current_user)):
-    """Create a new project"""
-    try:
-        project_id = str(uuid.uuid4())
-        
-        project = {
-            "id": project_id,
-            "name": request.get("name", "Untitled Project"),
-            "user_id": user_id,
-            "description": request.get("description", ""),
-            "generated_code": "",
-            "backend_code": "",
-            "status": "active",
-            "model": "gpt-4o",  # Default model
-            "created_at": datetime.now(timezone.utc).isoformat(),
-            "updated_at": datetime.now(timezone.utc).isoformat()
-        }
-        
-        await db.projects.insert_one(project)
-        
-        return {
-            "id": project_id,
-            "name": project["name"],
-            "message": "Project created successfully"
-        }
-    except Exception as e:
-        logger.error(f"Failed to create project: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to create project: {str(e)}")
+async def create_project(request: dict, user_id: str = Depends(get_current_user), db=Depends(get_db)):
+    """Create a new project - PostgreSQL"""
+    from project_endpoints_pg import ProjectCreate
+    project_data = ProjectCreate(
+        name=request.get("name", "Untitled Project"),
+        description=request.get("description", "")
+    )
+    return await create_project_endpoint(project_data, user_id, db)
 
 @api_router.get("/projects/{project_id}")
-async def get_project(project_id: str, user_id: str = Depends(get_current_user)):
-    project = await db.projects.find_one({"id": project_id, "user_id": user_id}, {"_id": 0})
-    if not project:
-        raise HTTPException(status_code=404, detail="Project not found")
-    return project
+async def get_project(project_id: str, user_id: str = Depends(get_current_user), db=Depends(get_db)):
+    """Get a specific project - PostgreSQL"""
+    return await get_project_endpoint(project_id, user_id, db)
 
 @api_router.get("/projects/{project_id}/messages")
-async def get_messages(project_id: str, user_id: str = Depends(get_current_user)):
-    project = await db.projects.find_one({"id": project_id, "user_id": user_id})
-    if not project:
-        raise HTTPException(status_code=404, detail="Project not found")
-    
-    messages = await db.messages.find(
-        {"project_id": project_id},
-        {"_id": 0}
-    ).sort("created_at", 1).to_list(1000)
-    return messages
+async def get_messages(project_id: str, user_id: str = Depends(get_current_user), db=Depends(get_db)):
+    """Get all messages for a project - PostgreSQL"""
+    return await get_project_messages_endpoint(project_id, user_id, db)
 
 
 @api_router.post("/projects/{project_id}/messages")
