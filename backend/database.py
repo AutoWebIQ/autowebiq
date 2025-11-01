@@ -116,6 +116,45 @@ class UserSession(Base):
     created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
 
+class Template(Base):
+    __tablename__ = "templates"
+    
+    id = Column(String(100), primary_key=True)  # template_id like 'ecom_luxury_v1'
+    name = Column(String(255), nullable=False)
+    description = Column(Text)
+    category = Column(String(100), nullable=False, index=True)  # ecommerce, saas, portfolio, etc.
+    tags = Column(JSON)  # List of tags for matching
+    html_structure = Column(Text, nullable=False)  # The template HTML
+    customization_zones = Column(JSON)  # Areas that can be customized
+    preview_image = Column(String(512))  # URL to preview image
+    features = Column(JSON)  # List of features
+    color_schemes = Column(JSON)  # Supported color schemes
+    seo_score = Column(Integer, default=90)
+    lighthouse_score = Column(Integer, default=92)
+    responsive = Column(Boolean, default=True)
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
+
+
+class Component(Base):
+    __tablename__ = "components"
+    
+    id = Column(String(100), primary_key=True)  # component_id like 'nav_minimal_v1'
+    name = Column(String(255), nullable=False)
+    description = Column(Text)
+    category = Column(String(100), nullable=False, index=True)  # navigation, hero, features, etc.
+    tags = Column(JSON)  # List of tags
+    html_code = Column(Text, nullable=False)  # The component HTML
+    css_code = Column(Text)  # Component-specific CSS
+    js_code = Column(Text)  # Component-specific JavaScript
+    preview_image = Column(String(512))  # URL to preview
+    props = Column(JSON)  # Configurable properties
+    variants = Column(JSON)  # Different style variants
+    responsive = Column(Boolean, default=True)
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
+
+
 # ==================== Database Helpers ====================
 
 async def get_db():
