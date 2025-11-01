@@ -12,14 +12,13 @@ from agents_v2 import ImprovedImageAgent, AgentMessage, AgentStatus, AgentType
 class TemplateBasedOrchestrator:
     """Orchestrator that uses template system + AI customization"""
     
-    def __init__(self, openai_key: str, anthropic_key: str, gemini_key: str, db):
+    def __init__(self, openai_key: str, anthropic_key: str, gemini_key: str):
         from openai import AsyncOpenAI
         
         self.openai_client = AsyncOpenAI(api_key=openai_key)
-        self.db = db
         
-        # Initialize systems
-        self.template_library = TemplateLibrary(db)
+        # Initialize systems (PostgreSQL now used internally)
+        self.template_library = TemplateLibrary()
         self.template_customizer = TemplateCustomizer(self.openai_client)
         self.image_agent = ImprovedImageAgent(self.openai_client)
         
