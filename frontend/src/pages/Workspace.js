@@ -37,6 +37,52 @@ const WorkspaceV2 = () => {
     withCredentials: true
   });
 
+  // Dropzone for file uploads
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    accept: {
+      'image/*': ['.png', '.jpg', '.jpeg', '.gif', '.webp', '.svg']
+    },
+    maxSize: 10485760, // 10MB
+    onDrop: async (acceptedFiles) => {
+      if (acceptedFiles.length === 0) return;
+      
+      setUploadingFile(true);
+      const file = acceptedFiles[0];
+      
+      try {
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('project_id', id);
+        
+        const config = getAxiosConfig();
+        const res = await axios.post(`${API}/upload`, formData, {
+          ...config,
+          headers: {
+            ...config.headers,
+            'Content-Type': 'multipart/form-data'
+          }
+        });
+        
+        // Add to uploaded images array
+        setUploadedImages(prev => [...prev, {
+          url: res.data.url,
+          filename: file.name,
+          format: res.data.format || 'image'
+        }]);
+        toast.success(`Image uploaded: ${file.name}`);
+      } catch (error) {
+        console.error('Upload error:', error);
+        toast.error('Upload failed. Please try again.');
+      } finally {
+        setUploadingFile(false);
+      }
+    }
+  });
+
+  const removeUploadedImage = (index) => {
+    setUploadedImages(prev => prev.filter((_, i) => i !== index));
+  };
+
   // WebSocket message handler
   const handleWebSocketMessage = useCallback((data) => {
     console.log('WebSocket message:', data);
