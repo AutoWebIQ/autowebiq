@@ -281,13 +281,61 @@ class TemplateBasedOrchestrator:
                 self.current_session_id = None
     
     async def _send_message(self, project_id: str, agent: str, content: str, status: AgentStatus, progress: int):
-        """Send agent message"""
+        """Send agent message (legacy method for compatibility)"""
         if self.message_callback:
             message = {
                 "id": f"{agent}_{datetime.now().timestamp()}",
                 "agent": agent,
                 "content": content,
                 "status": status.value,
+                "progress": progress,
+                "timestamp": datetime.now(timezone.utc).isoformat()
+            }
+            await self.message_callback(project_id, message)
+    
+    async def _send_message_with_status(
+        self, 
+        project_id: str, 
+        agent: str, 
+        content: str, 
+        status: str,
+        progress: int
+    ):
+        """
+        Send Emergent-style agent message with detailed status
+        
+        Status options: "thinking", "waiting", "working", "completed", "warning", "error"
+        """
+        if self.message_callback:
+            # Status emoji mapping (Emergent-style)
+            status_emoji = {
+                "thinking": "🤔",
+                "waiting": "⏸️",
+                "working": "⚙️",
+                "completed": "✅",
+                "warning": "⚠️",
+                "error": "❌"
+            }
+            
+            # Agent emoji mapping
+            agent_emoji = {
+                "initializing": "🚀",
+                "planner": "🧠",
+                "frontend": "🎨",
+                "backend": "⚙️",
+                "image": "🖼️",
+                "testing": "🧪",
+                "building": "🏗️"
+            }
+            
+            message = {
+                "id": f"{agent}_{datetime.now().timestamp()}",
+                "agent": agent,
+                "agent_display_name": agent.replace("_", " ").title() + " Agent",
+                "content": content,
+                "status": status,
+                "status_emoji": status_emoji.get(status, "💬"),
+                "agent_emoji": agent_emoji.get(agent, "💬"),
                 "progress": progress,
                 "timestamp": datetime.now(timezone.utc).isoformat()
             }
