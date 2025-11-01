@@ -299,15 +299,24 @@ const WorkspaceV2 = () => {
     try {
       toast.info('🚀 Deploying to Vercel...');
       
-      const result = await deployToVercel(id);
+      // Use V1 endpoint that works with MongoDB
+      const response = await axios.post(
+        `${API}/deploy/vercel`,
+        {
+          project_id: id,
+          project_name: project.name || 'autowebiq-project'
+        },
+        getAxiosConfig()
+      );
       
-      setDeploymentUrl(result.deployment_url);
+      const result = response.data;
+      setDeploymentUrl(result.deployment_url || result.url);
       
       toast.success(
         <div>
           <div>✅ Deployed successfully!</div>
           <a 
-            href={result.deployment_url} 
+            href={result.deployment_url || result.url} 
             target="_blank" 
             rel="noopener noreferrer"
             style={{ color: '#7c3aed', textDecoration: 'underline' }}
@@ -320,17 +329,17 @@ const WorkspaceV2 = () => {
 
       setMessages(prev => [...prev, {
         role: 'system',
-        content: `🚀 **Deployed to Vercel**: Your website is live at [${result.deployment_url}](${result.deployment_url})`,
+        content: `🚀 **Deployed to Vercel**: Your website is live!`,
         created_at: new Date().toISOString()
       }]);
 
     } catch (error) {
       console.error('Deployment error:', error);
-      toast.error(error.response?.data?.detail || 'Deployment failed');
+      toast.error(error.response?.data?.detail || 'Deployment failed. This feature requires Vercel integration.');
       
       setMessages(prev => [...prev, {
         role: 'system',
-        content: `❌ **Deployment Failed**: ${error.response?.data?.detail || error.message}`,
+        content: `❌ **Deployment Failed**: ${error.response?.data?.detail || error.message}. Note: Deployment requires Vercel token configuration.`,
         created_at: new Date().toISOString()
       }]);
     } finally {
