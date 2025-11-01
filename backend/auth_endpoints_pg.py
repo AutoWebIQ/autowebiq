@@ -8,7 +8,6 @@ from datetime import datetime, timezone, timedelta
 from passlib.context import CryptContext
 import jwt
 import uuid
-import os
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from database import get_db, User
@@ -19,9 +18,14 @@ from db_helpers import (
 from constants import INITIAL_FREE_CREDITS
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-JWT_SECRET = os.environ.get('JWT_SECRET', 'autowebiq-secret-key-change-in-production')
 JWT_ALGORITHM = "HS256"
 JWT_EXPIRATION = timedelta(days=30)
+
+# Import JWT_SECRET from server.py after it loads .env
+def get_jwt_secret():
+    """Get JWT secret from server module"""
+    import server
+    return server.JWT_SECRET
 
 # Pydantic models
 class UserRegister(BaseModel):
