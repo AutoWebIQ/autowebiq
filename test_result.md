@@ -637,6 +637,39 @@ agent_communication:
         - `/app/backend/credit_system.py` - Fixed MongoDB ObjectId serialization (previous fix)
         
         **Status**: Application fully operational with dual authentication system (Firebase + JWT)
+    - agent: "main"
+      message: |
+        ✅ IMAGE UPLOAD UI FIX COMPLETED:
+        
+        **Issue**: Image upload functionality (clip icon) was not visible in Workspace interface, preventing users from uploading images for website generation.
+        
+        **Root Cause**: The current Workspace.js (WorkspaceV2) did not have image upload UI components, although the backend supported uploaded_images parameter.
+        
+        **Solution Implemented**:
+        1. Imported Paperclip and X icons from lucide-react
+        2. Imported useDropzone from react-dropzone (already installed)
+        3. Added state management: uploadedImages[], uploadingFile
+        4. Implemented dropzone configuration for image uploads (png, jpg, jpeg, gif, webp, svg, max 10MB)
+        5. Added file upload handler that posts to /api/upload endpoint
+        6. Created clip icon button in input area (left of textarea)
+        7. Added uploaded images preview gallery above input area with thumbnail previews
+        8. Added remove button (X) on each uploaded image thumbnail
+        9. Updated handleSendMessage to collect image URLs and pass to startAsyncBuild
+        10. Images are cleared from state after sending message
+        
+        **Files Modified**:
+        - `/app/frontend/src/pages/Workspace.js` - Added complete image upload UI and integration
+        
+        **UI Components Added**:
+        - Paperclip button (left of textarea, shows loader when uploading)
+        - Image preview gallery (80x80px thumbnails with remove buttons)
+        - Drag-and-drop support via dropzone
+        - Visual feedback during upload
+        
+        **Integration Flow**:
+        User clicks clip icon → Selects image → Image uploads to /api/upload → Thumbnail appears in preview gallery → User types message → Clicks send → Image URLs passed to startAsyncBuild → Images cleared from state
+        
+        **Status**: Image upload UI now visible and functional. Ready for comprehensive testing with demo account to verify: (1) Clip icon visibility, (2) Image upload flow, (3) Preview gallery, (4) Integration with build system, (5) WebSocket updates with image generation.
     - agent: "testing"
       message: "Completed comprehensive testing of Google OAuth authentication endpoints. All backend authentication features are working correctly. JWT and session token authentication both function properly. Session management (creation, validation, deletion) works as expected. The flexible authentication system successfully supports both authentication methods."
     - agent: "testing"
