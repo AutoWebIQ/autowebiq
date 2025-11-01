@@ -97,11 +97,25 @@ class MongoToPostgreSQLMigrator:
         """Migrate projects from MongoDB to PostgreSQL"""
         print("📁 Migrating projects...")
         
+        # Get all valid user IDs first
+        valid_user_ids = set()
+        async for user_doc in self.mongo_db.users.find({}, {'id': 1, 'user_id': 1}):
+            user_id = user_doc.get('id') or user_doc.get('user_id') or str(user_doc.get('_id'))
+            valid_user_ids.add(user_id)
+        
+        skipped = 0
         async with self.AsyncSessionLocal() as session:
             async for project_doc in self.mongo_db.projects.find():
+                user_id = project_doc.get('user_id')
+                
+                # Skip projects with invalid user_id
+                if user_id not in valid_user_ids:
+                    skipped += 1
+                    continue
+                
                 project = Project(
                     id=project_doc.get('id') or project_doc.get('project_id') or str(project_doc.get('_id')),
-                    user_id=project_doc.get('user_id'),
+                    user_id=user_id,
                     name=project_doc.get('name', 'Untitled Project'),
                     description=project_doc.get('description', ''),
                     generated_code=project_doc.get('generated_code') or project_doc.get('code'),
@@ -116,7 +130,7 @@ class MongoToPostgreSQLMigrator:
             
             await session.commit()
         
-        print(f"✅ Migrated {self.stats['projects']} projects\n")
+        print(f"✅ Migrated {self.stats['projects']} projects ({skipped} skipped due to missing users)\n")
     
     async def migrate_messages(self):
         """Migrate project messages from MongoDB to PostgreSQL"""
