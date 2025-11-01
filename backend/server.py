@@ -92,8 +92,9 @@ api_router = APIRouter(prefix="/api")
 # Initialize PostgreSQL on startup
 @app.on_event("startup")
 async def startup_event():
-    await init_db()
-    logging.info("✅ PostgreSQL database initialized")
+    # Skip PostgreSQL initialization - using MongoDB for V1 endpoints
+    # await init_db()
+    logging.info("✅ Server started (MongoDB mode)")
 
 # Models
 class User(BaseModel):
