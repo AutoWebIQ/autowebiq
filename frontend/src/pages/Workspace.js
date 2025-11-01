@@ -580,20 +580,59 @@ const WorkspaceV2 = () => {
               </div>
             )}
 
-            {messages.map((msg, idx) => (
-              <div
-                key={idx}
-                style={{
-                  padding: '16px',
-                  borderRadius: '8px',
-                  background: msg.role === 'user' ? '#1a1a1a' : '#0f0f0f',
-                  border: `1px solid ${msg.role === 'user' ? '#333' : '#222'}`,
-                  color: '#fff'
-                }}
-              >
-                {msg.content}
-              </div>
-            ))}
+            {messages.map((msg, idx) => {
+              // Determine message styling based on agent status
+              const isAgentMessage = msg.agent_type !== undefined;
+              const agentStatus = msg.status || 'default';
+              
+              // Status-based styling
+              const statusColors = {
+                'thinking': { bg: '#1a1a2e', border: '#6366f1' },
+                'waiting': { bg: '#1a1a1a', border: '#f59e0b' },
+                'working': { bg: '#0f1419', border: '#10b981' },
+                'completed': { bg: '#0a1f0a', border: '#10b981' },
+                'warning': { bg: '#1f1a0a', border: '#f59e0b' },
+                'error': { bg: '#1f0a0a', border: '#ef4444' },
+                'default': { bg: msg.role === 'user' ? '#1a1a1a' : '#0f0f0f', border: msg.role === 'user' ? '#333' : '#222' }
+              };
+              
+              const colors = statusColors[agentStatus] || statusColors.default;
+              
+              return (
+                <div
+                  key={idx}
+                  style={{
+                    padding: '16px',
+                    borderRadius: '8px',
+                    background: colors.bg,
+                    border: `1px solid ${colors.border}`,
+                    borderLeft: isAgentMessage ? `4px solid ${colors.border}` : `1px solid ${colors.border}`,
+                    color: '#fff',
+                    position: 'relative',
+                    transition: 'all 0.3s ease'
+                  }}
+                >
+                  {/* Progress bar for working agents */}
+                  {isAgentMessage && msg.progress !== undefined && msg.progress > 0 && msg.progress < 100 && (
+                    <div style={{
+                      position: 'absolute',
+                      bottom: 0,
+                      left: 0,
+                      height: '3px',
+                      width: `${msg.progress}%`,
+                      background: `linear-gradient(90deg, ${colors.border}, ${colors.border}80)`,
+                      borderRadius: '0 0 0 8px',
+                      transition: 'width 0.5s ease'
+                    }} />
+                  )}
+                  
+                  {/* Message content */}
+                  <div style={{ whiteSpace: 'pre-wrap', lineHeight: '1.6' }}>
+                    {msg.content}
+                  </div>
+                </div>
+              );
+            })}
 
             {(loading || buildingAsync) && (
               <div style={{
