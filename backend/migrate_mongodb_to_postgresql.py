@@ -83,8 +83,8 @@ class MongoToPostgreSQLMigrator:
                     credits=user_doc.get('credits', 20),
                     firebase_uid=user_doc.get('firebase_uid'),
                     github_token=user_doc.get('github_token'),
-                    created_at=user_doc.get('created_at', datetime.now(timezone.utc)),
-                    updated_at=user_doc.get('updated_at', datetime.now(timezone.utc))
+                    created_at=parse_datetime(user_doc.get('created_at')),
+                    updated_at=parse_datetime(user_doc.get('updated_at'))
                 )
                 session.add(user)
                 self.stats['users'] += 1
