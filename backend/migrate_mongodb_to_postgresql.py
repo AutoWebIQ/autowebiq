@@ -224,19 +224,24 @@ class MongoToPostgreSQLMigrator:
                 valid_user_ids.add(row[0])
         
         skipped = 0
+        seen_tokens = set()  # Track session tokens to avoid duplicates
+        
         async with self.AsyncSessionLocal() as session:
             async for session_doc in self.mongo_db.user_sessions.find():
                 user_id = session_doc.get('user_id')
+                session_token = session_doc.get('session_token') or session_doc.get('token', '')
                 
-                # Skip sessions with invalid user_id
-                if user_id not in valid_user_ids:
+                # Skip sessions with invalid user_id or duplicate token
+                if user_id not in valid_user_ids or session_token in seen_tokens:
                     skipped += 1
                     continue
+                
+                seen_tokens.add(session_token)
                 
                 user_session = UserSession(
                     id=session_doc.get('id') or session_doc.get('session_id') or str(session_doc.get('_id')),
                     user_id=user_id,
-                    session_token=session_doc.get('session_token') or session_doc.get('token', ''),
+                    session_token=session_token,
                     expires_at=parse_datetime(session_doc.get('expires_at')),
                     created_at=parse_datetime(session_doc.get('created_at'))
                 )
@@ -245,7 +250,7 @@ class MongoToPostgreSQLMigrator:
             
             await session.commit()
         
-        print(f"✅ Migrated {self.stats['sessions']} sessions ({skipped} skipped due to missing users)\n")
+        print(f"✅ Migrated {self.stats['sessions']} sessions ({skipped} skipped due to missing users or duplicates)\n")
     
     async def migrate_templates(self):
         """Migrate templates from MongoDB to PostgreSQL"""
