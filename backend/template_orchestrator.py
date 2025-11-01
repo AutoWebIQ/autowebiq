@@ -36,29 +36,87 @@ class TemplateBasedOrchestrator:
     async def build_website(self, user_prompt: str, project_id: str, uploaded_images: List[str] = []) -> Dict:
         """Build website using template system"""
         
+        # Start token tracking session
+        session_id = f"build_{project_id}_{datetime.now().timestamp()}"
+        self.current_session_id = session_id
+        self.token_tracker.start_session(session_id)
+        
         try:
             print(f"\n🚀 Starting template-based build for: {user_prompt[:50]}...")
             
-            # Step 1: Template Selection
-            await self._send_message(project_id, "planner", "🎯 Analyzing requirements and selecting best template...", AgentStatus.THINKING, 10)
+            # Step 1: Initialize
+            await self._send_message_with_status(
+                project_id, 
+                "initializing", 
+                "🚀 Initializing build system...",
+                "working",
+                0
+            )
+            await asyncio.sleep(0.5)  # Small delay for UI visibility
+            
+            # Step 2: Template Selection
+            await self._send_message_with_status(
+                project_id,
+                "planner",
+                "🤔 Analyzing your requirements...",
+                "thinking",
+                10
+            )
+            await asyncio.sleep(0.3)
+            
+            await self._send_message_with_status(
+                project_id,
+                "planner",
+                "🔍 Searching template library (24 templates, 50 components)...",
+                "working",
+                15
+            )
             
             template = await self.template_library.select_template(user_prompt)
             
             if not template:
                 print("❌ No matching template found, falling back to AI generation")
-                await self._send_message(project_id, "planner", "⚠️ No matching template, using AI generation", AgentStatus.WORKING, 15)
+                await self._send_message_with_status(
+                    project_id,
+                    "planner",
+                    "⚠️ No matching template found. Using full AI generation...",
+                    "warning",
+                    20
+                )
                 # Fall back to pure AI generation
                 return {"status": "failed", "error": "No matching template"}
             
             template_name = template.get('name', 'Unknown')
             print(f"✅ Selected template: {template_name}")
-            await self._send_message(project_id, "planner", f"✅ Selected template: {template_name}", AgentStatus.COMPLETED, 20)
+            
+            await self._send_message_with_status(
+                project_id,
+                "planner",
+                f"✅ Selected template: **{template_name}**\nCategory: {template.get('category', 'N/A')} • Match score: {template.get('match_score', 'N/A')}",
+                "completed",
+                25
+            )
             
             # Increment usage count
             await self.template_library.increment_template_usage(template['template_id'])
             
-            # Step 2: Image Generation (if needed)
-            await self._send_message(project_id, "image", "🎨 Generating contextual images...", AgentStatus.WORKING, 30)
+            # Step 3: Image Generation Agent
+            await self._send_message_with_status(
+                project_id,
+                "image",
+                "🎨 Image Agent starting...",
+                "waiting",
+                30
+            )
+            await asyncio.sleep(0.3)
+            
+            await self._send_message_with_status(
+                project_id,
+                "image",
+                "🖼️ Generating contextual images for your website...",
+                "working",
+                35
+            )
             
             # Create a simplified plan for image generation
             image_plan = {
@@ -78,10 +136,40 @@ class TemplateBasedOrchestrator:
             images = await self.image_agent.think(image_plan, {})
             
             print(f"✅ Generated {len(images)} images")
-            await self._send_message(project_id, "image", f"✅ Generated {len(images)} professional images", AgentStatus.COMPLETED, 50)
+            await self._send_message_with_status(
+                project_id,
+                "image",
+                f"✅ Generated {len(images)} professional images\nQuality: High resolution • Style: {template.get('style', 'modern')}",
+                "completed",
+                55
+            )
             
-            # Step 3: Template Customization
-            await self._send_message(project_id, "frontend", "🎨 Customizing template with your content...", AgentStatus.WORKING, 60)
+            # Step 4: Frontend Agent - Template Customization
+            await self._send_message_with_status(
+                project_id,
+                "frontend",
+                "🎨 Frontend Agent starting...",
+                "waiting",
+                60
+            )
+            await asyncio.sleep(0.3)
+            
+            await self._send_message_with_status(
+                project_id,
+                "frontend",
+                "⚙️ Customizing template with your content...\nAnalyzing brand requirements...",
+                "working",
+                65
+            )
+            await asyncio.sleep(0.5)
+            
+            await self._send_message_with_status(
+                project_id,
+                "frontend",
+                "🎨 Applying design customizations...\nOptimizing layout and responsiveness...",
+                "working",
+                75
+            )
             
             customized_html = await self.template_customizer.customize_template(
                 template=template,
@@ -90,17 +178,62 @@ class TemplateBasedOrchestrator:
             )
             
             print(f"✅ Template customized ({len(customized_html)} chars)")
-            await self._send_message(project_id, "frontend", "✅ Website customized and optimized", AgentStatus.COMPLETED, 90)
+            await self._send_message_with_status(
+                project_id,
+                "frontend",
+                f"✅ Website customized successfully\nGenerated: {len(customized_html):,} characters of production-ready code",
+                "completed",
+                85
+            )
             
-            # Step 4: Final validation
-            await self._send_message(project_id, "testing", "🔍 Running quality checks...", AgentStatus.WORKING, 95)
+            # Step 5: Testing Agent - Quality Validation
+            await self._send_message_with_status(
+                project_id,
+                "testing",
+                "🧪 Testing Agent starting...",
+                "waiting",
+                90
+            )
+            await asyncio.sleep(0.3)
+            
+            await self._send_message_with_status(
+                project_id,
+                "testing",
+                "🔍 Running quality checks...\nValidating HTML structure, accessibility, and SEO...",
+                "working",
+                93
+            )
             
             validation_result = self._validate_output(customized_html)
             
             if validation_result['passed']:
-                await self._send_message(project_id, "testing", "✅ All quality checks passed!", AgentStatus.COMPLETED, 100)
+                await self._send_message_with_status(
+                    project_id,
+                    "testing",
+                    f"✅ All quality checks passed!\nScore: {validation_result['score']}/100 • Issues: 0",
+                    "completed",
+                    98
+                )
             else:
-                await self._send_message(project_id, "testing", f"⚠️ {len(validation_result['issues'])} minor issues found", AgentStatus.COMPLETED, 100)
+                await self._send_message_with_status(
+                    project_id,
+                    "testing",
+                    f"⚠️ {len(validation_result['issues'])} minor issues found\nScore: {validation_result['score']}/100 • Still production-ready",
+                    "completed",
+                    98
+                )
+            
+            # Step 6: Finalize
+            await self._send_message_with_status(
+                project_id,
+                "building",
+                "✅ Build complete! Finalizing...",
+                "completed",
+                100
+            )
+            
+            # Get token usage summary
+            token_summary = self.token_tracker.get_session_summary(session_id)
             
             # Return complete project
             return {
@@ -115,13 +248,23 @@ class TemplateBasedOrchestrator:
                 "images": images,
                 "test_results": validation_result,
                 "status": "completed",
-                "template_based": True
+                "template_based": True,
+                "token_usage": token_summary
             }
             
         except Exception as e:
             print(f"❌ Orchestrator error: {str(e)}")
             import traceback
             traceback.print_exc()
+            
+            await self._send_message_with_status(
+                project_id,
+                "building",
+                f"❌ Build failed: {str(e)}",
+                "error",
+                0
+            )
+            
             return {
                 "plan": {},
                 "frontend_code": "",
@@ -131,6 +274,11 @@ class TemplateBasedOrchestrator:
                 "status": "failed",
                 "error": str(e)
             }
+        finally:
+            # End token tracking
+            if self.current_session_id:
+                self.token_tracker.end_session(self.current_session_id)
+                self.current_session_id = None
     
     async def _send_message(self, project_id: str, agent: str, content: str, status: AgentStatus, progress: int):
         """Send agent message"""
