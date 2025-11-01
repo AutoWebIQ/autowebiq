@@ -177,19 +177,8 @@ async def init_db():
     print("✅ PostgreSQL tables created")
 
 
-# ==================== MongoDB Connection (for templates/components) ====================
-
-mongo_url = os.environ.get('MONGO_URL', 'mongodb://localhost:27017')
-mongo_client = AsyncIOMotorClient(mongo_url)
-mongo_db = mongo_client.autowebiq_db
-
-# MongoDB collections
-templates_collection = mongo_db.templates
-components_collection = mongo_db.components
-
-
 async def close_db():
     """Close database connections"""
     await engine.dispose()
-    mongo_client.close()
     print("✅ Database connections closed")
+
