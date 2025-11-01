@@ -108,8 +108,8 @@ class MongoToPostgreSQLMigrator:
                     status=project_doc.get('status', 'completed'),
                     template_id=project_doc.get('template_id'),
                     build_time=project_doc.get('build_time'),
-                    created_at=project_doc.get('created_at', datetime.now(timezone.utc)),
-                    updated_at=project_doc.get('updated_at', datetime.now(timezone.utc))
+                    created_at=parse_datetime(project_doc.get('created_at')),
+                    updated_at=parse_datetime(project_doc.get('updated_at'))
                 )
                 session.add(project)
                 self.stats['projects'] += 1
@@ -132,7 +132,7 @@ class MongoToPostgreSQLMigrator:
                     agent_type=msg_doc.get('agent_type'),
                     agent_status=msg_doc.get('agent_status'),
                     progress=msg_doc.get('progress', 0),
-                    created_at=msg_doc.get('created_at', datetime.now(timezone.utc))
+                    created_at=parse_datetime(msg_doc.get('created_at'))
                 )
                 session.add(message)
                 self.stats['messages'] += 1
@@ -157,7 +157,7 @@ class MongoToPostgreSQLMigrator:
                     status=txn_doc.get('status', 'completed'),
                     description=txn_doc.get('description', ''),
                     extra_data=txn_doc.get('extra_data') or txn_doc.get('metadata'),
-                    created_at=txn_doc.get('created_at', datetime.now(timezone.utc))
+                    created_at=parse_datetime(txn_doc.get('created_at'))
                 )
                 session.add(transaction)
                 self.stats['transactions'] += 1
@@ -176,8 +176,8 @@ class MongoToPostgreSQLMigrator:
                     id=session_doc.get('id') or session_doc.get('session_id') or str(session_doc.get('_id')),
                     user_id=session_doc.get('user_id'),
                     session_token=session_doc.get('session_token') or session_doc.get('token', ''),
-                    expires_at=session_doc.get('expires_at', datetime.now(timezone.utc)),
-                    created_at=session_doc.get('created_at', datetime.now(timezone.utc))
+                    expires_at=parse_datetime(session_doc.get('expires_at')),
+                    created_at=parse_datetime(session_doc.get('created_at'))
                 )
                 session.add(user_session)
                 self.stats['sessions'] += 1
@@ -206,8 +206,8 @@ class MongoToPostgreSQLMigrator:
                     seo_score=template_doc.get('seo_score', 90),
                     lighthouse_score=template_doc.get('lighthouse_score', 92),
                     responsive=template_doc.get('responsive', True),
-                    created_at=template_doc.get('created_at', datetime.now(timezone.utc)),
-                    updated_at=template_doc.get('updated_at', datetime.now(timezone.utc))
+                    created_at=parse_datetime(template_doc.get('created_at')),
+                    updated_at=parse_datetime(template_doc.get('updated_at'))
                 )
                 session.add(template)
                 self.stats['templates'] += 1
@@ -235,8 +235,8 @@ class MongoToPostgreSQLMigrator:
                     props=component_doc.get('props', {}),
                     variants=component_doc.get('variants', []),
                     responsive=component_doc.get('responsive', True),
-                    created_at=component_doc.get('created_at', datetime.now(timezone.utc)),
-                    updated_at=component_doc.get('updated_at', datetime.now(timezone.utc))
+                    created_at=parse_datetime(component_doc.get('created_at')),
+                    updated_at=parse_datetime(component_doc.get('updated_at'))
                 )
                 session.add(component)
                 self.stats['components'] += 1
