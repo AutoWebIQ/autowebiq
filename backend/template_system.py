@@ -5,25 +5,20 @@ import json
 from typing import Dict, List, Optional
 from datetime import datetime, timezone
 import re
+from sqlalchemy import select
+from database import AsyncSessionLocal, Template as DBTemplate, Component as DBComponent
 
 class TemplateLibrary:
     """Manages the template library with selection and customization"""
     
-    def __init__(self, db):
-        self.db = db
-        self.templates_collection = db.templates
-        self.components_collection = db.components
+    def __init__(self):
+        """Initialize with PostgreSQL"""
+        pass
         
     async def initialize_library(self):
         """Initialize template and component library in database"""
-        # Create indexes
-        await self.templates_collection.create_index("template_id", unique=True)
-        await self.templates_collection.create_index("category")
-        await self.templates_collection.create_index("tags")
-        await self.components_collection.create_index("component_id", unique=True)
-        await self.components_collection.create_index("category")
-        
-        print("✅ Template library initialized")
+        # PostgreSQL tables are already created with proper indexes
+        print("✅ Template library initialized (PostgreSQL)")
     
     async def select_template(self, user_prompt: str, project_type: str = None) -> Dict:
         """Select best matching template based on user prompt"""
@@ -31,20 +26,39 @@ class TemplateLibrary:
         # Extract features from prompt
         features = self._extract_features(user_prompt.lower())
         
-        # Build query
-        query = {}
-        if project_type:
-            query["category"] = project_type
-        
-        # Get all templates
-        templates = await self.templates_collection.find(query).to_list(length=None)
+        # Query PostgreSQL for templates
+        async with AsyncSessionLocal() as session:
+            query = select(DBTemplate)
+            if project_type:
+                query = query.where(DBTemplate.category == project_type)
+            
+            result = await session.execute(query)
+            templates = result.scalars().all()
         
         if not templates:
             return None
         
+        # Convert to dict format
+        template_dicts = []
+        for t in templates:
+            template_dicts.append({
+                'template_id': t.id,
+                'name': t.name,
+                'description': t.description,
+                'category': t.category,
+                'tags': t.tags or [],
+                'html_structure': t.html_structure,
+                'customization_zones': t.customization_zones or [],
+                'features': t.features or [],
+                'color_schemes': t.color_schemes or [],
+                'seo_score': t.seo_score,
+                'lighthouse_score': t.lighthouse_score,
+                'responsive': t.responsive
+            })
+        
         # Score each template
         scored_templates = []
-        for template in templates:
+        for template in template_dicts:
             score = self._calculate_match_score(template, features, user_prompt)
             scored_templates.append((template, score))
         
