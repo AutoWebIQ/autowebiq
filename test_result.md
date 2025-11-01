@@ -479,15 +479,18 @@ frontend:
 
   - task: "Image Upload with Visual Preview"
     implemented: true
-    working: "NA"
+    working: false
     file: "frontend/src/pages/Workspace.js"
-    stuck_count: 0
+    stuck_count: 1
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
         - working: "NA"
           agent: "main"
           comment: "Enhanced image upload functionality with visual thumbnail gallery above chat input. Uploaded images tracked in uploadedImages state array. Images automatically passed to build-with-agents endpoint. Includes remove button for each uploaded image. Requires UI testing with actual image uploads."
+        - working: false
+          agent: "testing"
+          comment: "❌ IMAGE UPLOAD UI NOT VISIBLE: Comprehensive workspace testing completed but image upload functionality (clip icon/upload button) was not visible in the current workspace interface. The chat input area, send button, and other workspace components are working correctly, but the image upload feature with visual preview is not accessible in the UI. This may be a UI rendering issue or the feature might be hidden/disabled."
   
   - task: "Multi-Agent Builder Image Integration"
     implemented: true
