@@ -13,6 +13,36 @@ body {
   color: white;
 }
 
+/* CRITICAL: Input visibility fixes */
+input, textarea, select {
+  color: #000000 !important; /* Black text for all inputs */
+  background: #ffffff !important; /* White background */
+  border: 1px solid #d1d5db !important; /* Visible border */
+}
+
+input::placeholder, textarea::placeholder {
+  color: #6b7280 !important; /* Gray placeholder */
+  opacity: 1 !important;
+}
+
+/* Auth form specific styles */
+.auth-form input,
+.input-group input {
+  color: #000000 !important;
+  background: #ffffff !important;
+  padding: 0.75rem !important;
+  border-radius: 0.5rem !important;
+  border: 1px solid #d1d5db !important;
+}
+
+/* Dark mode inputs (for workspace) */
+.workspace input,
+.workspace textarea {
+  color: #ffffff !important;
+  background: #1a1a1a !important;
+  border: 1px solid #333 !important;
+}
+
 h1, h2, h3, h4, h5, h6 {
   font-family: 'Space Grotesk', sans-serif;
 }
