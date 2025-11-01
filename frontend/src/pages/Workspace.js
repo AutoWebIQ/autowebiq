@@ -213,7 +213,9 @@ const WorkspaceV2 = () => {
     if (!input.trim() || loading || buildingAsync) return;
 
     const messageText = input.trim();
+    const imagesToSend = uploadedImages.map(img => img.url);
     setInput('');
+    setUploadedImages([]); // Clear uploaded images after sending
     setLoading(true);
 
     // Add user message
@@ -240,7 +242,7 @@ const WorkspaceV2 = () => {
 
       setBuildingAsync(true);
 
-      const buildResponse = await startAsyncBuild(id, messageText, []);
+      const buildResponse = await startAsyncBuild(id, messageText, imagesToSend);
       
       console.log('Async build started:', buildResponse);
       
