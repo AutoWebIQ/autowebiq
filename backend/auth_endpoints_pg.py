@@ -72,7 +72,7 @@ async def register_endpoint(user_data: UserRegister, db: AsyncSession = Depends(
     # Generate JWT
     token = jwt.encode(
         {"user_id": user.id, "exp": datetime.now(timezone.utc) + JWT_EXPIRATION},
-        JWT_SECRET,
+        get_jwt_secret(),
         algorithm=JWT_ALGORITHM
     )
     
@@ -93,7 +93,7 @@ async def login_endpoint(user_data: UserLogin, db: AsyncSession = Depends(get_db
     # Generate JWT
     token = jwt.encode(
         {"user_id": user.id, "exp": datetime.now(timezone.utc) + JWT_EXPIRATION},
-        JWT_SECRET,
+        get_jwt_secret(),
         algorithm=JWT_ALGORITHM
     )
     
