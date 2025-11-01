@@ -740,6 +740,26 @@ const WorkspaceV2 = () => {
               </button>
               
               <button
+                onClick={openInNewTab}
+                disabled={!project?.generated_code}
+                style={{
+                  background: project?.generated_code ? '#10b981' : '#e5e7eb',
+                  color: project?.generated_code ? '#fff' : '#9ca3af',
+                  padding: '6px 12px',
+                  borderRadius: '6px',
+                  fontSize: '0.875rem',
+                  cursor: project?.generated_code ? 'pointer' : 'not-allowed',
+                  border: 'none',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px'
+                }}
+              >
+                <ExternalLink size={14} />
+                Open in New Tab
+              </button>
+              
+              <button
                 onClick={handleDeploy}
                 disabled={deploying || !project?.generated_code}
                 style={{
