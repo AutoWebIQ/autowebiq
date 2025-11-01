@@ -8,8 +8,8 @@ import os
 
 class AutoWebIQDemoTester:
     def __init__(self):
-        # Get backend URL from frontend .env
-        self.base_url = "https://webgen-platform.preview.emergentagent.com"
+        # Use local backend URL since external URL is not accessible
+        self.base_url = "http://localhost:8001"
         self.api_url = f"{self.base_url}/api"
         self.demo_email = "demo@test.com"
         self.demo_password = "Demo123456"
