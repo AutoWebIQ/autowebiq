@@ -93,23 +93,66 @@ const WorkspaceV2 = () => {
     }
 
     if (data.type === 'agent_message') {
-      // Add agent message to chat
+      // Emergent-style agent status display
       const agentEmoji = {
+        'initializing': '🚀',
         'planner': '🧠',
         'frontend': '🎨',
         'backend': '⚙️',
         'image': '🖼️',
         'testing': '🧪',
-        'initializing': '🚀',
         'building': '🏗️'
       }[data.agent_type] || '💬';
 
-      const statusText = data.status === 'working' ? 'working...' : data.status;
+      const statusEmoji = {
+        'thinking': '🤔',
+        'waiting': '⏸️',
+        'working': '⚙️',
+        'completed': '✅',
+        'warning': '⚠️',
+        'error': '❌'
+      }[data.status] || '';
+
+      const agentDisplayName = (data.agent_type || 'system').replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) + ' Agent';
+      
+      // Format message with status indicators
+      let messageContent = `${agentEmoji} **${agentDisplayName}**`;
+      
+      // Add status indicator
+      if (data.status === 'thinking') {
+        messageContent += ` ${statusEmoji} *Thinking...*`;
+      } else if (data.status === 'waiting') {
+        messageContent += ` ${statusEmoji} *Waiting...*`;
+      } else if (data.status === 'working') {
+        messageContent += ` ${statusEmoji} *Working...*`;
+      } else if (data.status === 'completed') {
+        messageContent += ` ${statusEmoji} *Complete*`;
+      } else if (data.status === 'warning') {
+        messageContent += ` ${statusEmoji} *Warning*`;
+      } else if (data.status === 'error') {
+        messageContent += ` ${statusEmoji} *Error*`;
+      }
+      
+      // Add progress bar if available
+      if (data.progress !== undefined && data.progress > 0) {
+        messageContent += ` [${data.progress}%]`;
+      }
+      
+      // Add message content
+      messageContent += `\n${data.message}`;
+      
+      // Add token/credit info if available
+      if (data.tokens_used) {
+        messageContent += `\n*Tokens: ${data.tokens_used.toLocaleString()} • Credits: ${data.credits_used || 'calculating'}*`;
+      }
       
       setMessages(prev => [...prev, {
         role: 'system',
-        content: `${agentEmoji} **${data.agent_type} Agent** [${data.progress}%]: ${data.message}`,
-        created_at: new Date().toISOString()
+        content: messageContent,
+        created_at: new Date().toISOString(),
+        agent_type: data.agent_type,
+        status: data.status,
+        progress: data.progress
       }]);
     }
 
@@ -129,9 +172,25 @@ const WorkspaceV2 = () => {
         }));
       }
 
+      // Show token usage summary if available
+      let summaryMessage = `✅ **Build Complete!** Website generated successfully in ${data.result.build_time?.toFixed(1) || '?'}s`;
+      
+      if (data.result.token_usage) {
+        summaryMessage += `\n\n**Usage Summary:**`;
+        summaryMessage += `\n• Total tokens: ${data.result.token_usage.total_tokens?.toLocaleString() || 'N/A'}`;
+        summaryMessage += `\n• Total credits: ${data.result.token_usage.total_credits || 'N/A'}`;
+        
+        if (data.result.token_usage.agents) {
+          summaryMessage += `\n\n**Per-Agent Breakdown:**`;
+          Object.entries(data.result.token_usage.agents).forEach(([agent, usage]) => {
+            summaryMessage += `\n• ${agent}: ${usage.tokens?.toLocaleString()} tokens (${usage.credits} credits)`;
+          });
+        }
+      }
+
       setMessages(prev => [...prev, {
         role: 'system',
-        content: `✅ **Build Complete!** Website generated successfully in ${data.result.build_time?.toFixed(1) || '?'}s`,
+        content: summaryMessage,
         created_at: new Date().toISOString()
       }]);
 
@@ -152,6 +211,21 @@ const WorkspaceV2 = () => {
       }]);
 
       toast.error('Build failed. Please try again.');
+    }
+
+    if (data.type === 'credits_update') {
+      // Real-time credit updates (Emergent-style)
+      setUserCredits(data.credits);
+      
+      if (data.transaction) {
+        console.log('Credit transaction:', data.transaction);
+        
+        // Show toast for significant credit changes
+        if (Math.abs(data.transaction.amount) >= 5) {
+          const action = data.transaction.amount > 0 ? 'added' : 'deducted';
+          toast.info(`${Math.abs(data.transaction.amount)} credits ${action}. New balance: ${data.credits}`);
+        }
+      }
     }
 
     if (data.type === 'heartbeat') {
