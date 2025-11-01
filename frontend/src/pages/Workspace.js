@@ -512,7 +512,88 @@ const WorkspaceV2 = () => {
             borderTop: '1px solid #222',
             background: '#111'
           }}>
-            <div style={{ display: 'flex', gap: '12px' }}>
+            {/* Uploaded Images Preview */}
+            {uploadedImages.length > 0 && (
+              <div style={{
+                display: 'flex',
+                gap: '8px',
+                marginBottom: '12px',
+                flexWrap: 'wrap'
+              }}>
+                {uploadedImages.map((img, idx) => (
+                  <div
+                    key={idx}
+                    style={{
+                      position: 'relative',
+                      width: '80px',
+                      height: '80px',
+                      borderRadius: '8px',
+                      overflow: 'hidden',
+                      border: '2px solid #333'
+                    }}
+                  >
+                    <img
+                      src={img.url}
+                      alt={img.filename}
+                      style={{
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'cover'
+                      }}
+                    />
+                    <button
+                      onClick={() => removeUploadedImage(idx)}
+                      style={{
+                        position: 'absolute',
+                        top: '4px',
+                        right: '4px',
+                        background: 'rgba(0, 0, 0, 0.7)',
+                        border: 'none',
+                        borderRadius: '50%',
+                        width: '24px',
+                        height: '24px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        cursor: 'pointer',
+                        color: '#fff'
+                      }}
+                    >
+                      <X size={14} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+            
+            <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-end' }}>
+              {/* Clip Icon Button */}
+              <div {...getRootProps()} style={{ cursor: 'pointer' }}>
+                <input {...getInputProps()} />
+                <button
+                  type="button"
+                  disabled={uploadingFile || loading || buildingAsync}
+                  style={{
+                    background: '#1a1a1a',
+                    border: '1px solid #333',
+                    borderRadius: '8px',
+                    padding: '12px',
+                    color: uploadingFile ? '#666' : '#999',
+                    cursor: uploadingFile || loading || buildingAsync ? 'not-allowed' : 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    height: '60px'
+                  }}
+                >
+                  {uploadingFile ? (
+                    <Loader2 size={20} style={{ animation: 'spin 1s linear infinite' }} />
+                  ) : (
+                    <Paperclip size={20} />
+                  )}
+                </button>
+              </div>
+              
               <textarea
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
@@ -543,7 +624,8 @@ const WorkspaceV2 = () => {
                   cursor: input.trim() && !loading && !buildingAsync ? 'pointer' : 'not-allowed',
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '8px'
+                  gap: '8px',
+                  height: '60px'
                 }}
               >
                 <Send size={18} />
