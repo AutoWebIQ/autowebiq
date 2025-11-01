@@ -171,15 +171,29 @@ class TemplateLibrary:
     
     async def get_components_by_category(self, category: str) -> List[Dict]:
         """Get all components in a category"""
-        components = await self.components_collection.find({"category": category}).to_list(length=None)
-        return components
+        async with AsyncSessionLocal() as session:
+            result = await session.execute(
+                select(DBComponent).where(DBComponent.category == category)
+            )
+            components = result.scalars().all()
+            
+            return [{
+                'component_id': c.id,
+                'name': c.name,
+                'description': c.description,
+                'category': c.category,
+                'tags': c.tags or [],
+                'html_code': c.html_code,
+                'css_code': c.css_code,
+                'js_code': c.js_code,
+                'props': c.props or {},
+                'variants': c.variants or []
+            } for c in components]
     
     async def increment_template_usage(self, template_id: str):
-        """Increment template usage count"""
-        await self.templates_collection.update_one(
-            {"template_id": template_id},
-            {"$inc": {"use_count": 1}}
-        )
+        """Increment template usage count - PostgreSQL doesn't track this yet"""
+        # TODO: Add use_count column to Template model if needed
+        pass
 
 
 class TemplateCustomizer:
