@@ -1906,14 +1906,6 @@ async def health_check():
     }
     
     try:
-        # Check MongoDB connection
-        await db.command('ping')
-        health_status["databases"]["mongodb"] = "connected"
-    except Exception as e:
-        health_status["databases"]["mongodb"] = f"error: {str(e)}"
-        health_status["status"] = "degraded"
-    
-    try:
         # Check PostgreSQL connection
         from database import AsyncSessionLocal
         from sqlalchemy import text
