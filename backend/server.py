@@ -298,25 +298,10 @@ async def login(user_data: UserLogin, db=Depends(get_db)):
     return await login_endpoint(user_data, db)
 
 @api_router.get("/auth/me")
-async def get_me(request: Request):
-    """Get current user data with projects (supports both JWT and session token)"""
+async def get_me(request: Request, db=Depends(get_db)):
+    """Get current user data with projects - PostgreSQL"""
     user_id = await get_current_user_flexible(request)
-    
-    user_doc = await db.users.find_one({"id": user_id}, {"_id": 0, "password_hash": 0})
-    if not user_doc:
-        raise HTTPException(status_code=404, detail="User not found")
-    
-    # Get user's projects
-    projects = await db.projects.find(
-        {"user_id": user_id},
-        {"_id": 0}
-    ).sort("updated_at", -1).limit(50).to_list(length=50)
-    
-    # Add projects to user data
-    user_doc['projects'] = projects
-    user_doc['project_count'] = len(projects)
-    
-    return user_doc
+    return await get_current_user_endpoint(user_id, db)
 
 @api_router.post("/auth/forgot-password")
 async def forgot_password(request: ForgotPasswordRequest):
