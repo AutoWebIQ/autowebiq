@@ -261,7 +261,7 @@ Mood: engaging, trustworthy, professional"""
             await self._send_message_with_status(
                 project_id,
                 "frontend",
-                f"✅ Multi-page website generated!\nCreated **{len(all_pages)} pages**: {', '.join(all_pages.keys())}\n\n**Features included:**\n• Working navigation between pages\n• Functional contact forms\n• Login/signup pages with validation\n• Responsive design",
+                f"✅ Multi-page website generated!\nCreated **{len(all_pages)} pages**: {', '.join(all_pages.keys())}\n\n**Features included:**\n• Working navigation between pages\n• Functional contact forms\n• Login/signup pages with validation\n• Responsive design\n\n*UI/UX crafted by Claude Sonnet 4 • Content by Gemini 2.5 Pro*",
                 "completed",
                 85
             )
