@@ -2166,6 +2166,181 @@ async def git_branches(
     return await git_manager.list_branches(workspace_path)
 
 
+# ============================================================================
+# DEPLOYMENT ENDPOINTS (Multi-Platform Support)
+# ============================================================================
+
+from deployment_manager import get_deployment_manager
+
+class DeployRequest(BaseModel):
+    project_id: str
+    platform: str  # vercel, netlify, railway
+    token: str
+    project_name: str
+
+@api_router.post("/deploy")
+async def deploy_project(
+    request: DeployRequest,
+    user_id: str = Depends(get_current_user)
+):
+    """
+    Deploy project to multiple platforms:
+    - Vercel (frontend + serverless)
+    - Netlify (frontend)
+    - Railway (full-stack)
+    """
+    workspace_path = f"/tmp/workspaces/{user_id}/{request.project_id}"
+    
+    deployment_manager = get_deployment_manager()
+    
+    if request.platform == "vercel":
+        result = await deployment_manager.deploy_to_vercel(
+            workspace_path,
+            request.project_name,
+            request.token
+        )
+    elif request.platform == "netlify":
+        result = await deployment_manager.deploy_to_netlify(
+            workspace_path,
+            request.project_name,
+            request.token
+        )
+    elif request.platform == "railway":
+        result = await deployment_manager.deploy_to_railway(
+            workspace_path,
+            request.project_name,
+            request.token
+        )
+    else:
+        raise HTTPException(status_code=400, detail="Unknown platform")
+    
+    return result
+
+@api_router.get("/deploy/{platform}/{deployment_id}/status")
+async def get_deploy_status(
+    platform: str,
+    deployment_id: str,
+    token: str,
+    user_id: str = Depends(get_current_user)
+):
+    """Get deployment status"""
+    deployment_manager = get_deployment_manager()
+    return await deployment_manager.get_deployment_status(platform, deployment_id, token)
+
+
+# ============================================================================
+# INTEGRATION TEMPLATES ENDPOINTS
+# ============================================================================
+
+from integration_templates import get_integration_templates
+
+@api_router.get("/integrations/list")
+async def list_integrations():
+    """List available integration templates"""
+    return {
+        "status": "success",
+        "integrations": [
+            {
+                "id": "stripe",
+                "name": "Stripe",
+                "description": "Payment processing",
+                "modes": ["frontend", "backend"]
+            },
+            {
+                "id": "auth0",
+                "name": "Auth0",
+                "description": "Authentication provider",
+                "modes": ["frontend", "backend"]
+            },
+            {
+                "id": "sendgrid",
+                "name": "SendGrid",
+                "description": "Email service",
+                "modes": ["backend"]
+            },
+            {
+                "id": "supabase",
+                "name": "Supabase",
+                "description": "Backend as a Service",
+                "modes": ["frontend", "backend"]
+            },
+            {
+                "id": "google-analytics",
+                "name": "Google Analytics",
+                "description": "Analytics tracking",
+                "modes": ["frontend"]
+            }
+        ]
+    }
+
+class IntegrationRequest(BaseModel):
+    integration_id: str
+    mode: str = "frontend"
+
+@api_router.post("/integrations/get-template")
+async def get_integration_template(request: IntegrationRequest):
+    """Get integration template code"""
+    templates = get_integration_templates()
+    
+    if request.integration_id == "stripe":
+        template = templates.get_stripe_template(request.mode)
+    elif request.integration_id == "auth0":
+        template = templates.get_auth0_template(request.mode)
+    elif request.integration_id == "sendgrid":
+        template = templates.get_sendgrid_template()
+    elif request.integration_id == "supabase":
+        template = templates.get_supabase_template(request.mode)
+    elif request.integration_id == "google-analytics":
+        template = templates.get_google_analytics_template()
+    else:
+        raise HTTPException(status_code=404, detail="Integration not found")
+    
+    return {
+        "status": "success",
+        "template": template
+    }
+
+@api_router.post("/integrations/apply")
+async def apply_integration(
+    project_id: str,
+    integration_id: str,
+    mode: str = "frontend",
+    user_id: str = Depends(get_current_user)
+):
+    """Apply integration template to project"""
+    templates = get_integration_templates()
+    fs_manager = get_file_system_manager()
+    
+    # Get template
+    if integration_id == "stripe":
+        template = templates.get_stripe_template(mode)
+    elif integration_id == "auth0":
+        template = templates.get_auth0_template(mode)
+    elif integration_id == "sendgrid":
+        template = templates.get_sendgrid_template()
+    elif integration_id == "supabase":
+        template = templates.get_supabase_template(mode)
+    elif integration_id == "google-analytics":
+        template = templates.get_google_analytics_template()
+    else:
+        raise HTTPException(status_code=404, detail="Integration not found")
+    
+    # Write files
+    files_created = []
+    for file_path, content in template.get("files", {}).items():
+        result = await fs_manager.write_file(user_id, project_id, file_path, content)
+        if result["status"] == "success":
+            files_created.append(file_path)
+    
+    return {
+        "status": "success",
+        "message": f"Applied {integration_id} integration",
+        "files_created": files_created,
+        "dependencies": template.get("dependencies", {}),
+        "env_vars": template.get("env_vars", [])
+    }
+
+
 # Docker Container Management Endpoints (OLD - Deprecated, use workspaces instead)
 @api_router.post("/projects/{project_id}/container/create")
 async def create_project_container(project_id: str, user_id: str = Depends(get_current_user)):
