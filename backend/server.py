@@ -1082,6 +1082,87 @@ async def download_project(project_id: str, user_id: str = Depends(get_current_u
         headers={"Content-Disposition": f"attachment; filename={project['name'].replace(' ', '_')}.zip"}
     )
 
+
+@api_router.post("/projects/{project_id}/fork")
+async def fork_project(project_id: str, user_id: str = Depends(get_current_user)):
+    """Fork/clone a project to create a copy"""
+    # Get original project
+    original_project = await db.projects.find_one({"id": project_id, "user_id": user_id}, {"_id": 0})
+    if not original_project:
+        raise HTTPException(status_code=404, detail="Project not found")
+    
+    # Create new project with copied data
+    new_project_id = str(uuid.uuid4())
+    forked_project = {
+        "id": new_project_id,
+        "user_id": user_id,
+        "name": f"{original_project['name']} (Copy)",
+        "description": original_project.get('description', ''),
+        "generated_code": original_project.get('generated_code', ''),
+        "model": original_project.get('model', 'claude-4.5-sonnet-200k'),
+        "status": "draft",
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "updated_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    await db.projects.insert_one(forked_project)
+    
+    # Copy messages if any
+    messages = await db.messages.find({"project_id": project_id}, {"_id": 0}).to_list(length=None)
+    if messages:
+        for msg in messages:
+            msg['id'] = str(uuid.uuid4())
+            msg['project_id'] = new_project_id
+            await db.messages.insert_one(msg)
+    
+    return {
+        "message": "Project forked successfully",
+        "project_id": new_project_id,
+        "project_name": forked_project['name']
+    }
+
+@api_router.post("/projects/{project_id}/share")
+async def share_project(project_id: str, user_id: str = Depends(get_current_user)):
+    """Generate a public shareable link for the project"""
+    project = await db.projects.find_one({"id": project_id, "user_id": user_id}, {"_id": 0})
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+    
+    # Generate share token
+    share_token = str(uuid.uuid4())
+    
+    # Update project with share token
+    await db.projects.update_one(
+        {"id": project_id, "user_id": user_id},
+        {"$set": {
+            "share_token": share_token,
+            "is_public": True,
+            "updated_at": datetime.now(timezone.utc).isoformat()
+        }}
+    )
+    
+    # Generate public URL
+    backend_url = os.environ.get('REACT_APP_BACKEND_URL', 'http://localhost:8001')
+    share_url = f"{backend_url}/api/public/{share_token}"
+    
+    return {
+        "message": "Project is now public",
+        "share_url": share_url,
+        "share_token": share_token
+    }
+
+@api_router.get("/public/{share_token}")
+async def view_public_project(share_token: str):
+    """View a publicly shared project"""
+    project = await db.projects.find_one({"share_token": share_token, "is_public": True}, {"_id": 0})
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found or not public")
+    
+    # Return HTML directly
+    from fastapi.responses import HTMLResponse
+    return HTMLResponse(content=project.get('generated_code', '<h1>No content available</h1>'))
+
+
 @api_router.post("/upload")
 async def upload_file(
     file: UploadFile = File(...),
