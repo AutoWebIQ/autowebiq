@@ -750,9 +750,15 @@ async def create_project(project_data: ProjectCreate, user_id: str = Depends(get
     }
 
 @api_router.get("/projects")
-async def get_projects(user_id: str = Depends(get_current_user), db=Depends(get_db)):
-    """Get all projects for user - PostgreSQL"""
-    return await get_projects_endpoint(user_id, db)
+async def get_projects_mongodb(user_id: str = Depends(get_current_user)):
+    """Get all projects for user - MongoDB"""
+    projects = await db.projects.find({"user_id": user_id}, {"_id": 0}).to_list(length=None)
+    return {"projects": projects}
+
+# @api_router.get("/projects")
+# async def get_projects(user_id: str = Depends(get_current_user), db=Depends(get_db)):
+#     """Get all projects for user - PostgreSQL"""
+#     return await get_projects_endpoint(user_id, db)
 
 @api_router.post("/projects/create")
 async def create_project(request: dict, user_id: str = Depends(get_current_user), db=Depends(get_db)):
