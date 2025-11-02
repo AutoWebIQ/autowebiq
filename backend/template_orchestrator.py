@@ -1,5 +1,5 @@
-# Template-Based Agent Orchestrator V3
-# Uses pre-built templates + AI customization instead of pure generation
+# Template-Based Agent Orchestrator V4
+# Uses pre-built templates + Multi-Model AI (Claude, GPT, Gemini) for optimal generation
 
 import asyncio
 from typing import Dict, List, Optional, Callable
@@ -10,20 +10,34 @@ from template_system import TemplateLibrary, TemplateCustomizer
 from agents_v2 import ImprovedImageAgent, AgentMessage, AgentStatus, AgentType
 from token_tracker import get_token_tracker
 from multipage_generator import MultiPageGenerator
+from model_router import get_model_router
 
 class TemplateBasedOrchestrator:
-    """Orchestrator that uses template system + AI customization"""
+    """Orchestrator that uses template system + Multi-Model AI customization"""
     
     def __init__(self, openai_key: str, anthropic_key: str, gemini_key: str):
         from openai import AsyncOpenAI
         
         self.openai_client = AsyncOpenAI(api_key=openai_key)
         
+        # Initialize Multi-Model Router (Claude + GPT + Gemini)
+        self.model_router = get_model_router()
+        print("🚀 Multi-Model Router initialized:")
+        print("   • Claude Sonnet 4 → Frontend/UI generation")
+        print("   • GPT-4o → Backend/API logic")  
+        print("   • Gemini 2.5 Pro → Content/SEO generation")
+        print("   • OpenAI gpt-image-1 → HD image generation")
+        
         # Initialize systems (PostgreSQL now used internally)
         self.template_library = TemplateLibrary()
         self.template_customizer = TemplateCustomizer(self.openai_client)
         self.image_agent = ImprovedImageAgent(self.openai_client)
         self.multipage_generator = MultiPageGenerator()
+        
+        # Store API keys for agents
+        self.openai_key = openai_key
+        self.anthropic_key = anthropic_key
+        self.gemini_key = gemini_key
         
         # Token tracking for real-time credit deduction
         self.token_tracker = get_token_tracker()
