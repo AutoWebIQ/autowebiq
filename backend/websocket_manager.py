@@ -177,3 +177,7 @@ class ConnectionManager:
 
 # Global connection manager instance
 ws_manager = ConnectionManager()
+
+def get_websocket_manager() -> ConnectionManager:
+    """Get the global WebSocket manager instance"""
+    return ws_manager
