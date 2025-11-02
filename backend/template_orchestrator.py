@@ -264,15 +264,17 @@ class TemplateBasedOrchestrator:
                 "plan": {
                     "project_name": template_name,
                     "template_used": template['template_id'],
-                    "pages": [{"name": "index", "sections": template.get("features", [])}],
-                    "features": template.get("features", [])
+                    "pages": [{"name": page.replace('.html', ''), "file": page} for page in all_pages.keys()],
+                    "features": page_analysis['features']
                 },
                 "frontend_code": customized_html,
+                "all_pages": all_pages,  # Include all generated pages
                 "backend_code": "",
                 "images": images,
                 "test_results": validation_result,
                 "status": "completed",
                 "template_based": True,
+                "multipage": True,
                 "token_usage": token_summary
             }
             
