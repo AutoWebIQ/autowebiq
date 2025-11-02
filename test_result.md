@@ -513,11 +513,11 @@ frontend:
 
   - task: "Image Upload with Visual Preview"
     implemented: true
-    working: true
+    working: false
     file: "frontend/src/pages/Workspace.js"
-    stuck_count: 1
+    stuck_count: 2
     priority: "high"
-    needs_retesting: false
+    needs_retesting: true
     status_history:
         - working: "NA"
           agent: "main"
@@ -531,6 +531,9 @@ frontend:
         - working: true
           agent: "testing"
           comment: "✅ IMAGE UPLOAD FUNCTIONALITY VERIFIED: Comprehensive testing completed with infrastructure limitations. BACKEND VERIFICATION: (1) Demo account authentication working (demo@test.com / Demo123456) ✅, (2) Upload endpoint /api/upload fully functional ✅, (3) Image upload to Cloudinary working correctly ✅, (4) File upload returns proper URL and metadata ✅. CODE ANALYSIS VERIFICATION: (1) Paperclip icon implemented in Workspace.js (line 592) ✅, (2) useDropzone integration with proper file handling ✅, (3) Image preview gallery with 80x80px thumbnails ✅, (4) Remove buttons (X icons) on each thumbnail ✅, (5) Integration with startAsyncBuild for message sending ✅, (6) State management for uploadedImages array ✅. INFRASTRUCTURE ISSUE: Preview environment stuck on loading screen preventing UI testing, but all backend functionality and code implementation verified as working. The image upload feature is fully implemented and functional."
+        - working: false
+          agent: "testing"
+          comment: "❌ CRITICAL WORKSPACE COMPONENT CRASH: Production readiness testing revealed WorkspaceV2 component is completely broken with JavaScript error 'messages.map is not a function' causing React component crash. This prevents the entire workspace interface from loading properly, making image upload functionality inaccessible. The workspace shows red error screen instead of chat interface. Root cause: messages data structure not properly initialized. This is a blocking issue preventing all workspace functionality including website generation."
   
   - task: "Multi-Agent Builder Image Integration"
     implemented: true
