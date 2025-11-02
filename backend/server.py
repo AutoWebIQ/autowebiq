@@ -3041,7 +3041,7 @@ async def validate_website(
 # Health check endpoint
 @app.get("/api/health")
 async def health_check():
-    """Health check endpoint for monitoring"""
+    """Health check endpoint for monitoring - MongoDB only"""
     health_status = {
         "status": "healthy",
         "service": "autowebiq-backend",
@@ -3051,41 +3051,17 @@ async def health_check():
     }
     
     try:
-        # Check PostgreSQL connection
-        from database import AsyncSessionLocal
-        from sqlalchemy import text
-        async with AsyncSessionLocal() as session:
-            await session.execute(text("SELECT 1"))
-        health_status["databases"]["postgresql"] = "connected"
+        # Check MongoDB connection
+        await db.command('ping')
+        health_status["databases"]["mongodb"] = "connected"
     except Exception as e:
-        health_status["databases"]["postgresql"] = f"error: {str(e)}"
+        health_status["databases"]["mongodb"] = f"error: {str(e)}"
         health_status["status"] = "degraded"
     
-    try:
-        # Check Redis connection
-        import redis.asyncio as redis
-        redis_client = redis.from_url(os.environ.get('REDIS_URL', 'redis://localhost:6379/0'))
-        await redis_client.ping()
-        await redis_client.close()
-        health_status["services"]["redis"] = "connected"
-    except Exception as e:
-        health_status["services"]["redis"] = f"error: {str(e)}"
-        health_status["status"] = "degraded"
-    
-    try:
-        # Check Celery workers
-        from celery_app import celery_app
-        inspect = celery_app.control.inspect()
-        stats = inspect.stats()
-        if stats:
-            worker_count = len(stats)
-            health_status["services"]["celery"] = f"{worker_count} workers active"
-        else:
-            health_status["services"]["celery"] = "no workers"
-            health_status["status"] = "degraded"
-    except Exception as e:
-        health_status["services"]["celery"] = f"error: {str(e)}"
-        health_status["status"] = "degraded"
+    # PostgreSQL, Redis, and Celery are not used in production (MongoDB-only mode)
+    health_status["databases"]["postgresql"] = "not configured (using MongoDB)"
+    health_status["services"]["redis"] = "not configured (not required)"
+    health_status["services"]["celery"] = "not configured (not required)"
     
     return health_status
 
