@@ -366,12 +366,15 @@ async def get_me(request: Request):
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     
+    # Remove MongoDB _id
+    user.pop('_id', None)
+    
     return {
-        "id": user["id"],
-        "email": user["email"],
-        "username": user.get("username", ""),
-        "credits": user.get("credits", 0),
-        "created_at": user.get("created_at", "")
+        "id": str(user["id"]),
+        "email": str(user["email"]),
+        "username": str(user.get("username", "")),
+        "credits": int(user.get("credits", 0)),
+        "created_at": str(user.get("created_at", ""))
     }
 
 @api_router.post("/auth/forgot-password")
