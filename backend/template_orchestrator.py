@@ -64,7 +64,7 @@ class TemplateBasedOrchestrator:
             await self._send_message_with_status(
                 project_id, 
                 "initializing", 
-                "🚀 Initializing build system...",
+                "🚀 Initializing Multi-Model AI System...\n\n**Models ready:**\n• Claude Sonnet 4 → Frontend/UI generation\n• GPT-4o → Backend logic\n• Gemini 2.5 Pro → Content/SEO\n• OpenAI gpt-image-1 → HD images",
                 "working",
                 0
             )
