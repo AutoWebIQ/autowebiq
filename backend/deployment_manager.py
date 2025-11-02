@@ -118,8 +118,8 @@ class DeploymentManager:
             # Create site if doesn't exist
             site_response = requests.post(
                 f"{self.netlify_api}/sites",
-                headers={\"Authorization\": f\"Bearer {netlify_token}\"},
-                json={\"name\": site_name},
+                headers={"Authorization": f"Bearer {netlify_token}"},
+                json={"name": site_name},
                 timeout=60
             )
             
@@ -129,7 +129,7 @@ class DeploymentManager:
                 # Site might already exist
                 sites_response = requests.get(
                     f"{self.netlify_api}/sites",
-                    headers={\"Authorization\": f\"Bearer {netlify_token}\"},
+                    headers={"Authorization": f"Bearer {netlify_token}"},
                     timeout=60
                 )
                 sites = sites_response.json()
