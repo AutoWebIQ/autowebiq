@@ -316,6 +316,9 @@ async def register(user_data: UserRegister):
     
     await db.users.insert_one(user_dict)
     
+    # Remove MongoDB _id before generating response
+    user_dict.pop('_id', None)
+    
     # Generate JWT token
     token = create_access_token({"sub": user_dict['id']})
     
@@ -323,10 +326,10 @@ async def register(user_data: UserRegister):
         "access_token": token,
         "token_type": "bearer",
         "user": {
-            "id": user_dict["id"],
-            "email": user_dict["email"],
-            "username": user_dict["username"],
-            "credits": user_dict["credits"]
+            "id": str(user_dict["id"]),
+            "email": str(user_dict["email"]),
+            "username": str(user_dict["username"]),
+            "credits": int(user_dict["credits"])
         }
     }
 
