@@ -247,7 +247,8 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
     try:
         token = credentials.credentials
         payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
-        user_id: str = payload.get("user_id")
+        # Accept both 'sub' (standard JWT claim) and 'user_id' (legacy)
+        user_id: str = payload.get("sub") or payload.get("user_id")
         if user_id is None:
             raise HTTPException(status_code=401, detail="Invalid authentication")
         return user_id
