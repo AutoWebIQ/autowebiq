@@ -650,6 +650,115 @@ const WorkspaceV2 = () => {
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+          {/* Action Buttons */}
+          <button
+            onClick={handleDownload}
+            style={{
+              background: '#1a1a1a',
+              border: '1px solid #333',
+              color: '#fff',
+              padding: '8px 16px',
+              borderRadius: '6px',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px'
+            }}
+            title="Download project as ZIP"
+          >
+            📥 Download
+          </button>
+
+          <button
+            onClick={handleFork}
+            style={{
+              background: '#1a1a1a',
+              border: '1px solid #333',
+              color: '#fff',
+              padding: '8px 16px',
+              borderRadius: '6px',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px'
+            }}
+            title="Fork/Clone this project"
+          >
+            🍴 Fork
+          </button>
+
+          <button
+            onClick={handleShare}
+            style={{
+              background: '#1a1a1a',
+              border: '1px solid #333',
+              color: '#fff',
+              padding: '8px 16px',
+              borderRadius: '6px',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px'
+            }}
+            title="Generate public share link"
+          >
+            🔗 Share
+          </button>
+
+          <button
+            onClick={handleSaveToGitHub}
+            style={{
+              background: '#1a1a1a',
+              border: '1px solid #333',
+              color: '#fff',
+              padding: '8px 16px',
+              borderRadius: '6px',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px'
+            }}
+            title="Save to GitHub"
+          >
+            💾 GitHub
+          </button>
+
+          <button
+            onClick={handleOpenInNewTab}
+            style={{
+              background: '#1a1a1a',
+              border: '1px solid #333',
+              color: '#fff',
+              padding: '8px 16px',
+              borderRadius: '6px',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px'
+            }}
+            title="Open preview in new tab"
+          >
+            ↗️ Open
+          </button>
+
+          <button
+            onClick={handleRefreshPreview}
+            style={{
+              background: '#1a1a1a',
+              border: '1px solid #333',
+              color: '#fff',
+              padding: '8px 16px',
+              borderRadius: '6px',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px'
+            }}
+            title="Refresh preview"
+          >
+            🔄 Refresh
+          </button>
+
           <div style={{
             background: '#1a1a1a',
             padding: '8px 16px',
