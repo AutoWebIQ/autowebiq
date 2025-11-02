@@ -18,7 +18,7 @@ from datetime import datetime
 from typing import Dict, List, Optional
 
 # Test Configuration
-BACKEND_URL = "https://autowebiq-iq.preview.emergentagent.com/api"
+BACKEND_URL = "https://multiagent-ide.preview.emergentagent.com/api"
 
 # Demo Account Credentials
 DEMO_EMAIL = "demo@test.com"

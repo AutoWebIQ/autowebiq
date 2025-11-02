@@ -7,7 +7,7 @@ from datetime import datetime, timezone, timedelta
 
 class AdditionalAutoWebIQTester:
     def __init__(self):
-        self.base_url = "https://autowebiq-iq.preview.emergentagent.com"
+        self.base_url = "https://multiagent-ide.preview.emergentagent.com"
         self.api_url = f"{self.base_url}/api"
         self.jwt_token = None
         self.user_id = None

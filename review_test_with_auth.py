@@ -9,7 +9,7 @@ import os
 class AutoWebIQReviewTesterWithAuth:
     def __init__(self):
         # Backend URL as specified in review request
-        self.base_url = "https://autowebiq-iq.preview.emergentagent.com"
+        self.base_url = "https://multiagent-ide.preview.emergentagent.com"
         self.api_url = f"{self.base_url}/api"
         self.demo_token = None
         self.demo_user_id = None

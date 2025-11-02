@@ -284,9 +284,9 @@ nginx-code-proxy                 RUNNING
 - ✅ FIREBASE credentials (frontend .env)
 
 ### URLs
-- **Backend API:** https://autowebiq-iq.preview.emergentagent.com/api
-- **Frontend:** https://autowebiq-iq.preview.emergentagent.com
-- **Health Check:** https://autowebiq-iq.preview.emergentagent.com/api/health
+- **Backend API:** https://multiagent-ide.preview.emergentagent.com/api
+- **Frontend:** https://multiagent-ide.preview.emergentagent.com
+- **Health Check:** https://multiagent-ide.preview.emergentagent.com/api/health
 
 ---
 
