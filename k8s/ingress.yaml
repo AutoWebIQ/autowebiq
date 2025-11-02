@@ -1,48 +1,65 @@
-# Ingress for subdomain-based routing
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: autowebiq-ingress
-  namespace: autowebiq-workspaces
+  namespace: autowebiq
   annotations:
     kubernetes.io/ingress.class: "nginx"
     cert-manager.io/cluster-issuer: "letsencrypt-prod"
     nginx.ingress.kubernetes.io/ssl-redirect: "true"
     nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
     nginx.ingress.kubernetes.io/proxy-body-size: "50m"
-    nginx.ingress.kubernetes.io/proxy-read-timeout: "300"
-    nginx.ingress.kubernetes.io/proxy-send-timeout: "300"
-    # Subdomain wildcard routing
-    nginx.ingress.kubernetes.io/server-snippet: |
-      if ($host ~* ^([a-z0-9-]+)\.preview\.autowebiq\.com$) {
-        set $project_id $1;
-      }
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "600"
 spec:
   tls:
   - hosts:
-    - "*.preview.autowebiq.com"
-    - "preview.autowebiq.com"
-    secretName: autowebiq-preview-tls
+    - autowebiq.com
+    - www.autowebiq.com
+    - api.autowebiq.com
+    secretName: autowebiq-tls
   rules:
-  # Wildcard rule for project subdomains (e.g., project123.preview.autowebiq.com)
-  - host: "*.preview.autowebiq.com"
+  - host: autowebiq.com
+    http:
+      paths:
+      - path: /api
+        pathType: Prefix
+        backend:
+          service:
+            name: autowebiq-backend
+            port:
+              number: 8001
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: autowebiq-frontend
+            port:
+              number: 80
+  - host: www.autowebiq.com
+    http:
+      paths:
+      - path: /api
+        pathType: Prefix
+        backend:
+          service:
+            name: autowebiq-backend
+            port:
+              number: 8001
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: autowebiq-frontend
+            port:
+              number: 80
+  - host: api.autowebiq.com
     http:
       paths:
       - path: /
         pathType: Prefix
         backend:
           service:
-            name: workspace-template-service
+            name: autowebiq-backend
             port:
-              number: 80
-  # Main preview domain
-  - host: "preview.autowebiq.com"
-    http:
-      paths:
-      - path: /
-        pathType: Prefix
-        backend:
-          service:
-            name: workspace-template-service
-            port:
-              number: 80
+              number: 8001
