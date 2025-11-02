@@ -898,6 +898,7 @@ async def create_message(project_id: str, request: Request, user_id: str = Depen
                 "created_at": datetime.now(timezone.utc).isoformat()
             }
             await db.messages.insert_one(error_message)
+            error_message.pop('_id', None)
             return {"message": error_message}
             
     except Exception as e:
