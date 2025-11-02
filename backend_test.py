@@ -1,53 +1,121 @@
-import requests
-import sys
+#!/usr/bin/env python3
+"""
+Multi-Model Router System Testing for AutoWebIQ
+Tests the new implementation with intelligent task routing:
+- Claude Sonnet 4 for frontend/UI generation
+- GPT-4o for backend logic  
+- Gemini 2.5 Pro for content generation
+- OpenAI gpt-image-1 for HD image generation
+"""
+
+import asyncio
 import json
-import time
-import uuid
-from datetime import datetime, timezone, timedelta
 import os
+import sys
+import time
+import websockets
+from datetime import datetime
+from typing import Dict, List, Optional
 
-class AutoWebIQAPITester:
+import httpx
+import pytest
+
+# Test Configuration
+BACKEND_URL = "https://autowebiq-iq.preview.emergentagent.com/api"
+WS_URL = "wss://autowebiq-iq.preview.emergentagent.com/ws"
+
+# Demo Account Credentials
+DEMO_EMAIL = "demo@test.com"
+DEMO_PASSWORD = "Demo123456"
+
+class MultiModelRouterTester:
+    """Comprehensive tester for Multi-Model Router System"""
+    
     def __init__(self):
-        # Get backend URL from frontend .env
-        self.base_url = "https://autowebiq-iq.preview.emergentagent.com"
-        self.api_url = f"{self.base_url}/api"
-        self.jwt_token = None
-        self.session_token = None
-        self.user_id = None
-        self.test_user_email = None
+        self.client = httpx.AsyncClient(timeout=120.0)
+        self.auth_token = None
+        self.user_data = None
         self.test_project_id = None
-        self.tests_run = 0
-        self.tests_passed = 0
-        self.test_results = []
-
-    def log_test(self, name, success, details=""):
-        """Log test result"""
-        self.tests_run += 1
-        if success:
-            self.tests_passed += 1
-            print(f"✅ {name} - PASSED")
-        else:
-            print(f"❌ {name} - FAILED: {details}")
+        self.websocket_messages = []
+        self.model_routing_detected = {}
         
-        self.test_results.append({
-            "test": name,
-            "success": success,
-            "details": details
-        })
-
-    def run_test(self, name, method, endpoint, expected_status, data=None, headers=None, cookies=None):
-        """Run a single API test"""
-        url = f"{self.api_url}/{endpoint}"
-        default_headers = {'Content-Type': 'application/json'}
+    async def __aenter__(self):
+        return self
         
-        if headers:
-            default_headers.update(headers)
-        
-        print(f"\n🔍 Testing {name}...")
-        print(f"   URL: {url}")
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        await self.client.aclose()
+    
+    async def authenticate_demo_account(self) -> Dict:
+        """Authenticate with demo account and verify credits"""
+        print(f"\n🔐 Authenticating demo account: {DEMO_EMAIL}")
         
         try:
-            if method == 'GET':
+            response = await self.client.post(f"{BACKEND_URL}/auth/login", json={
+                "email": DEMO_EMAIL,
+                "password": DEMO_PASSWORD
+            })
+            
+            if response.status_code != 200:
+                raise Exception(f"Authentication failed: {response.status_code} - {response.text}")
+            
+            auth_data = response.json()
+            self.auth_token = auth_data["access_token"]
+            self.user_data = auth_data["user"]
+            
+            print(f"✅ Authentication successful")
+            print(f"   User ID: {self.user_data['id']}")
+            print(f"   Credits: {self.user_data['credits']}")
+            
+            # Verify sufficient credits for testing
+            if self.user_data['credits'] < 50:
+                print(f"⚠️  Warning: Low credits ({self.user_data['credits']}). May need more for full testing.")
+            
+            return {
+                "success": True,
+                "user_id": self.user_data['id'],
+                "credits": self.user_data['credits']
+            }
+            
+        except Exception as e:
+            print(f"❌ Authentication failed: {str(e)}")
+            return {"success": False, "error": str(e)}
+    
+    async def create_test_project(self) -> Dict:
+        """Create a new test project for multi-model testing"""
+        print(f"\n📁 Creating test project...")
+        
+        headers = {"Authorization": f"Bearer {self.auth_token}"}
+        project_data = {
+            "name": "Multi-Model Router Test - Coffee Shop",
+            "description": "Test project for verifying multi-model routing system with Claude, GPT, and Gemini"
+        }
+        
+        try:
+            response = await self.client.post(
+                f"{BACKEND_URL}/projects/create",
+                json=project_data,
+                headers=headers
+            )
+            
+            if response.status_code != 200:
+                raise Exception(f"Project creation failed: {response.status_code} - {response.text}")
+            
+            project = response.json()
+            self.test_project_id = project["id"]
+            
+            print(f"✅ Test project created")
+            print(f"   Project ID: {self.test_project_id}")
+            print(f"   Name: {project['name']}")
+            
+            return {
+                "success": True,
+                "project_id": self.test_project_id,
+                "project_name": project['name']
+            }
+            
+        except Exception as e:
+            print(f"❌ Project creation failed: {str(e)}")
+            return {"success": False, "error": str(e)}
                 response = requests.get(url, headers=default_headers, cookies=cookies)
             elif method == 'POST':
                 response = requests.post(url, json=data, headers=default_headers, cookies=cookies)
