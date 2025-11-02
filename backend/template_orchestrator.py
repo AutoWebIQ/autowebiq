@@ -131,11 +131,11 @@ class TemplateBasedOrchestrator:
             # Increment usage count
             await self.template_library.increment_template_usage(template['template_id'])
             
-            # Step 3: Image Generation Agent
+            # Step 3: Image Generation Agent (Using OpenAI gpt-image-1 HD)
             await self._send_message_with_status(
                 project_id,
                 "image",
-                "🎨 Image Agent starting...",
+                "🎨 Image Agent starting...\nModel: **OpenAI gpt-image-1** (HD Quality)",
                 "waiting",
                 30
             )
@@ -144,33 +144,60 @@ class TemplateBasedOrchestrator:
             await self._send_message_with_status(
                 project_id,
                 "image",
-                "🖼️ Generating contextual images for your website...",
+                "🖼️ Generating HD images with gpt-image-1...\nQuality: Ultra-high resolution, professional grade",
                 "working",
                 35
             )
             
-            # Create a simplified plan for image generation
-            image_plan = {
-                "project_name": user_prompt[:50],
-                "description": user_prompt,
-                "type": template.get("category", "landing"),
-                "color_scheme": template.get("color_scheme", {}),
-                "image_requirements": [
-                    {
+            # Generate HD image using model router
+            images = []
+            try:
+                # Create enhanced prompt for hero image
+                template_style = template.get("style", "modern")
+                template_category = template.get("category", "business")
+                
+                image_prompt = f"""Professional hero image for {user_prompt}.
+Style: {template_style}, clean, modern, high-quality
+Category: {template_category}
+Quality: Ultra-high resolution, sharp, well-lit, professional photography
+Mood: engaging, trustworthy, professional"""
+                
+                # Generate HD image using OpenAI gpt-image-1
+                image_bytes_list = await self.model_router.generate_image(
+                    prompt=image_prompt,
+                    number_of_images=1
+                )
+                
+                if image_bytes_list and len(image_bytes_list) > 0:
+                    import base64
+                    import cloudinary.uploader
+                    
+                    # Upload to Cloudinary
+                    image_base64 = base64.b64encode(image_bytes_list[0]).decode('utf-8')
+                    upload_result = cloudinary.uploader.upload(
+                        f"data:image/png;base64,{image_base64}",
+                        folder="autowebiq_generated"
+                    )
+                    
+                    images.append({
+                        "url": upload_result['secure_url'],
                         "type": "hero",
-                        "description": f"Professional hero image for {user_prompt}",
-                        "style": template.get("style", "modern")
-                    }
-                ]
-            }
+                        "description": user_prompt[:100],
+                        "model": "gpt-image-1"
+                    })
+                    
+                    print(f"✅ Generated 1 HD image with gpt-image-1")
+                else:
+                    print("⚠️ No images generated, using placeholder")
+            except Exception as e:
+                print(f"❌ Image generation error: {str(e)}")
+                import traceback
+                traceback.print_exc()
             
-            images = await self.image_agent.think(image_plan, {})
-            
-            print(f"✅ Generated {len(images)} images")
             await self._send_message_with_status(
                 project_id,
                 "image",
-                f"✅ Generated {len(images)} professional images\nQuality: High resolution • Style: {template.get('style', 'modern')}",
+                f"✅ Generated {len(images)} HD images\nModel: **gpt-image-1** • Quality: Ultra HD • Style: {template.get('style', 'modern')}",
                 "completed",
                 55
             )
