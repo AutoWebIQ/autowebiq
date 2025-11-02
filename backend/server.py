@@ -270,7 +270,8 @@ async def get_current_user_flexible(request: Request) -> str:
         
         token = auth_header.replace("Bearer ", "")
         payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
-        user_id = payload.get("user_id")
+        # Accept both 'sub' (standard JWT claim) and 'user_id' (legacy)
+        user_id = payload.get("sub") or payload.get("user_id")
         if not user_id:
             raise HTTPException(status_code=401, detail="Invalid authentication")
         return user_id
