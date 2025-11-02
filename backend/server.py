@@ -1466,6 +1466,202 @@ async def build_with_agents(request: MultiAgentBuildRequest, user_id: str = Depe
         )
         raise HTTPException(status_code=500, detail=f"Multi-agent build error: {str(e)}")
 
+
+# ============================================================================
+# FULL-STACK APPLICATION BUILDER ENDPOINT (NEW)
+# ============================================================================
+
+class FullStackBuildRequest(BaseModel):
+    project_id: str
+    prompt: str
+    generate_tests: Optional[bool] = True
+    include_docker: Optional[bool] = True
+
+@api_router.post("/build-fullstack")
+async def build_fullstack_application(
+    request: FullStackBuildRequest, 
+    user_id: str = Depends(get_current_user)
+):
+    """
+    Build a complete full-stack application (React + FastAPI + PostgreSQL).
+    
+    This endpoint generates:
+    - React frontend with routing and components
+    - FastAPI backend with authentication
+    - PostgreSQL database with migrations
+    - Automated tests
+    - Docker deployment configuration
+    - Complete documentation
+    
+    Uses multi-model AI:
+    - Claude Sonnet 4 for frontend (React)
+    - GPT-4o for backend (FastAPI)
+    - Gemini 2.5 Pro for planning
+    """
+    from fullstack_orchestrator import FullStackOrchestrator
+    
+    # Initialize credit manager
+    credit_manager = get_credit_manager(db)
+    
+    # Verify project
+    project = await db.projects.find_one({"id": request.project_id, "user_id": user_id})
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+    
+    # Calculate cost for full-stack build
+    # Full-stack requires all agents
+    agents_to_use = [
+        AgentType.PLANNER,      # 12 credits
+        AgentType.FRONTEND,     # 16 credits
+        AgentType.BACKEND,      # 16 credits
+        AgentType.DATABASE,     # 10 credits
+        AgentType.TESTING       # 10 credits
+    ]
+    
+    models_used = {
+        AgentType.PLANNER: ModelType.GEMINI_2_5_PRO,
+        AgentType.FRONTEND: ModelType.CLAUDE_SONNET_4,
+        AgentType.BACKEND: ModelType.GPT_4O,
+        AgentType.DATABASE: ModelType.GPT_4O,
+        AgentType.TESTING: ModelType.GPT_4O
+    }
+    
+    # Calculate cost
+    cost_breakdown = await credit_manager.calculate_multi_agent_cost(
+        agents_to_use,
+        models_used,
+        has_images=False,  # No images for full-stack build
+        has_backend=True
+    )
+    
+    estimated_cost = cost_breakdown['total']
+    
+    # Check if user has enough credits
+    user_balance = await credit_manager.get_user_balance(user_id)
+    if user_balance < estimated_cost:
+        raise HTTPException(
+            status_code=402,
+            detail=f"Insufficient credits. Full-stack build requires {estimated_cost} credits. You have {user_balance}. Breakdown: Planning (12) + Frontend (16) + Backend (16) + Database (10) + Testing (10) = {estimated_cost}"
+        )
+    
+    # Reserve credits upfront
+    reservation = await credit_manager.reserve_credits(
+        user_id,
+        estimated_cost,
+        "fullstack_build",
+        {
+            "project_id": request.project_id,
+            "agents_used": [a.value for a in agents_to_use],
+            "estimated_cost": estimated_cost,
+            "breakdown": cost_breakdown
+        }
+    )
+    
+    if reservation['status'] != 'success':
+        raise HTTPException(status_code=402, detail="Failed to reserve credits")
+    
+    transaction_id = reservation['transaction_id']
+    
+    try:
+        # Initialize full-stack orchestrator
+        orchestrator = FullStackOrchestrator()
+        
+        # Set up WebSocket callback for real-time updates
+        async def send_ws_message(message):
+            """Send agent messages via WebSocket"""
+            await ws_manager.send_agent_status(
+                request.project_id,
+                {
+                    "agent": message.agent_type,
+                    "status": message.status,
+                    "message": message.message,
+                    "progress": message.progress,
+                    "timestamp": message.timestamp.isoformat(),
+                    "details": message.details
+                }
+            )
+        
+        orchestrator.set_message_callback(send_ws_message)
+        
+        # Build full-stack application
+        result = await orchestrator.build_fullstack_app(
+            user_prompt=request.prompt,
+            project_id=request.project_id
+        )
+        
+        if result['status'] == 'completed':
+            # Calculate actual cost (same as estimated for full-stack)
+            actual_cost = estimated_cost
+            
+            # Complete the transaction
+            completion_result = await credit_manager.complete_transaction(
+                transaction_id,
+                actual_cost,
+                {
+                    "agents_used": [a.value for a in agents_to_use],
+                    "total_files": result.get('total_files', 0),
+                    "tech_stack": result.get('tech_stack', {})
+                }
+            )
+            
+            # Calculate refund if any
+            refund_amount = estimated_cost - actual_cost
+            if refund_amount > 0:
+                await credit_manager.refund_credits(
+                    user_id,
+                    refund_amount,
+                    "Full-stack build refund (unused credits)",
+                    {"transaction_id": transaction_id}
+                )
+            
+            # Update project with generated code
+            await db.projects.update_one(
+                {"id": request.project_id},
+                {"$set": {
+                    "generated_code": json.dumps(result.get('files', {})),
+                    "plan": result.get('plan', {}),
+                    "structure": result.get('structure', {}),
+                    "deployment": result.get('deployment', {}),
+                    "fullstack": True,
+                    "tech_stack": result.get('tech_stack', {}),
+                    "updated_at": datetime.utcnow().isoformat()
+                }}
+            )
+            
+            # Return success with credit breakdown
+            return {
+                "status": "success",
+                "project_id": request.project_id,
+                "result": result,
+                "credits": {
+                    "estimated": estimated_cost,
+                    "used": actual_cost,
+                    "refunded": refund_amount,
+                    "remaining": user_balance - actual_cost
+                },
+                "message": f"✅ Full-stack application generated! {result.get('total_files', 0)} files created."
+            }
+        else:
+            # Full refund on failure
+            await credit_manager.refund_credits(
+                user_id,
+                estimated_cost,
+                "Full-stack build failed - full refund",
+                {"transaction_id": transaction_id, "error": result.get('error')}
+            )
+            raise HTTPException(status_code=500, detail=result.get('error', 'Full-stack build failed'))
+    
+    except Exception as e:
+        # Full refund on exception
+        await credit_manager.refund_credits(
+            user_id,
+            estimated_cost,
+            f"Full-stack build exception - full refund: {str(e)}",
+            {"transaction_id": transaction_id}
+        )
+        raise HTTPException(status_code=500, detail=f"Full-stack build error: {str(e)}")
+
+
 # Docker Container Management Endpoints
 @api_router.post("/projects/{project_id}/container/create")
 async def create_project_container(project_id: str, user_id: str = Depends(get_current_user)):
