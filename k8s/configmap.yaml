@@ -2,9 +2,30 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: autowebiq-config
-  namespace: autowebiq-workspaces
+  namespace: autowebiq
 data:
+  # Database
+  DB_NAME: "autowebiq_db"
+  
+  # CORS
+  CORS_ORIGINS: "https://autowebiq.com,https://www.autowebiq.com"
+  
+  # Domain
   DOMAIN: "autowebiq.com"
   PREVIEW_HOST: "preview.autowebiq.com"
-  GCP_PROJECT_ID: "autowebiq-476616"
-  GKE_CLUSTER_REGION: "asia-south1"
+  
+  # Redis
+  REDIS_URL: "redis://autowebiq-redis:6379/0"
+  
+  # MongoDB
+  MONGO_URL: "mongodb://autowebiq-mongodb:27017"
+  
+  # Celery
+  CELERY_BROKER_URL: "redis://autowebiq-redis:6379/0"
+  CELERY_RESULT_BACKEND: "redis://autowebiq-redis:6379/0"
+  
+  # AWS Region
+  AWS_REGION: "us-east-1"
+  
+  # Frontend Backend URL
+  REACT_APP_BACKEND_URL: "https://autowebiq.com"

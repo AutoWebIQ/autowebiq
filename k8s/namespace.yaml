@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: autowebiq-workspaces
+  name: autowebiq
   labels:
-    app: autowebiq
+    name: autowebiq
     environment: production
