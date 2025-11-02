@@ -808,51 +808,83 @@ async def create_message(project_id: str, request: Request, user_id: str = Depen
         return {"message": error_message}
     
     try:
-        # Import template system
-        from template_orchestrator import TemplateOrchestrator
+        # Import template system with multi-page support
+        from template_orchestrator import TemplateBasedOrchestrator
+        import os
         
-        # Initialize orchestrator
-        orchestrator = TemplateOrchestrator()
-        
-        # Generate website using template system
-        result = await orchestrator.generate_website(
-            prompt=message,
-            project_id=project_id,
-            user_id=user_id,
-            images=uploaded_images
+        # Initialize orchestrator with API keys
+        orchestrator = TemplateBasedOrchestrator(
+            openai_key=os.environ.get('OPENAI_API_KEY', ''),
+            anthropic_key=os.environ.get('ANTHROPIC_API_KEY', ''),
+            gemini_key=os.environ.get('GEMINI_API_KEY', '')
         )
         
-        if result.get('success'):
-            # Save assistant response
+        # Set up WebSocket callback for real-time agent updates
+        async def send_agent_update(proj_id: str, update: dict):
+            """Send agent status updates via WebSocket"""
+            from websocket_manager import get_websocket_manager
+            ws_manager = get_websocket_manager()
+            await ws_manager.send_agent_message(
+                project_id=proj_id,
+                agent_type=update.get('agent', 'system'),
+                message=update.get('content', ''),
+                status=update.get('status', 'working'),
+                progress=update.get('progress', 0)
+            )
+        
+        orchestrator.message_callback = send_agent_update
+        
+        # Generate multi-page website
+        result = await orchestrator.build_website(
+            user_prompt=message,
+            project_id=project_id,
+            uploaded_images=uploaded_images
+        )
+        
+        if result.get('status') == 'completed':
+            # Extract all pages
+            all_pages = result.get('all_pages', {})
+            frontend_code = result.get('frontend_code', '')
+            
+            # Save assistant response with page list
+            page_list = ', '.join(all_pages.keys()) if all_pages else 'index.html'
             assistant_message = {
                 "id": str(uuid.uuid4()),
                 "project_id": project_id,
                 "role": "assistant",
-                "content": result.get('message', 'Website generated successfully! 🎉'),
+                "content": f"✅ Multi-page website generated successfully! 🎉\n\n**Generated Pages:** {page_list}\n\n**Features:**\n• Working navigation\n• Functional forms\n• Responsive design",
                 "created_at": datetime.now(timezone.utc).isoformat()
             }
             await db.messages.insert_one(assistant_message)
             
-            # Update project with generated code
+            # Update project with generated code and all pages
             await db.projects.update_one(
                 {"id": project_id},
                 {"$set": {
-                    "generated_code": result.get('html', ''),
+                    "generated_code": frontend_code,
+                    "all_pages": all_pages,  # Store all pages
+                    "multipage": True,
                     "status": "completed",
                     "updated_at": datetime.now(timezone.utc).isoformat()
                 }}
             )
             
-            # Deduct credits
+            # Deduct credits (use token usage if available)
+            credits_used = result.get('token_usage', {}).get('total_credits', 20)
+            credits_used = max(20, min(int(credits_used), 100))  # Between 20-100
+            
             await db.users.update_one(
                 {"id": user_id},
-                {"$inc": {"credits": -20}}
+                {"$inc": {"credits": -credits_used}}
             )
             
             return {
                 "message": assistant_message,
-                "generated_code": result.get('html', ''),
-                "credits_used": 20
+                "generated_code": frontend_code,
+                "all_pages": all_pages,
+                "multipage": True,
+                "credits_used": credits_used,
+                "token_usage": result.get('token_usage', {})
             }
         else:
             error_message = {
