@@ -338,6 +338,9 @@ async def login(user_data: UserLogin):
     if not user or not verify_password(user_data.password, user.get('password_hash', '')):
         raise HTTPException(status_code=401, detail="Invalid credentials")
     
+    # Remove MongoDB _id to prevent serialization issues
+    user.pop('_id', None)
+    
     # Generate JWT token
     token = create_access_token({"sub": user['id']})
     
@@ -345,10 +348,10 @@ async def login(user_data: UserLogin):
         "access_token": token,
         "token_type": "bearer",
         "user": {
-            "id": user["id"],
-            "email": user["email"],
-            "username": user.get("username", ""),
-            "credits": user.get("credits", 0)
+            "id": str(user["id"]),  # Ensure string
+            "email": str(user["email"]),
+            "username": str(user.get("username", "")),
+            "credits": int(user.get("credits", 0))
         }
     }
 
