@@ -159,31 +159,53 @@ class TemplateBasedOrchestrator:
             await self._send_message_with_status(
                 project_id,
                 "frontend",
-                "⚙️ Customizing template with your content...\nAnalyzing brand requirements...",
+                "⚙️ Analyzing website requirements...\nDetecting pages needed (home, about, contact, login, etc.)...",
                 "working",
                 65
+            )
+            
+            # Generate multi-page analysis
+            page_analysis = self.multipage_generator.analyze_requirements(user_prompt)
+            pages_list = ", ".join(page_analysis['pages'])
+            
+            await self._send_message_with_status(
+                project_id,
+                "frontend",
+                f"✅ Pages detected: **{pages_list}**\nBusiness type: {page_analysis['business_type']}\nFeatures: {', '.join(page_analysis['features'])}",
+                "completed",
+                70
             )
             await asyncio.sleep(0.5)
             
             await self._send_message_with_status(
                 project_id,
                 "frontend",
-                "🎨 Applying design customizations...\nOptimizing layout and responsiveness...",
+                "🎨 Generating multi-page website...\nCreating navigation, forms, and interactive elements...",
                 "working",
                 75
             )
             
-            customized_html = await self.template_customizer.customize_template(
-                template=template,
-                user_prompt=user_prompt,
+            # Generate complete multi-page website
+            business_info = {
+                "name": user_prompt[:50],
+                "description": user_prompt,
+                "type": page_analysis['business_type']
+            }
+            
+            all_pages = self.multipage_generator.generate_complete_website(
+                prompt=user_prompt,
+                business_info=business_info,
                 images=images
             )
             
-            print(f"✅ Template customized ({len(customized_html)} chars)")
+            # Use index.html as the main customized HTML
+            customized_html = all_pages.get('index.html', '')
+            
+            print(f"✅ Generated {len(all_pages)} pages: {list(all_pages.keys())}")
             await self._send_message_with_status(
                 project_id,
                 "frontend",
-                f"✅ Website customized successfully\nGenerated: {len(customized_html):,} characters of production-ready code",
+                f"✅ Multi-page website generated!\nCreated **{len(all_pages)} pages**: {', '.join(all_pages.keys())}\n\n**Features included:**\n• Working navigation between pages\n• Functional contact forms\n• Login/signup pages with validation\n• Responsive design",
                 "completed",
                 85
             )
