@@ -9,6 +9,7 @@ import os
 from template_system import TemplateLibrary, TemplateCustomizer
 from agents_v2 import ImprovedImageAgent, AgentMessage, AgentStatus, AgentType
 from token_tracker import get_token_tracker
+from multipage_generator import MultiPageGenerator
 
 class TemplateBasedOrchestrator:
     """Orchestrator that uses template system + AI customization"""
