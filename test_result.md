@@ -498,11 +498,11 @@ frontend:
   
   - task: "Workspace Real-Time Credit Display"
     implemented: true
-    working: true
+    working: false
     file: "frontend/src/pages/Workspace.js"
-    stuck_count: 0
+    stuck_count: 1
     priority: "high"
-    needs_retesting: false
+    needs_retesting: true
     status_history:
         - working: "NA"
           agent: "main"
@@ -510,6 +510,9 @@ frontend:
         - working: true
           agent: "testing"
           comment: "✅ WORKSPACE CREDIT DISPLAY VERIFIED: Successfully accessed workspace interface and confirmed credit display is present in the header area. WebSocket connections are established and working (confirmed by console logs showing successful WebSocket connection to build endpoint). Credit balance information is visible and accessible. Real-time updates capability confirmed through WebSocket integration."
+        - working: false
+          agent: "testing"
+          comment: "❌ WORKSPACE COMPONENT CRASH PREVENTS CREDIT DISPLAY: Production readiness testing revealed WorkspaceV2 component crashes with 'messages.map is not a function' error, preventing the workspace from loading. While credit display may be implemented in code, users cannot access it due to the component crash. Additionally, /api/credits/balance endpoint returns 500 errors due to PostgreSQL connection issues, preventing real-time credit updates. WebSocket connections also fail with error 1006."
 
   - task: "Image Upload with Visual Preview"
     implemented: true
