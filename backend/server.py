@@ -1846,6 +1846,326 @@ async def search_files(
     return await fs_manager.search_files(user_id, project_id, query)
 
 
+# ============================================================================
+# ITERATIVE CHAT ENDPOINTS (Phase 5 - Conversational Development)
+# ============================================================================
+
+from iterative_chat_manager import get_iterative_chat_manager
+
+class ChatRequest(BaseModel):
+    project_id: str
+    message: str
+
+@api_router.post("/chat/iterative")
+async def iterative_chat(
+    request: ChatRequest,
+    user_id: str = Depends(get_current_user)
+):
+    """
+    Iterative chat for refining projects.
+    
+    Users can say:
+    - "Make the button blue"
+    - "Add a login form"
+    - "Fix the mobile responsive design"
+    
+    The system understands context and makes precise changes.
+    """
+    chat_manager = get_iterative_chat_manager()
+    return await chat_manager.process_iterative_request(
+        project_id=request.project_id,
+        user_id=user_id,
+        message=request.message,
+        db=db
+    )
+
+@api_router.get("/chat/{project_id}/history")
+async def get_chat_history(
+    project_id: str,
+    user_id: str = Depends(get_current_user)
+):
+    """Get conversation history for a project"""
+    chat_manager = get_iterative_chat_manager()
+    history = await chat_manager.get_conversation_history(project_id, user_id)
+    return {"status": "success", "history": history}
+
+@api_router.delete("/chat/{project_id}/context")
+async def clear_chat_context(
+    project_id: str,
+    user_id: str = Depends(get_current_user)
+):
+    """Clear conversation context"""
+    chat_manager = get_iterative_chat_manager()
+    await chat_manager.clear_context(project_id, user_id)
+    return {"status": "success", "message": "Context cleared"}
+
+
+# ============================================================================
+# TERMINAL ACCESS ENDPOINTS (Phase 7 - WebSocket Terminal)
+# ============================================================================
+
+from terminal_manager import get_terminal_manager
+
+class CommandRequest(BaseModel):
+    container_id: str
+    command: str
+    working_dir: str = "/workspace"
+
+class PackageInstallRequest(BaseModel):
+    container_id: str
+    packages: List[str]
+    package_manager: str = "npm"
+
+@api_router.post("/terminal/execute")
+async def execute_command(
+    request: CommandRequest,
+    user_id: str = Depends(get_current_user)
+):
+    """Execute a command in container"""
+    terminal_manager = get_terminal_manager()
+    return await terminal_manager.execute_command(
+        container_id=request.container_id,
+        command=request.command,
+        working_dir=request.working_dir
+    )
+
+@api_router.post("/terminal/install-packages")
+async def install_packages(
+    request: PackageInstallRequest,
+    user_id: str = Depends(get_current_user)
+):
+    """Install packages in container"""
+    terminal_manager = get_terminal_manager()
+    return await terminal_manager.install_packages(
+        container_id=request.container_id,
+        packages=request.packages,
+        package_manager=request.package_manager
+    )
+
+@api_router.get("/terminal/container/{container_id}/info")
+async def get_container_info(
+    container_id: str,
+    user_id: str = Depends(get_current_user)
+):
+    """Get container information"""
+    terminal_manager = get_terminal_manager()
+    return await terminal_manager.get_container_info(container_id)
+
+@app.websocket("/ws/terminal/{session_id}")
+async def terminal_websocket(websocket: WebSocket, session_id: str):
+    """
+    WebSocket endpoint for terminal access.
+    
+    Client sends:
+    - {"type": "start", "container_id": "..."}
+    - {"type": "input", "data": "command\n"}
+    - {"type": "resize", "rows": 24, "cols": 80}
+    
+    Server sends:
+    - {"type": "output", "data": "output text"}
+    - {"type": "error", "data": "error message"}
+    """
+    await websocket.accept()
+    
+    try:
+        # Wait for start message
+        data = await websocket.receive_json()
+        
+        if data.get("type") != "start":
+            await websocket.send_json({
+                "type": "error",
+                "data": "Expected 'start' message"
+            })
+            return
+        
+        container_id = data.get("container_id")
+        if not container_id:
+            await websocket.send_json({
+                "type": "error",
+                "data": "Missing container_id"
+            })
+            return
+        
+        # Create terminal session
+        terminal_manager = get_terminal_manager()
+        session = await terminal_manager.create_session(
+            container_id=container_id,
+            websocket=websocket,
+            session_id=session_id
+        )
+        
+        # Start session (this blocks until session ends)
+        await session.start()
+    
+    except Exception as e:
+        print(f"Terminal WebSocket error: {e}")
+        await websocket.send_json({
+            "type": "error",
+            "data": str(e)
+        })
+    finally:
+        terminal_manager = get_terminal_manager()
+        await terminal_manager.close_session(session_id)
+
+
+# ============================================================================
+# GIT INTEGRATION ENDPOINTS (Phase 6 - Version Control)
+# ============================================================================
+
+from git_manager import get_git_manager
+
+class GitInitRequest(BaseModel):
+    project_id: str
+    user_name: str = "AutoWebIQ User"
+    user_email: str = "user@autowebiq.com"
+
+class GitCommitRequest(BaseModel):
+    project_id: str
+    message: str
+    files: Optional[List[str]] = None
+
+class GitHubRepoRequest(BaseModel):
+    project_id: str
+    github_token: str
+    repo_name: str
+    description: str = ""
+    private: bool = False
+
+class GitPushRequest(BaseModel):
+    project_id: str
+    remote: str = "origin"
+    branch: str = "main"
+
+@api_router.post("/git/init")
+async def git_init(
+    request: GitInitRequest,
+    user_id: str = Depends(get_current_user)
+):
+    """Initialize git repository in workspace"""
+    # Get workspace path
+    workspace_path = f"/tmp/workspaces/{user_id}/{request.project_id}"
+    
+    git_manager = get_git_manager()
+    return await git_manager.init_repository(
+        workspace_path=workspace_path,
+        user_name=request.user_name,
+        user_email=request.user_email
+    )
+
+@api_router.get("/git/{project_id}/status")
+async def git_status(
+    project_id: str,
+    user_id: str = Depends(get_current_user)
+):
+    """Get git status"""
+    workspace_path = f"/tmp/workspaces/{user_id}/{project_id}"
+    git_manager = get_git_manager()
+    return await git_manager.get_status(workspace_path)
+
+@api_router.post("/git/commit")
+async def git_commit(
+    request: GitCommitRequest,
+    user_id: str = Depends(get_current_user)
+):
+    """Create a git commit"""
+    workspace_path = f"/tmp/workspaces/{user_id}/{request.project_id}"
+    git_manager = get_git_manager()
+    
+    # Stage files
+    await git_manager.stage_files(workspace_path, request.files)
+    
+    # Commit
+    return await git_manager.commit(
+        workspace_path=workspace_path,
+        message=request.message
+    )
+
+@api_router.get("/git/{project_id}/history")
+async def git_history(
+    project_id: str,
+    limit: int = 10,
+    user_id: str = Depends(get_current_user)
+):
+    """Get commit history"""
+    workspace_path = f"/tmp/workspaces/{user_id}/{project_id}"
+    git_manager = get_git_manager()
+    return await git_manager.get_commit_history(workspace_path, limit)
+
+@api_router.post("/git/github/create-repo")
+async def create_github_repo(
+    request: GitHubRepoRequest,
+    user_id: str = Depends(get_current_user)
+):
+    """Create GitHub repository and push code"""
+    workspace_path = f"/tmp/workspaces/{user_id}/{request.project_id}"
+    git_manager = get_git_manager()
+    
+    # Create GitHub repo
+    repo_result = await git_manager.create_github_repo(
+        github_token=request.github_token,
+        repo_name=request.repo_name,
+        description=request.description,
+        private=request.private
+    )
+    
+    if repo_result["status"] != "success":
+        return repo_result
+    
+    # Add remote
+    await git_manager.add_remote(
+        workspace_path=workspace_path,
+        remote_name="origin",
+        remote_url=repo_result["clone_url"]
+    )
+    
+    # Initial commit if needed
+    status = await git_manager.get_status(workspace_path)
+    if not status.get("clean", False):
+        await git_manager.stage_files(workspace_path)
+        await git_manager.commit(
+            workspace_path=workspace_path,
+            message="Initial commit from AutoWebIQ"
+        )
+    
+    # Push to GitHub
+    push_result = await git_manager.push(
+        workspace_path=workspace_path,
+        remote="origin",
+        branch="main"
+    )
+    
+    return {
+        "status": "success",
+        "message": "Repository created and code pushed to GitHub",
+        "repo_url": repo_result["repo_url"],
+        "push_result": push_result
+    }
+
+@api_router.post("/git/push")
+async def git_push(
+    request: GitPushRequest,
+    user_id: str = Depends(get_current_user)
+):
+    """Push commits to remote"""
+    workspace_path = f"/tmp/workspaces/{user_id}/{request.project_id}"
+    git_manager = get_git_manager()
+    return await git_manager.push(
+        workspace_path=workspace_path,
+        remote=request.remote,
+        branch=request.branch
+    )
+
+@api_router.get("/git/{project_id}/branches")
+async def git_branches(
+    project_id: str,
+    user_id: str = Depends(get_current_user)
+):
+    """List all branches"""
+    workspace_path = f"/tmp/workspaces/{user_id}/{project_id}"
+    git_manager = get_git_manager()
+    return await git_manager.list_branches(workspace_path)
+
+
 # Docker Container Management Endpoints (OLD - Deprecated, use workspaces instead)
 @api_router.post("/projects/{project_id}/container/create")
 async def create_project_container(project_id: str, user_id: str = Depends(get_current_user)):
