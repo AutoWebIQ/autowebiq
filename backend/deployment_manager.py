@@ -112,7 +112,7 @@ class DeploymentManager:
                     for file in files:
                         file_path = os.path.join(root, file)
                         arcname = os.path.relpath(file_path, project_path)
-                        zip_file.write(file_path, arcname)\n            
+                        zip_file.write(file_path, arcname)
             zip_buffer.seek(0)
             
             # Create site if doesn't exist
