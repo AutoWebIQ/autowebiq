@@ -1662,7 +1662,191 @@ async def build_fullstack_application(
         raise HTTPException(status_code=500, detail=f"Full-stack build error: {str(e)}")
 
 
-# Docker Container Management Endpoints
+# ============================================================================
+# WORKSPACE MANAGEMENT ENDPOINTS (Phase 3 - Live Preview)
+# ============================================================================
+
+from workspace_manager import get_workspace_manager
+from file_system_manager import get_file_system_manager
+
+@api_router.post("/workspaces/create")
+async def create_workspace(
+    project_id: str,
+    user_id: str = Depends(get_current_user)
+):
+    """
+    Create a Docker workspace with live preview for a project.
+    
+    Features:
+    - Isolated Docker container
+    - Live reload
+    - Frontend + Backend serving
+    - Real-time code execution
+    """
+    # Get project
+    project = await db.projects.find_one({"id": project_id, "user_id": user_id})
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+    
+    # Get generated files
+    generated_code = project.get('generated_code', '')
+    if not generated_code:
+        raise HTTPException(status_code=400, detail="No code generated yet")
+    
+    # Parse files
+    try:
+        if isinstance(generated_code, str):
+            files = json.loads(generated_code)
+        else:
+            files = generated_code
+    except:
+        files = {"index.html": generated_code}  # Fallback for old format
+    
+    # Create workspace
+    workspace_manager = get_workspace_manager()
+    result = await workspace_manager.create_workspace(
+        project_id=project_id,
+        user_id=user_id,
+        files=files,
+        project_name=project.get('name', 'app')
+    )
+    
+    if result["status"] == "success":
+        # Update project with workspace info
+        await db.projects.update_one(
+            {"id": project_id},
+            {"$set": {
+                "workspace_id": result["workspace_id"],
+                "preview_url": result["preview_url"],
+                "frontend_port": result["frontend_port"],
+                "backend_port": result.get("backend_port"),
+                "workspace_created_at": datetime.utcnow().isoformat()
+            }}
+        )
+    
+    return result
+
+@api_router.get("/workspaces/{project_id}/status")
+async def get_workspace_status(
+    project_id: str,
+    user_id: str = Depends(get_current_user)
+):
+    """Get status of workspace"""
+    workspace_manager = get_workspace_manager()
+    return await workspace_manager.get_workspace_status(project_id)
+
+@api_router.post("/workspaces/{project_id}/stop")
+async def stop_workspace(
+    project_id: str,
+    user_id: str = Depends(get_current_user)
+):
+    """Stop a running workspace"""
+    workspace_manager = get_workspace_manager()
+    return await workspace_manager.stop_workspace(project_id)
+
+@api_router.post("/workspaces/{project_id}/restart")
+async def restart_workspace(
+    project_id: str,
+    user_id: str = Depends(get_current_user)
+):
+    """Restart a workspace"""
+    workspace_manager = get_workspace_manager()
+    return await workspace_manager.restart_workspace(project_id)
+
+@api_router.delete("/workspaces/{project_id}")
+async def delete_workspace(
+    project_id: str,
+    user_id: str = Depends(get_current_user)
+):
+    """Delete a workspace"""
+    workspace_manager = get_workspace_manager()
+    return await workspace_manager.delete_workspace(project_id)
+
+@api_router.get("/workspaces/{project_id}/logs")
+async def get_workspace_logs(
+    project_id: str,
+    tail: int = 100,
+    user_id: str = Depends(get_current_user)
+):
+    """Get workspace logs"""
+    workspace_manager = get_workspace_manager()
+    return await workspace_manager.get_workspace_logs(project_id, tail)
+
+
+# ============================================================================
+# FILE SYSTEM ENDPOINTS (Phase 3 - Code Editor)
+# ============================================================================
+
+class FileReadRequest(BaseModel):
+    project_id: str
+    file_path: str
+
+class FileWriteRequest(BaseModel):
+    project_id: str
+    file_path: str
+    content: str
+
+class DirectoryRequest(BaseModel):
+    project_id: str
+    directory_path: str = ""
+
+@api_router.post("/files/read")
+async def read_file(
+    request: FileReadRequest,
+    user_id: str = Depends(get_current_user)
+):
+    """Read a file from workspace"""
+    fs_manager = get_file_system_manager()
+    return await fs_manager.read_file(user_id, request.project_id, request.file_path)
+
+@api_router.post("/files/write")
+async def write_file(
+    request: FileWriteRequest,
+    user_id: str = Depends(get_current_user)
+):
+    """Write content to a file"""
+    fs_manager = get_file_system_manager()
+    return await fs_manager.write_file(user_id, request.project_id, request.file_path, request.content)
+
+@api_router.post("/files/delete")
+async def delete_file(
+    request: FileReadRequest,
+    user_id: str = Depends(get_current_user)
+):
+    """Delete a file"""
+    fs_manager = get_file_system_manager()
+    return await fs_manager.delete_file(user_id, request.project_id, request.file_path)
+
+@api_router.post("/files/list")
+async def list_directory(
+    request: DirectoryRequest,
+    user_id: str = Depends(get_current_user)
+):
+    """List directory contents"""
+    fs_manager = get_file_system_manager()
+    return await fs_manager.list_directory(user_id, request.project_id, request.directory_path)
+
+@api_router.post("/files/tree")
+async def get_file_tree(
+    project_id: str,
+    user_id: str = Depends(get_current_user)
+):
+    """Get complete file tree structure"""
+    fs_manager = get_file_system_manager()
+    return await fs_manager.get_file_tree(user_id, project_id)
+
+@api_router.post("/files/search")
+async def search_files(
+    project_id: str,
+    query: str,
+    user_id: str = Depends(get_current_user)
+):
+    """Search for files"""
+    fs_manager = get_file_system_manager()
+    return await fs_manager.search_files(user_id, project_id, query)
+
+
+# Docker Container Management Endpoints (OLD - Deprecated, use workspaces instead)
 @api_router.post("/projects/{project_id}/container/create")
 async def create_project_container(project_id: str, user_id: str = Depends(get_current_user)):
     """Create a Docker container for live preview"""
