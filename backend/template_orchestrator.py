@@ -23,6 +23,7 @@ class TemplateBasedOrchestrator:
         self.template_library = TemplateLibrary()
         self.template_customizer = TemplateCustomizer(self.openai_client)
         self.image_agent = ImprovedImageAgent(self.openai_client)
+        self.multipage_generator = MultiPageGenerator()
         
         # Token tracking for real-time credit deduction
         self.token_tracker = get_token_tracker()
