@@ -5,6 +5,9 @@ import asyncio
 from typing import Dict, List, Optional, Callable
 from datetime import datetime, timezone
 import os
+import base64
+import cloudinary
+import cloudinary.uploader
 
 from template_system import TemplateLibrary, TemplateCustomizer
 from agents_v2 import ImprovedImageAgent, AgentMessage, AgentStatus, AgentType
