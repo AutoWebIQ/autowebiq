@@ -2711,23 +2711,62 @@ async def list_gke_workspaces(user_id: str = Depends(get_current_user)):
 
 # Credit System Endpoints
 @api_router.get("/credits/balance")
-async def get_credit_balance(user_id: str = Depends(get_current_user), db=Depends(get_db)):
-    """Get current credit balance - PostgreSQL"""
-    return await get_credit_balance_endpoint(user_id, db)
+async def get_credit_balance_mongodb(user_id: str = Depends(get_current_user)):
+    """Get current credit balance - MongoDB"""
+    user = await db.users.find_one({"id": user_id}, {"_id": 0, "credits": 1})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    return {"credits": user.get("credits", 0)}
+
+# @api_router.get("/credits/balance")
+# async def get_credit_balance(user_id: str = Depends(get_current_user), db=Depends(get_db)):
+#     """Get current credit balance - PostgreSQL"""
+#     return await get_credit_balance_endpoint(user_id, db)
 
 @api_router.get("/credits/transactions")
-async def get_credit_transactions(
+async def get_credit_transactions_mongodb(
     user_id: str = Depends(get_current_user),
-    limit: int = 50,
-    db=Depends(get_db)
+    limit: int = 50
 ):
-    """Get credit transaction history - PostgreSQL"""
-    return await get_credit_transactions_endpoint(user_id, db)
+    """Get credit transaction history - MongoDB"""
+    transactions = await db.credit_transactions.find(
+        {"user_id": user_id},
+        {"_id": 0}
+    ).sort("created_at", -1).limit(limit).to_list(length=limit)
+    return {"transactions": transactions}
+
+# @api_router.get("/credits/transactions")
+# async def get_credit_transactions(
+#     user_id: str = Depends(get_current_user),
+#     limit: int = 50,
+#     db=Depends(get_db)
+# ):
+#     """Get credit transaction history - PostgreSQL"""
+#     return await get_credit_transactions_endpoint(user_id, db)
 
 @api_router.get("/credits/summary")
-async def get_credit_summary(user_id: str = Depends(get_current_user), db=Depends(get_db)):
-    """Get credit usage summary - PostgreSQL"""
-    return await get_credit_summary_endpoint(user_id, db)
+async def get_credit_summary_mongodb(user_id: str = Depends(get_current_user)):
+    """Get credit usage summary - MongoDB"""
+    transactions = await db.credit_transactions.find({"user_id": user_id}, {"_id": 0}).to_list(length=None)
+    
+    total_spent = sum(t.get("amount", 0) for t in transactions if t.get("transaction_type") == "deduction")
+    total_refunded = sum(t.get("amount", 0) for t in transactions if t.get("transaction_type") == "refund")
+    total_purchased = sum(t.get("amount", 0) for t in transactions if t.get("transaction_type") == "purchase")
+    
+    user = await db.users.find_one({"id": user_id}, {"_id": 0, "credits": 1})
+    current_balance = user.get("credits", 0) if user else 0
+    
+    return {
+        "current_balance": current_balance,
+        "total_spent": total_spent,
+        "total_refunded": total_refunded,
+        "total_purchased": total_purchased
+    }
+
+# @api_router.get("/credits/summary")
+# async def get_credit_summary(user_id: str = Depends(get_current_user), db=Depends(get_db)):
+#     """Get credit usage summary - PostgreSQL"""
+#     return await get_credit_summary_endpoint(user_id, db)
 
 @api_router.get("/credits/pricing")
 async def get_credit_pricing():
