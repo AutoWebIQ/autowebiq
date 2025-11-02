@@ -577,6 +577,18 @@ frontend:
           agent: "testing"
           comment: "✅ COMPREHENSIVE TESTING COMPLETED: All Google OAuth UI features working perfectly. Login/register pages show Google button with proper Google logo SVG, 'Continue with Google' text, and OR divider. Redirect URL format correct (https://auth.emergentagent.com/?redirect=dashboard_url). Regular email/password authentication works flawlessly - test account created and login successful. Responsive design verified across desktop (1920x800), tablet (768x1024), and mobile (390x844) viewports. Button hover effects working. Only minor console warnings from Razorpay (unrelated to OAuth). No critical errors found."
 
+  - task: "CRITICAL: WorkspaceV2 Component Crash Fix"
+    implemented: false
+    working: false
+    file: "frontend/src/pages/Workspace.js"
+    stuck_count: 0
+    priority: "critical"
+    needs_retesting: true
+    status_history:
+        - working: false
+          agent: "testing"
+          comment: "❌ CRITICAL PRODUCTION BLOCKING ISSUE: WorkspaceV2 component crashes with JavaScript error 'messages.map is not a function' preventing entire workspace functionality. This causes React error boundary to trigger, showing red error screen instead of chat interface. Users cannot generate websites, send messages, or access any workspace features. Root cause: messages data structure is not properly initialized as an array. This is the #1 blocking issue preventing production deployment. IMMEDIATE FIX REQUIRED: Initialize messages state as empty array [] and ensure proper data fetching from /api/projects/{id}/messages endpoint."
+
 metadata:
   created_by: "main_agent"
   version: "2.0"
