@@ -273,9 +273,10 @@ const WorkspaceV2 = () => {
   const fetchMessages = async () => {
     try {
       const res = await axios.get(`${API}/projects/${id}/messages`, getAxiosConfig());
-      setMessages(res.data);
+      setMessages(res.data.messages || []);
     } catch (error) {
       console.error('Error fetching messages:', error);
+      setMessages([]); // Ensure messages is always an array
     }
   };
 
