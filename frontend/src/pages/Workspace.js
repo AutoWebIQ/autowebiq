@@ -259,6 +259,11 @@ const WorkspaceV2 = () => {
     try {
       const res = await axios.get(`${API}/projects/${id}`, getAxiosConfig());
       setProject(res.data);
+      
+      // Load preview URL if it exists
+      if (res.data.preview_url) {
+        setDeploymentUrl(res.data.preview_url);
+      }
     } catch (error) {
       console.error('Error fetching project:', error);
       toast.error('Failed to load project');
