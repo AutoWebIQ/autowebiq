@@ -373,47 +373,59 @@ const WorkspaceV2 = () => {
     try {
       toast.info('🚀 Deploying to Vercel...');
       
-      // Use V1 endpoint that works with MongoDB
+      // Call new deploy-preview endpoint
       const response = await axios.post(
-        `${API}/deploy/vercel`,
-        {
-          project_id: id,
-          project_name: project.name || 'autowebiq-project'
-        },
+        `${API}/projects/${id}/deploy-preview`,
+        {},
         getAxiosConfig()
       );
       
       const result = response.data;
-      setDeploymentUrl(result.deployment_url || result.url);
+      const previewUrl = result.preview_url;
       
+      setDeploymentUrl(previewUrl);
+      
+      // Show success toast with live link
       toast.success(
         <div>
           <div>✅ Deployed successfully!</div>
-          <a 
-            href={result.deployment_url || result.url} 
-            target="_blank" 
-            rel="noopener noreferrer"
-            style={{ color: '#7c3aed', textDecoration: 'underline' }}
-          >
-            View live site →
-          </a>
+          <div style={{ marginTop: '8px' }}>
+            <a 
+              href={previewUrl} 
+              target="_blank" 
+              rel="noopener noreferrer"
+              style={{ color: '#7c3aed', textDecoration: 'underline', fontWeight: 'bold' }}
+            >
+              🔗 View Live Preview →
+            </a>
+          </div>
+          {result.pages_count > 1 && (
+            <div style={{ marginTop: '4px', fontSize: '0.875rem', opacity: 0.8 }}>
+              {result.pages_count} pages deployed
+            </div>
+          )}
         </div>,
-        { duration: 8000 }
+        { duration: 10000 }
       );
 
+      // Add message to chat
       setMessages(prev => [...prev, {
         role: 'system',
-        content: `🚀 **Deployed to Vercel**: Your website is live!`,
+        content: `🚀 **Website Deployed Successfully!**\n\n**Live Preview:** ${previewUrl}\n\n${result.pages_count > 1 ? `✅ ${result.pages_count} pages deployed with working navigation\n` : ''}Your website is now live and accessible to anyone with the link. Share it with clients or test all features!`,
         created_at: new Date().toISOString()
       }]);
 
+      // Fetch updated project to get preview_url
+      fetchProject();
+
     } catch (error) {
       console.error('Deployment error:', error);
-      toast.error(error.response?.data?.detail || 'Deployment failed. This feature requires Vercel integration.');
+      const errorMsg = error.response?.data?.detail || 'Deployment failed. Please try again.';
+      toast.error(errorMsg);
       
       setMessages(prev => [...prev, {
         role: 'system',
-        content: `❌ **Deployment Failed**: ${error.response?.data?.detail || error.message}. Note: Deployment requires Vercel token configuration.`,
+        content: `❌ **Deployment Failed**: ${errorMsg}`,
         created_at: new Date().toISOString()
       }]);
     } finally {
