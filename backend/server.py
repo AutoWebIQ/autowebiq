@@ -760,24 +760,43 @@ async def get_projects_mongodb(user_id: str = Depends(get_current_user)):
 #     """Get all projects for user - PostgreSQL"""
 #     return await get_projects_endpoint(user_id, db)
 
-@api_router.post("/projects/create")
-async def create_project(request: dict, user_id: str = Depends(get_current_user), db=Depends(get_db)):
-    """Create a new project - PostgreSQL"""
-    from project_endpoints_pg import ProjectCreate
-    project_data = ProjectCreate(
-        name=request.get("name", "Untitled Project"),
-        description=request.get("description", "")
-    )
-    return await create_project_endpoint(project_data, user_id, db)
+# @api_router.post("/projects/create")
+# async def create_project(request: dict, user_id: str = Depends(get_current_user), db=Depends(get_db)):
+#     """Create a new project - PostgreSQL"""
+#     from project_endpoints_pg import ProjectCreate
+#     project_data = ProjectCreate(
+#         name=request.get("name", "Untitled Project"),
+#         description=request.get("description", "")
+#     )
+#     return await create_project_endpoint(project_data, user_id, db)
 
 @api_router.get("/projects/{project_id}")
-async def get_project(project_id: str, user_id: str = Depends(get_current_user), db=Depends(get_db)):
-    """Get a specific project - PostgreSQL"""
-    return await get_project_endpoint(project_id, user_id, db)
+async def get_project_mongodb(project_id: str, user_id: str = Depends(get_current_user)):
+    """Get a specific project - MongoDB"""
+    project = await db.projects.find_one({"id": project_id, "user_id": user_id}, {"_id": 0})
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+    return project
+
+# @api_router.get("/projects/{project_id}")
+# async def get_project(project_id: str, user_id: str = Depends(get_current_user), db=Depends(get_db)):
+#     """Get a specific project - PostgreSQL"""
+#     return await get_project_endpoint(project_id, user_id, db)
 
 @api_router.get("/projects/{project_id}/messages")
-async def get_messages(project_id: str, user_id: str = Depends(get_current_user), db=Depends(get_db)):
-    """Get all messages for a project - PostgreSQL"""
+async def get_messages_mongodb(project_id: str, user_id: str = Depends(get_current_user)):
+    """Get all messages for a project - MongoDB"""
+    # Verify project ownership
+    project = await db.projects.find_one({"id": project_id, "user_id": user_id}, {"_id": 0})
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+    
+    messages = await db.messages.find({"project_id": project_id}, {"_id": 0}).to_list(length=None)
+    return {"messages": messages}
+
+# @api_router.get("/projects/{project_id}/messages")
+# async def get_messages(project_id: str, user_id: str = Depends(get_current_user), db=Depends(get_db)):
+#     """Get all messages for a project - PostgreSQL"""
     return await get_project_messages_endpoint(project_id, user_id, db)
 
 
