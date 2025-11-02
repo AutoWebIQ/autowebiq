@@ -131,14 +131,24 @@ class AutoWebIQMultiPageTester:
             else:
                 self.log_test("Demo Account Credits Check", False, f"Only has {initial_credits} credits, need at least 100")
             
-            # Test JWT token with /auth/me
+            # Test JWT token with /auth/me - try both V1 and V2 endpoints
             success, response, _ = self.run_test(
-                "Verify JWT Token",
+                "Verify JWT Token (V1)",
                 "GET",
                 "auth/me",
                 200,
                 headers={"Authorization": f"Bearer {self.jwt_token}"}
             )
+            
+            # If V1 fails, try V2
+            if not success:
+                success, response, _ = self.run_test(
+                    "Verify JWT Token (V2)",
+                    "GET",
+                    "v2/user/me",
+                    200,
+                    headers={"Authorization": f"Bearer {self.jwt_token}"}
+                )
             
             return success
         
