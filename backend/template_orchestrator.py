@@ -36,7 +36,7 @@ class TemplateBasedOrchestrator:
         self.message_callback = callback
     
     async def build_website(self, user_prompt: str, project_id: str, uploaded_images: List[str] = []) -> Dict:
-        """Build website using template system"""
+        """Build website using template system with multi-page support"""
         
         # Start token tracking session
         session_id = f"build_{project_id}_{datetime.now().timestamp()}"
@@ -46,7 +46,7 @@ class TemplateBasedOrchestrator:
         try:
             print(f"\n🚀 Starting template-based build for: {user_prompt[:50]}...")
             
-            # Step 1: Initialize
+            # Step 0: Check if we need to ask clarifying questions
             await self._send_message_with_status(
                 project_id, 
                 "initializing", 
@@ -54,6 +54,21 @@ class TemplateBasedOrchestrator:
                 "working",
                 0
             )
+            
+            # Analyze if forms are needed
+            page_analysis = self.multipage_generator.analyze_requirements(user_prompt)
+            needs_clarification = any(feat in page_analysis['features'] for feat in ['contact_form', 'user_auth', 'booking_form'])
+            
+            if needs_clarification:
+                await self._send_message_with_status(
+                    project_id,
+                    "planner",
+                    "🤔 I notice your website needs functional forms (contact, login, signup).\n\n**Quick questions to make forms work perfectly:**\n\n1. **Where should form data be saved?**\n   • Option A: Email to you (simple, no setup needed)\n   • Option B: Save to database (I'll create API endpoints)\n   • Option C: Send to your existing API (provide URL)\n\n2. **For user authentication (login/signup):**\n   • Do you want me to create backend API endpoints?\n   • Or integrate with existing auth service?\n\n**For now, I'll create forms with:**\n✅ Client-side validation\n✅ Sample backend endpoints (you can customize later)\n✅ Console logging (for testing)\n\nYou can update the API endpoints after deployment to connect to your real backend.\n\nProceeding with build...",
+                    "thinking",
+                    5
+                )
+                await asyncio.sleep(2)
+            
             await asyncio.sleep(0.5)  # Small delay for UI visibility
             
             # Step 2: Template Selection
