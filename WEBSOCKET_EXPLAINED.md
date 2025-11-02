@@ -81,7 +81,7 @@ sudo supervisorctl status backend
 #### 2. **Wrong URL Configuration** 🔴
 ```javascript
 // frontend/.env should have:
-REACT_APP_BACKEND_URL=https://webgen-platform-4.preview.emergentagent.com
+REACT_APP_BACKEND_URL=https://autowebiq-iq.preview.emergentagent.com
 
 // WebSocket automatically converts:
 // https → wss (secure websocket)

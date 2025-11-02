@@ -222,7 +222,7 @@ redis-server /etc/redis/redis.conf --daemonize yes
 
 ### Test Backend Health:
 ```bash
-curl https://autowebiq.preview.emergentagent.com/api/health | json_pp
+curl https://autowebiq-iq.preview.emergentagent.com/api/health | json_pp
 ```
 
 ### View Database Status:
@@ -244,7 +244,7 @@ mongosh --eval "db.stats()"
 ### Set Up Monitoring:
 
 1. **Health Check Endpoint**
-   - Monitor: `https://autowebiq.preview.emergentagent.com/api/health`
+   - Monitor: `https://autowebiq-iq.preview.emergentagent.com/api/health`
    - Check every 1 minute
    - Alert if status != "healthy"
 
@@ -357,7 +357,7 @@ psql "postgresql://user:pass@host/db" < backup.sql
 **Step 4: Test & Switch**
 ```bash
 # Test new connection
-curl https://autowebiq.preview.emergentagent.com/api/health
+curl https://autowebiq-iq.preview.emergentagent.com/api/health
 
 # If healthy, you're done!
 ```
