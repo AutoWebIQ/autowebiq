@@ -102,7 +102,7 @@
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
 
-user_problem_statement: "Implement Emergent's dynamic credit system with auto-deduction based on agents used, models, and complexity. Include refund mechanism, transaction ledger, and real-time balance updates. Starting credits: 20 for new users."
+user_problem_statement: "Phase 1: Implement Multi-Model Router System with intelligent task routing. Claude Sonnet 4 for frontend/UI, GPT-4o for backend logic, Gemini 2.5 Pro for content generation, and OpenAI gpt-image-1 for HD image generation. Enhance website generation quality with multi-model orchestration."
 
 backend:
   - task: "Dynamic Credit System Core"
