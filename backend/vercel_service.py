@@ -363,6 +363,62 @@ class VercelService:
             # Wait before next poll
             time.sleep(poll_interval)
     
+    def deploy_multipage_website(
+        self,
+        project_name: str,
+        pages: Dict[str, str],
+        environment: str = "preview"
+    ) -> Dict:
+        """
+        Deploy a multi-page website with multiple HTML files.
+        
+        Args:
+            project_name: Name for the Vercel project
+            pages: Dictionary of {filename: html_content} for all pages
+            environment: Target environment (preview/production)
+        
+        Returns:
+            Deployment details with URL
+        
+        Raises:
+            VercelDeploymentError: If deployment fails
+        """
+        logger.info(f"Starting multi-page deployment for {project_name} ({len(pages)} pages)")
+        
+        # Upload all pages
+        uploaded_files = []
+        
+        for filename, content in pages.items():
+            logger.info(f"Uploading {filename}...")
+            file, sha, size = self.upload_content(filename, content.encode('utf-8'))
+            uploaded_files.append({"file": file, "sha": sha, "size": size})
+        
+        # Create deployment
+        deployment = self.create_deployment(
+            project_name=project_name,
+            files=uploaded_files,
+            environment=environment,
+            metadata={
+                "deployed_via": "autowebiq",
+                "timestamp": datetime.utcnow().isoformat(),
+                "pages_count": len(pages)
+            }
+        )
+        
+        # Wait for deployment to be ready
+        final_status = self.wait_for_deployment(deployment["id"])
+        
+        return {
+            "success": True,
+            "deployment_id": deployment["id"],
+            "deployment_url": f"https://{deployment['url']}",
+            "preview_url": f"https://{deployment['url']}",
+            "state": final_status["state"],
+            "project_name": project_name,
+            "environment": environment,
+            "pages_count": len(pages)
+        }
+    
     def deploy_website(
         self,
         project_name: str,
