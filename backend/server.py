@@ -857,6 +857,9 @@ async def create_message(project_id: str, request: Request, user_id: str = Depen
             }
             await db.messages.insert_one(assistant_message)
             
+            # Remove MongoDB _id before returning
+            assistant_message.pop('_id', None)
+            
             # Update project with generated code and all pages
             await db.projects.update_one(
                 {"id": project_id},
