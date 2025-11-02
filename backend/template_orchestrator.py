@@ -202,11 +202,11 @@ Mood: engaging, trustworthy, professional"""
                 55
             )
             
-            # Step 4: Frontend Agent - Template Customization
+            # Step 4: Frontend Agent - Template Customization (Using Claude Sonnet 4)
             await self._send_message_with_status(
                 project_id,
                 "frontend",
-                "🎨 Frontend Agent starting...",
+                "🎨 Frontend Agent starting...\nModel: **Claude Sonnet 4** (Best for UI/UX)",
                 "waiting",
                 60
             )
@@ -215,19 +215,19 @@ Mood: engaging, trustworthy, professional"""
             await self._send_message_with_status(
                 project_id,
                 "frontend",
-                "⚙️ Analyzing website requirements...\nDetecting pages needed (home, about, contact, login, etc.)...",
+                "⚙️ Claude analyzing requirements...\nDetecting pages needed (home, about, contact, login, etc.)...",
                 "working",
                 65
             )
             
-            # Generate multi-page analysis
+            # Generate multi-page analysis (using Gemini for content strategy)
             page_analysis = self.multipage_generator.analyze_requirements(user_prompt)
             pages_list = ", ".join(page_analysis['pages'])
             
             await self._send_message_with_status(
                 project_id,
                 "frontend",
-                f"✅ Pages detected: **{pages_list}**\nBusiness type: {page_analysis['business_type']}\nFeatures: {', '.join(page_analysis['features'])}",
+                f"✅ Pages detected: **{pages_list}**\nBusiness type: {page_analysis['business_type']}\nFeatures: {', '.join(page_analysis['features'])}\n\n*Content strategy by Gemini 2.5 Pro*",
                 "completed",
                 70
             )
@@ -236,7 +236,7 @@ Mood: engaging, trustworthy, professional"""
             await self._send_message_with_status(
                 project_id,
                 "frontend",
-                "🎨 Generating multi-page website...\nCreating navigation, forms, and interactive elements...",
+                "🎨 Claude generating multi-page website...\nCreating navigation, forms, and interactive elements with optimal UI/UX...",
                 "working",
                 75
             )
