@@ -158,24 +158,9 @@ class TemplateLibrary:
     
     async def get_components_by_category(self, category: str) -> List[Dict]:
         """Get all components in a category"""
-        async with AsyncSessionLocal() as session:
-            result = await session.execute(
-                select(DBComponent).where(DBComponent.category == category)
-            )
-            components = result.scalars().all()
-            
-            return [{
-                'component_id': c.id,
-                'name': c.name,
-                'description': c.description,
-                'category': c.category,
-                'tags': c.tags or [],
-                'html_code': c.html_code,
-                'css_code': c.css_code,
-                'js_code': c.js_code,
-                'props': c.props or {},
-                'variants': c.variants or []
-            } for c in components]
+        query = {"category": category}
+        components = await db.components.find(query, {"_id": 0}).to_list(length=None)
+        return components
     
     async def increment_template_usage(self, template_id: str):
         """Increment template usage count - PostgreSQL doesn't track this yet"""
