@@ -29,6 +29,8 @@ from github_manager import github_manager
 from gke_manager import gke_manager
 from credit_system import get_credit_manager, AgentType, ModelType, MODEL_NAME_MAPPING
 from constants import INITIAL_FREE_CREDITS
+from subscription_manager import subscription_manager
+from manual_deployment_manager import manual_deployment_manager
 from database import init_db, get_db, AsyncSessionLocal, User as DBUser, Project as DBProject, Template as DBTemplate, Component as DBComponent
 from sqlalchemy import select
 
