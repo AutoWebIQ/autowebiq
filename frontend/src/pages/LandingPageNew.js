@@ -57,11 +57,6 @@ const LandingPageNew = () => {
         </div>
 
         <div className="hero-content">
-          <div className="hero-badge fade-in">
-            <span className="badge-dot"></span>
-            <span>4 AI Agents • Lightning Fast • Production Ready</span>
-          </div>
-
           <h1 className="hero-title fade-up">
             Build Production-Ready
             <br />
@@ -78,12 +73,6 @@ const LandingPageNew = () => {
               <span>Start Building Free</span>
               <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
                 <path d="M7.5 15L12.5 10L7.5 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-            </button>
-            <button className="btn-hero-secondary" onClick={() => navigate('/auth')}>
-              <span>View Demo</span>
-              <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                <path d="M10 5V15M10 15L5 10M10 15L15 10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
             </button>
           </div>
