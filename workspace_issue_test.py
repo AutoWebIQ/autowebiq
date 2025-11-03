@@ -336,8 +336,11 @@ class WorkspaceIssueTester:
             self.log_test("WebSocket - No Project ID", "FAIL", "No project ID available", "HIGH")
             return False
             
-        # Convert HTTPS URL to WSS URL for WebSocket
-        ws_url = BASE_URL.replace("https://", "wss://").replace("/api", "") + f"/ws/{self.created_project_id}"
+        # Convert HTTP/HTTPS URL to WS/WSS URL for WebSocket
+        if BASE_URL.startswith("https://"):
+            ws_url = BASE_URL.replace("https://", "wss://").replace("/api", "") + f"/ws/{self.created_project_id}"
+        else:
+            ws_url = BASE_URL.replace("http://", "ws://").replace("/api", "") + f"/ws/{self.created_project_id}"
         
         connection_successful = False
         error_message = ""
