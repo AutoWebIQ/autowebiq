@@ -151,8 +151,15 @@ const Workspace = ({ user, onLogout }) => {
       <div className="workspace-content">
         {/* Left Panel - Chat & Agent Status */}
         <div className="left-panel">
-          <div className="chat-section">
-            <h3>AI Workspace</h3>
+          {/* Agent Status Panel - Emergent Style */}
+          <div className="agent-panel-container">
+            <AgentStatusPanel 
+              agents={agentStatus}
+              isGenerating={generating}
+            />
+          </div>
+          
+          <div className="chat-section">\n            <h3>AI Workspace</h3>
             
             {/* Agent Status Display */}
             {agentStatus.length > 0 && (
