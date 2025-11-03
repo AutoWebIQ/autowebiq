@@ -23,7 +23,7 @@ import time
 from datetime import datetime
 
 # Test Configuration
-BASE_URL = "https://autowebiq.com/api"
+BASE_URL = "https://multiagent-web.preview.emergentagent.com/api"
 DEMO_EMAIL = "demo@test.com"
 DEMO_PASSWORD = "Demo123456"
 
