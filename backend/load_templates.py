@@ -11,7 +11,7 @@ async def load_templates():
     # Connect to MongoDB
     mongo_url = os.environ.get('MONGO_URL', 'mongodb://localhost:27017')
     client = AsyncIOMotorClient(mongo_url)
-    db = client.autowebiq_db
+    db = client[os.environ.get('DB_NAME', 'autowebiq_db')]
     
     print("🔄 Loading templates into MongoDB...")
     
