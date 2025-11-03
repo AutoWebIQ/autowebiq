@@ -15,7 +15,7 @@ async def migrate_existing_users():
     # Connect to MongoDB
     mongo_url = os.environ.get('MONGO_URL')
     client = AsyncIOMotorClient(mongo_url)
-    db = client.autowebiq
+    db = client[os.environ.get('DB_NAME', 'autowebiq')]
     
     print("Starting migration: Adding initial_credits_granted flag to existing users...")
     
