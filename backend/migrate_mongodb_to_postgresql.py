@@ -41,7 +41,7 @@ def parse_datetime(value):
 class MongoToPostgreSQLMigrator:
     def __init__(self):
         self.mongo_client = AsyncIOMotorClient(MONGO_URL)
-        self.mongo_db = self.mongo_client.autowebiq_db
+        self.mongo_db = self.mongo_client[os.environ.get('DB_NAME', 'autowebiq_db')]
         
         self.pg_engine = create_async_engine(DATABASE_URL, echo=False)
         self.AsyncSessionLocal = async_sessionmaker(
