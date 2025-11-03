@@ -109,62 +109,82 @@ class WebsiteBuilder:
         }
     
     async def code_generation_agent(self, prompt: str, plan: dict, design: dict) -> str:
-        """Code generation agent - generates HTML/CSS"""
+        """Code generation agent - generates INCREDIBLE, FULLY FUNCTIONAL websites"""
         try:
+            # SUPERIOR prompt for Claude Sonnet 4
+            enhanced_prompt = f"""You are an EXPERT web developer. Create a COMPLETE, PRODUCTION-READY, FULLY FUNCTIONAL website.
+
+USER REQUEST: {prompt}
+
+CRITICAL REQUIREMENTS:
+1. **FULLY FUNCTIONAL** - All buttons, forms, navigation MUST work with JavaScript
+2. **INCREDIBLE UI/UX** - Modern, beautiful, professional design that looks like a $10,000 website
+3. **COMPLETE SECTIONS**:
+   - Professional navigation bar with smooth scroll
+   - Stunning hero section with CTA buttons
+   - Features/Services section (3-6 items)
+   - About section
+   - Contact form that validates and shows success message
+   - Professional footer with social links
+4. **WORKING INTERACTIVITY**:
+   - Mobile hamburger menu that opens/closes
+   - Smooth scroll to sections
+   - Form validation with JavaScript
+   - Hover effects and animations
+   - Contact form submission handling
+5. **MODERN DESIGN**:
+   - Gradient backgrounds or modern color schemes
+   - Box shadows and depth
+   - Smooth animations and transitions
+   - Professional typography
+   - Proper spacing and alignment
+6. **HIGH-QUALITY IMAGES**:
+   - Use beautiful Unsplash images (https://images.unsplash.com/photo-...)
+   - At least 3-5 relevant, high-quality images
+   - Proper image optimization
+7. **RESPONSIVE**:
+   - Perfect on mobile, tablet, desktop
+   - Mobile-first approach
+8. **PRODUCTION-READY**:
+   - Clean, semantic HTML5
+   - Modern CSS with flexbox/grid
+   - Vanilla JavaScript (no dependencies)
+   - Cross-browser compatible
+   - SEO-friendly meta tags
+
+DESIGN STYLE: Modern, professional, clean, with smooth animations
+
+OUTPUT: Single HTML file with inline CSS and JavaScript. Make it look INCREDIBLE - like a professional developer spent days building it!
+
+IMPORTANT: 
+- Use REAL Unsplash image URLs
+- Make EVERY button functional
+- Add smooth scrolling
+- Include working form validation
+- Add mobile menu toggle
+- Use modern CSS (gradients, shadows, animations)
+
+CREATE THE WEBSITE NOW:"""
+
             response = await self.anthropic.messages.create(
                 model="claude-sonnet-4-20250514",
-                max_tokens=4000,
+                max_tokens=8000,  # Increased for complete websites
                 messages=[{
                     "role": "user",
-                    "content": f"""Create a complete, modern, responsive HTML website for: {prompt}
-                    
-                    Requirements:
-                    - Single HTML file with inline CSS
-                    - Modern, professional design
-                    - Responsive layout
-                    - Clean code
-                    
-                    Return ONLY the HTML code, no explanations."""
+                    "content": enhanced_prompt
                 }]
             )
             
-            return response.content[0].text
+            generated_code = response.content[0].text
+            
+            # Clean up if Claude adds markdown code blocks
+            if '```html' in generated_code:
+                generated_code = generated_code.split('```html')[1].split('```')[0].strip()
+            elif '```' in generated_code:
+                generated_code = generated_code.split('```')[1].split('```')[0].strip()
+            
+            return generated_code
             
         except Exception as e:
-            # Fallback simple template
-            return f'''<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Your Website</title>
-    <style>
-        * {{ margin: 0; padding: 0; box-sizing: border-box; }}
-        body {{
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            line-height: 1.6;
-            color: #333;
-        }}
-        .hero {{
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            text-align: center;
-            padding: 2rem;
-        }}
-        h1 {{ font-size: 3rem; margin-bottom: 1rem; }}
-        p {{ font-size: 1.2rem; }}
-    </style>
-</head>
-<body>
-    <section class="hero">
-        <div>
-            <h1>Welcome to Your Website</h1>
-            <p>{prompt}</p>
-        </div>
-    </section>
-</body>
-</html>'''
+            # Enhanced fallback with working features
+            return self._create_fallback_website(prompt)
