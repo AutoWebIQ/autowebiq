@@ -1,1376 +1,218 @@
-// Enhanced Workspace with V2 API and WebSocket Support
-// Real-time build updates with async Celery tasks
-
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import axios from 'axios';
-import { toast } from 'sonner';
-import { Send, Loader2, Sparkles, Rocket, ExternalLink, CheckCircle, XCircle, AlertCircle, Paperclip, X } from 'lucide-react';
-import { useDropzone } from 'react-dropzone';
-import { useBuildWebSocket } from '../hooks/useBuildWebSocket';
-import { startAsyncBuild, getBuildStatus, deployToVercel, validateWebsite } from '../services/apiV2';
+import './Workspace.css';
 
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
-const API = `${BACKEND_URL}/api`;
-
-const WorkspaceV2 = () => {
-  const { id } = useParams();
+const Workspace = ({ user, onLogout }) => {
+  const { projectId } = useParams();
   const navigate = useNavigate();
+  const wsRef = useRef(null);
+  
   const [project, setProject] = useState(null);
-  const [messages, setMessages] = useState([]);
-  const [input, setInput] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [buildingAsync, setBuildingAsync] = useState(false);
-  const [currentTaskId, setCurrentTaskId] = useState(null);
-  const [userCredits, setUserCredits] = useState(0);
-  const [deploying, setDeploying] = useState(false);
-  const [deploymentUrl, setDeploymentUrl] = useState(null);
-  const [validating, setValidating] = useState(false);
-  const [validationResults, setValidationResults] = useState(null);
-  const [showValidationModal, setShowValidationModal] = useState(false);
-  const [uploadedImages, setUploadedImages] = useState([]);
-  const [uploadingFile, setUploadingFile] = useState(false);
-  const messagesEndRef = useRef(null);
-
-  const getAxiosConfig = () => ({
-    headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
-    withCredentials: true
-  });
-
-  // Dropzone for file uploads
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({
-    accept: {
-      'image/*': ['.png', '.jpg', '.jpeg', '.gif', '.webp', '.svg']
-    },
-    maxSize: 10485760, // 10MB
-    onDrop: async (acceptedFiles) => {
-      if (acceptedFiles.length === 0) return;
-      
-      setUploadingFile(true);
-      const file = acceptedFiles[0];
-      
-      try {
-        const formData = new FormData();
-        formData.append('file', file);
-        formData.append('project_id', id);
-        
-        const config = getAxiosConfig();
-        const res = await axios.post(`${API}/upload`, formData, {
-          ...config,
-          headers: {
-            ...config.headers,
-            'Content-Type': 'multipart/form-data'
-          }
-        });
-        
-        // Add to uploaded images array
-        setUploadedImages(prev => [...prev, {
-          url: res.data.url,
-          filename: file.name,
-          format: res.data.format || 'image'
-        }]);
-        toast.success(`Image uploaded: ${file.name}`);
-      } catch (error) {
-        console.error('Upload error:', error);
-        toast.error('Upload failed. Please try again.');
-      } finally {
-        setUploadingFile(false);
-      }
-    }
-  });
-
-  const removeUploadedImage = (index) => {
-    setUploadedImages(prev => prev.filter((_, i) => i !== index));
-  };
-
-  // WebSocket message handler
-  const handleWebSocketMessage = useCallback((data) => {
-    console.log('WebSocket message:', data);
-
-    if (data.type === 'connection') {
-      console.log('WebSocket connection established');
-      return;
-    }
-
-    if (data.type === 'agent_message') {
-      // Emergent-style agent status display
-      const agentEmoji = {
-        'initializing': '🚀',
-        'planner': '🧠',
-        'frontend': '🎨',
-        'backend': '⚙️',
-        'image': '🖼️',
-        'testing': '🧪',
-        'building': '🏗️'
-      }[data.agent_type] || '💬';
-
-      const statusEmoji = {
-        'thinking': '🤔',
-        'waiting': '⏸️',
-        'working': '⚙️',
-        'completed': '✅',
-        'warning': '⚠️',
-        'error': '❌'
-      }[data.status] || '';
-
-      const agentDisplayName = (data.agent_type || 'system').replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) + ' Agent';
-      
-      // Format message with status indicators
-      let messageContent = `${agentEmoji} **${agentDisplayName}**`;
-      
-      // Add status indicator
-      if (data.status === 'thinking') {
-        messageContent += ` ${statusEmoji} *Thinking...*`;
-      } else if (data.status === 'waiting') {
-        messageContent += ` ${statusEmoji} *Waiting...*`;
-      } else if (data.status === 'working') {
-        messageContent += ` ${statusEmoji} *Working...*`;
-      } else if (data.status === 'completed') {
-        messageContent += ` ${statusEmoji} *Complete*`;
-      } else if (data.status === 'warning') {
-        messageContent += ` ${statusEmoji} *Warning*`;
-      } else if (data.status === 'error') {
-        messageContent += ` ${statusEmoji} *Error*`;
-      }
-      
-      // Add progress bar if available
-      if (data.progress !== undefined && data.progress > 0) {
-        messageContent += ` [${data.progress}%]`;
-      }
-      
-      // Add message content
-      messageContent += `\n${data.message}`;
-      
-      // Add token/credit info if available
-      if (data.tokens_used) {
-        messageContent += `\n*Tokens: ${data.tokens_used.toLocaleString()} • Credits: ${data.credits_used || 'calculating'}*`;
-      }
-      
-      setMessages(prev => [...prev, {
-        role: 'system',
-        content: messageContent,
-        created_at: new Date().toISOString(),
-        agent_type: data.agent_type,
-        status: data.status,
-        progress: data.progress
-      }]);
-    }
-
-    if (data.type === 'build_progress') {
-      console.log('Build progress:', data.data);
-    }
-
-    if (data.type === 'build_complete') {
-      setBuildingAsync(false);
-      setCurrentTaskId(null);
-      
-      // Update project with generated code
-      if (data.result && data.result.generated_code) {
-        setProject(prev => ({
-          ...prev,
-          generated_code: data.result.generated_code
-        }));
-      }
-
-      // Show token usage summary if available
-      let summaryMessage = `✅ **Build Complete!** Website generated successfully in ${data.result.build_time?.toFixed(1) || '?'}s`;
-      
-      if (data.result.token_usage) {
-        summaryMessage += `\n\n**Usage Summary:**`;
-        summaryMessage += `\n• Total tokens: ${data.result.token_usage.total_tokens?.toLocaleString() || 'N/A'}`;
-        summaryMessage += `\n• Total credits: ${data.result.token_usage.total_credits || 'N/A'}`;
-        
-        if (data.result.token_usage.agents) {
-          summaryMessage += `\n\n**Per-Agent Breakdown:**`;
-          Object.entries(data.result.token_usage.agents).forEach(([agent, usage]) => {
-            summaryMessage += `\n• ${agent}: ${usage.tokens?.toLocaleString()} tokens (${usage.credits} credits)`;
-          });
-        }
-      }
-
-      setMessages(prev => [...prev, {
-        role: 'system',
-        content: summaryMessage,
-        created_at: new Date().toISOString()
-      }]);
-
-      toast.success('Website built successfully!');
-      
-      // Refresh credits
-      fetchUserCredits();
-    }
-
-    if (data.type === 'build_error') {
-      setBuildingAsync(false);
-      setCurrentTaskId(null);
-      
-      setMessages(prev => [...prev, {
-        role: 'system',
-        content: `❌ **Build Failed**: ${data.error}`,
-        created_at: new Date().toISOString()
-      }]);
-
-      toast.error('Build failed. Please try again.');
-    }
-
-    if (data.type === 'credits_update') {
-      // Real-time credit updates (Emergent-style)
-      setUserCredits(data.credits);
-      
-      if (data.transaction) {
-        console.log('Credit transaction:', data.transaction);
-        
-        // Show toast for significant credit changes
-        if (Math.abs(data.transaction.amount) >= 5) {
-          const action = data.transaction.amount > 0 ? 'added' : 'deducted';
-          toast.info(`${Math.abs(data.transaction.amount)} credits ${action}. New balance: ${data.credits}`);
-        }
-      }
-    }
-
-    if (data.type === 'heartbeat') {
-      // Just keep connection alive
-      console.log('Heartbeat received');
-    }
-  }, []);
-
-  // Initialize WebSocket
-  const { connectionStatus, sendMessage } = useBuildWebSocket(
-    id,
-    localStorage.getItem('token'),
-    handleWebSocketMessage
-  );
+  const [message, setMessage] = useState('');
+  const [credits, setCredits] = useState(user.credits);
+  const [agentStatus, setAgentStatus] = useState([]);
+  const [generating, setGenerating] = useState(false);
+  const [generatedCode, setGeneratedCode] = useState('');
+  const [showPreview, setShowPreview] = useState(true);
 
   useEffect(() => {
     fetchProject();
-    fetchMessages();
-    fetchUserCredits();
-  }, [id]);
-
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
-
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
+    connectWebSocket();
+    
+    return () => {
+      if (wsRef.current) {
+        wsRef.current.close();
+      }
+    };
+  }, [projectId]);
 
   const fetchProject = async () => {
     try {
-      const res = await axios.get(`${API}/projects/${id}`, getAxiosConfig());
-      setProject(res.data);
+      const response = await fetch(
+        `${process.env.REACT_APP_BACKEND_URL}/api/projects/${projectId}`,
+        {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          }
+        }
+      );
       
-      // Load preview URL if it exists
-      if (res.data.preview_url) {
-        setDeploymentUrl(res.data.preview_url);
+      if (response.ok) {
+        const data = await response.json();
+        setProject(data);
+        if (data.generated_code) {
+          setGeneratedCode(data.generated_code);
+        }
       }
     } catch (error) {
       console.error('Error fetching project:', error);
-      toast.error('Failed to load project');
     }
   };
 
-  const fetchMessages = async () => {
-    try {
-      const res = await axios.get(`${API}/projects/${id}/messages`, getAxiosConfig());
-      setMessages(res.data.messages || []);
-    } catch (error) {
-      console.error('Error fetching messages:', error);
-      setMessages([]); // Ensure messages is always an array
-    }
-  };
-
-  const fetchUserCredits = async () => {
-    try {
-      const res = await axios.get(`${API}/credits/balance`, getAxiosConfig());
-      setUserCredits(res.data.credits);
-    } catch (error) {
-      console.error('Error fetching credits:', error);
-    }
-  };
-
-  // New feature handlers
-  const handleDownload = async () => {
-    try {
-      const response = await axios.get(`${API}/projects/${id}/download`, {
-        ...getAxiosConfig(),
-        responseType: 'blob'
-      });
-      
-      const url = window.URL.createObjectURL(new Blob([response.data]));
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', `${project?.name || 'project'}.zip`);
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      toast.success('Project downloaded successfully!');
-    } catch (error) {
-      console.error('Download error:', error);
-      toast.error('Failed to download project');
-    }
-  };
-
-  const handleFork = async () => {
-    try {
-      const response = await axios.post(`${API}/projects/${id}/fork`, {}, getAxiosConfig());
-      toast.success(`Project forked: ${response.data.project_name}`);
-      setTimeout(() => navigate(`/workspace/${response.data.project_id}`), 1500);
-    } catch (error) {
-      console.error('Fork error:', error);
-      toast.error('Failed to fork project');
-    }
-  };
-
-  const handleShare = async () => {
-    try {
-      const response = await axios.post(`${API}/projects/${id}/share`, {}, getAxiosConfig());
-      const shareUrl = response.data.share_url;
-      
-      // Copy to clipboard
-      await navigator.clipboard.writeText(shareUrl);
-      toast.success('Share link copied to clipboard!');
-      
-      // Show share URL in a modal or alert
-      alert(`Share URL (copied to clipboard):\n${shareUrl}`);
-    } catch (error) {
-      console.error('Share error:', error);
-      toast.error('Failed to generate share link');
-    }
-  };
-
-  const handleOpenInNewTab = () => {
-    if (project?.generated_code) {
-      const blob = new Blob([project.generated_code], { type: 'text/html' });
-      const url = URL.createObjectURL(blob);
-      window.open(url, '_blank');
-    } else {
-      toast.error('No generated code to preview');
-    }
-  };
-
-  const handleRefreshPreview = () => {
-    // Force re-render of preview
-    fetchProject();
-    toast.success('Preview refreshed');
-  };
-
-  const handleSaveToGitHub = async () => {
-    try {
-      // Check if user has connected GitHub
-      const userInfo = await axios.get(`${API}/github/user-info`, getAxiosConfig());
-      
-      if (!userInfo.data.connected) {
-        toast.error('Please connect your GitHub account first');
-        // You can add GitHub OAuth flow here
-        return;
-      }
-
-      // Create repo
-      const repoName = project?.name?.replace(/\s+/g, '-').toLowerCase() || 'autowebiq-project';
-      const repoResponse = await axios.post(`${API}/github/create-repo`, {
-        name: repoName,
-        description: project?.description || 'Created with AutoWebIQ',
-        private: false
-      }, getAxiosConfig());
-
-      // Push code
-      await axios.post(`${API}/github/push-code`, {
-        repo_name: repoName,
-        files: [{
-          path: 'index.html',
-          content: project?.generated_code || ''
-        }, {
-          path: 'README.md',
-          content: `# ${project?.name}\n\n${project?.description}\n\nGenerated by AutoWebIQ`
-        }]
-      }, getAxiosConfig());
-
-      toast.success(`Saved to GitHub: ${repoResponse.data.html_url}`);
-      window.open(repoResponse.data.html_url, '_blank');
-    } catch (error) {
-      console.error('GitHub save error:', error);
-      toast.error(error.response?.data?.detail || 'Failed to save to GitHub');
-    }
-  };
-
-  const handleSendMessage = async () => {
-    if (!input.trim() || loading || buildingAsync) return;
-
-    const messageText = input.trim();
-    const imagesToSend = uploadedImages.map(img => img.url);
-    setInput('');
-    setUploadedImages([]); // Clear uploaded images after sending
-    setLoading(true);
-
-    // Add user message
-    const userMsg = {
-      role: 'user',
-      content: messageText,
-      created_at: new Date().toISOString()
+  const connectWebSocket = () => {
+    const wsUrl = process.env.REACT_APP_BACKEND_URL.replace('http', 'ws');
+    const ws = new WebSocket(`${wsUrl}/ws/${projectId}`);
+    
+    ws.onopen = () => {
+      console.log('WebSocket connected');
     };
-    setMessages(prev => [...prev, userMsg]);
-
-    try {
-      // Save message to database
-      await axios.post(`${API}/projects/${id}/messages`, {
-        role: 'user',
-        content: messageText
-      }, getAxiosConfig());
-
-      // Start async build with V2 API
-      setMessages(prev => [...prev, {
-        role: 'system',
-        content: '🚀 **Starting build...** Connecting to WebSocket for real-time updates...',
-        created_at: new Date().toISOString()
-      }]);
-
-      setBuildingAsync(true);
-
-      const buildResponse = await startAsyncBuild(id, messageText, imagesToSend);
+    
+    ws.onmessage = (event) => {
+      const data = JSON.parse(event.data);
       
-      console.log('Async build started:', buildResponse);
-      
-      setCurrentTaskId(buildResponse.task_id);
-
-      setMessages(prev => [...prev, {
-        role: 'system',
-        content: `✅ **Build Started** (Task: ${buildResponse.task_id.substring(0, 8)}...)\n\nWebSocket Status: ${connectionStatus}\n\nWatch for real-time updates below!`,
-        created_at: new Date().toISOString()
-      }]);
-
-      toast.success('Build started! Watch for real-time updates.');
-
-    } catch (error) {
-      console.error('Error starting build:', error);
-      
-      if (error.response?.status === 402) {
-        setMessages(prev => [...prev, {
-          role: 'system',
-          content: '⚠️ **Insufficient Credits**: You need more credits to build this project.',
-          created_at: new Date().toISOString()
+      if (data.type === 'status') {
+        setAgentStatus(prev => [...prev, {
+          status: data.status,
+          credits: data.credits_used,
+          timestamp: new Date(data.timestamp).toLocaleTimeString()
         }]);
-        toast.error('Insufficient credits');
-      } else {
-        setMessages(prev => [...prev, {
-          role: 'system',
-          content: `❌ **Error**: ${error.response?.data?.detail || error.message}`,
-          created_at: new Date().toISOString()
-        }]);
-        toast.error('Failed to start build');
+      } else if (data.type === 'complete') {
+        setGeneratedCode(data.code);
+        setGenerating(false);
+        setCredits(data.new_balance);
+        fetchProject();
+      } else if (data.error) {
+        setGenerating(false);
+        alert(data.error);
       }
-      
-      setBuildingAsync(false);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleKeyPress = (e) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      handleSendMessage();
-    }
-  };
-
-  const handleDeploy = async () => {
-    if (!project?.generated_code) {
-      toast.error('Please build your website first');
-      return;
-    }
-
-    setDeploying(true);
+    };
     
-    try {
-      toast.info('🚀 Deploying to Vercel...');
-      
-      // Call new deploy-preview endpoint
-      const response = await axios.post(
-        `${API}/projects/${id}/deploy-preview`,
-        {},
-        getAxiosConfig()
-      );
-      
-      const result = response.data;
-      const previewUrl = result.preview_url;
-      
-      setDeploymentUrl(previewUrl);
-      
-      // Show success toast with live link
-      toast.success(
-        <div>
-          <div>✅ Deployed successfully!</div>
-          <div style={{ marginTop: '8px' }}>
-            <a 
-              href={previewUrl} 
-              target="_blank" 
-              rel="noopener noreferrer"
-              style={{ color: '#7c3aed', textDecoration: 'underline', fontWeight: 'bold' }}
-            >
-              🔗 View Live Preview →
-            </a>
-          </div>
-          {result.pages_count > 1 && (
-            <div style={{ marginTop: '4px', fontSize: '0.875rem', opacity: 0.8 }}>
-              {result.pages_count} pages deployed
-            </div>
-          )}
-        </div>,
-        { duration: 10000 }
-      );
-
-      // Add message to chat
-      setMessages(prev => [...prev, {
-        role: 'system',
-        content: `🚀 **Website Deployed Successfully!**\n\n**Live Preview:** ${previewUrl}\n\n${result.pages_count > 1 ? `✅ ${result.pages_count} pages deployed with working navigation\n` : ''}Your website is now live and accessible to anyone with the link. Share it with clients or test all features!`,
-        created_at: new Date().toISOString()
-      }]);
-
-      // Fetch updated project to get preview_url
-      fetchProject();
-
-    } catch (error) {
-      console.error('Deployment error:', error);
-      const errorMsg = error.response?.data?.detail || 'Deployment failed. Please try again.';
-      toast.error(errorMsg);
-      
-      setMessages(prev => [...prev, {
-        role: 'system',
-        content: `❌ **Deployment Failed**: ${errorMsg}`,
-        created_at: new Date().toISOString()
-      }]);
-    } finally {
-      setDeploying(false);
-    }
-  };
-
-  const handleValidate = async () => {
-    if (!project?.generated_code) {
-      toast.error('Please build your website first');
-      return;
-    }
-
-    setValidating(true);
+    ws.onerror = (error) => {
+      console.error('WebSocket error:', error);
+    };
     
-    try {
-      toast.info('🔍 Running 9-point validation...');
-      
-      // Use V1 endpoint that works with MongoDB
-      const response = await axios.post(
-        `${API}/validate`,
-        {
-          project_id: id,
-          html_content: project.generated_code
-        },
-        getAxiosConfig()
-      );
-      
-      const result = response.data;
-      setValidationResults(result);
-      setShowValidationModal(true);
-      
-      const statusEmoji = result.all_passed ? '✅' : result.overall_score >= 75 ? '⚠️' : '❌';
-      const statusText = result.overall_score >= 90 ? 'EXCELLENT' : 
-                        result.overall_score >= 75 ? 'GOOD' : 
-                        result.overall_score >= 60 ? 'NEEDS IMPROVEMENT' : 'POOR';
-      
-      toast.success(
-        <div>
-          <div>{statusEmoji} Validation Complete!</div>
-          <div>Score: {result.overall_score}/100 ({statusText})</div>
-          <div>{result.passed_checks}/{result.total_checks} checks passed</div>
-        </div>,
-        { duration: 5000 }
-      );
+    ws.onclose = () => {
+      console.log('WebSocket closed');
+    };
+    
+    wsRef.current = ws;
+  };
 
-      setMessages(prev => [...prev, {
-        role: 'system',
-        content: `${statusEmoji} **Validation Complete**: ${result.passed_checks}/${result.total_checks} checks passed. Overall Score: ${result.overall_score}/100 (${statusText})`,
-        created_at: new Date().toISOString()
-      }]);
-
-    } catch (error) {
-      console.error('Validation error:', error);
-      toast.error(error.response?.data?.detail || 'Validation failed');
-      
-      setMessages(prev => [...prev, {
-        role: 'system',
-        content: `❌ **Validation Failed**: ${error.response?.data?.detail || error.message}. Running validation on generated code...`,
-        created_at: new Date().toISOString()
-      }]);
-    } finally {
-      setValidating(false);
+  const handleGenerate = () => {
+    if (!message.trim() || generating) return;
+    
+    setGenerating(true);
+    setAgentStatus([]);
+    
+    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+      wsRef.current.send(JSON.stringify({
+        token: localStorage.getItem('token'),
+        message: message
+      }));
+      setMessage('');
     }
   };
 
-  const openInNewTab = () => {
-    if (!project?.generated_code) {
-      toast.error('No website to open. Build your website first!');
-      return;
-    }
-
-    // Create a blob from the HTML
-    const blob = new Blob([project.generated_code], { type: 'text/html' });
+  const downloadCode = () => {
+    const blob = new Blob([generatedCode], { type: 'text/html' });
     const url = URL.createObjectURL(blob);
-    
-    // Open in new tab
-    window.open(url, '_blank');
-    
-    toast.success('✅ Opened in new tab!');
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${project.name}.html`;
+    a.click();
   };
 
   return (
-    <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', background: '#0a0a0a' }}>
+    <div className="workspace">
       {/* Header */}
-      <header style={{
-        background: '#111',
-        borderBottom: '1px solid #222',
-        padding: '16px 24px',
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center'
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-          <button
-            onClick={() => navigate('/dashboard')}
-            style={{
-              background: 'transparent',
-              border: '1px solid #333',
-              color: '#fff',
-              padding: '8px 16px',
-              borderRadius: '6px',
-              cursor: 'pointer'
-            }}
-          >
+      <header className="workspace-header">
+        <div className="header-left">
+          <button className="back-btn" onClick={() => navigate('/dashboard')}>
             ← Back
           </button>
-          <h1 style={{ color: '#fff', fontSize: '1.25rem', fontWeight: '600' }}>
-            {project?.name || 'Project'}
-          </h1>
+          <div className="project-info">
+            <h1>{project?.name}</h1>
+            <span className="project-desc">{project?.description}</span>
+          </div>
         </div>
-
-        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-          {/* Action Buttons */}
-          <button
-            onClick={handleDownload}
-            style={{
-              background: '#1a1a1a',
-              border: '1px solid #333',
-              color: '#fff',
-              padding: '8px 16px',
-              borderRadius: '6px',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px'
-            }}
-            title="Download project as ZIP"
-          >
-            📥 Download
-          </button>
-
-          <button
-            onClick={handleFork}
-            style={{
-              background: '#1a1a1a',
-              border: '1px solid #333',
-              color: '#fff',
-              padding: '8px 16px',
-              borderRadius: '6px',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px'
-            }}
-            title="Fork/Clone this project"
-          >
-            🍴 Fork
-          </button>
-
-          <button
-            onClick={handleShare}
-            style={{
-              background: '#1a1a1a',
-              border: '1px solid #333',
-              color: '#fff',
-              padding: '8px 16px',
-              borderRadius: '6px',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px'
-            }}
-            title="Generate public share link"
-          >
-            🔗 Share
-          </button>
-
-          <button
-            onClick={handleSaveToGitHub}
-            style={{
-              background: '#1a1a1a',
-              border: '1px solid #333',
-              color: '#fff',
-              padding: '8px 16px',
-              borderRadius: '6px',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px'
-            }}
-            title="Save to GitHub"
-          >
-            💾 GitHub
-          </button>
-
-          <button
-            onClick={handleOpenInNewTab}
-            style={{
-              background: '#1a1a1a',
-              border: '1px solid #333',
-              color: '#fff',
-              padding: '8px 16px',
-              borderRadius: '6px',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px'
-            }}
-            title="Open preview in new tab"
-          >
-            ↗️ Open
-          </button>
-
-          <button
-            onClick={handleRefreshPreview}
-            style={{
-              background: '#1a1a1a',
-              border: '1px solid #333',
-              color: '#fff',
-              padding: '8px 16px',
-              borderRadius: '6px',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px'
-            }}
-            title="Refresh preview"
-          >
-            🔄 Refresh
-          </button>
-
-          <div style={{
-            background: '#1a1a1a',
-            padding: '8px 16px',
-            borderRadius: '6px',
-            border: '1px solid #333'
-          }}>
-            <span style={{ color: '#888', marginRight: '8px' }}>WebSocket:</span>
-            <span style={{
-              color: connectionStatus === 'connected' ? '#10b981' : 
-                     connectionStatus === 'connecting' ? '#f59e0b' : '#ef4444',
-              fontWeight: '600'
-            }}>
-              {connectionStatus}
-            </span>
+        <div className="header-right">
+          <div className="credits-display">
+            💎 {credits} credits
           </div>
-
-          <div style={{
-            background: '#1a1a1a',
-            padding: '8px 16px',
-            borderRadius: '6px',
-            border: '1px solid #333'
-          }}>
-            <span style={{ color: '#888', marginRight: '8px' }}>Credits:</span>
-            <span style={{ color: '#fff', fontWeight: '600' }}>{userCredits}</span>
-          </div>
+          {generatedCode && (
+            <>
+              <button className="btn-icon" onClick={downloadCode} title="Download">
+                📥
+              </button>
+              <button 
+                className="btn-icon" 
+                onClick={() => setShowPreview(!showPreview)}
+                title={showPreview ? 'Hide Preview' : 'Show Preview'}
+              >
+                {showPreview ? '👁️' : '👁️‍🗨️'}
+              </button>
+            </>
+          )}
         </div>
       </header>
 
       {/* Main Content */}
-      <div style={{ flex: 1, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 0 }}>
-        {/* Chat */}
-        <div style={{ 
-          background: '#0a0a0a',
-          borderRight: '1px solid #222',
-          display: 'flex',
-          flexDirection: 'column'
-        }}>
-          {/* Messages */}
-          <div style={{
-            flex: 1,
-            overflowY: 'auto',
-            padding: '24px',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '16px'
-          }}>
-            {messages.length === 0 && (
-              <div style={{ textAlign: 'center', padding: '40px', color: '#666' }}>
-                <Sparkles size={48} style={{ margin: '0 auto 16px', opacity: 0.5 }} />
-                <p>Start by describing your website idea...</p>
-              </div>
-            )}
-
-            {messages.map((msg, idx) => {
-              // Determine message styling based on agent status
-              const isAgentMessage = msg.agent_type !== undefined;
-              const agentStatus = msg.status || 'default';
-              
-              // Status-based styling
-              const statusColors = {
-                'thinking': { bg: '#1a1a2e', border: '#6366f1' },
-                'waiting': { bg: '#1a1a1a', border: '#f59e0b' },
-                'working': { bg: '#0f1419', border: '#10b981' },
-                'completed': { bg: '#0a1f0a', border: '#10b981' },
-                'warning': { bg: '#1f1a0a', border: '#f59e0b' },
-                'error': { bg: '#1f0a0a', border: '#ef4444' },
-                'default': { bg: msg.role === 'user' ? '#1a1a1a' : '#0f0f0f', border: msg.role === 'user' ? '#333' : '#222' }
-              };
-              
-              const colors = statusColors[agentStatus] || statusColors.default;
-              
-              return (
-                <div
-                  key={idx}
-                  style={{
-                    padding: '16px',
-                    borderRadius: '8px',
-                    background: colors.bg,
-                    border: `1px solid ${colors.border}`,
-                    borderLeft: isAgentMessage ? `4px solid ${colors.border}` : `1px solid ${colors.border}`,
-                    color: '#fff',
-                    position: 'relative',
-                    transition: 'all 0.3s ease'
-                  }}
-                >
-                  {/* Progress bar for working agents */}
-                  {isAgentMessage && msg.progress !== undefined && msg.progress > 0 && msg.progress < 100 && (
-                    <div style={{
-                      position: 'absolute',
-                      bottom: 0,
-                      left: 0,
-                      height: '3px',
-                      width: `${msg.progress}%`,
-                      background: `linear-gradient(90deg, ${colors.border}, ${colors.border}80)`,
-                      borderRadius: '0 0 0 8px',
-                      transition: 'width 0.5s ease'
-                    }} />
-                  )}
-                  
-                  {/* Message content */}
-                  <div style={{ whiteSpace: 'pre-wrap', lineHeight: '1.6' }}>
-                    {msg.content}
-                  </div>
-                </div>
-              );
-            })}
-
-            {(loading || buildingAsync) && (
-              <div style={{
-                padding: '16px',
-                borderRadius: '8px',
-                background: '#0f0f0f',
-                border: '1px solid #222',
-                color: '#888',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '12px'
-              }}>
-                <Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} />
-                <span>{buildingAsync ? 'Building (async)...' : 'Processing...'}</span>
-              </div>
-            )}
-
-            <div ref={messagesEndRef} />
-          </div>
-
-          {/* Input */}
-          <div style={{
-            padding: '16px 24px',
-            borderTop: '1px solid #222',
-            background: '#111'
-          }}>
-            {/* Uploaded Images Preview */}
-            {uploadedImages.length > 0 && (
-              <div style={{
-                display: 'flex',
-                gap: '8px',
-                marginBottom: '12px',
-                flexWrap: 'wrap'
-              }}>
-                {uploadedImages.map((img, idx) => (
-                  <div
-                    key={idx}
-                    style={{
-                      position: 'relative',
-                      width: '80px',
-                      height: '80px',
-                      borderRadius: '8px',
-                      overflow: 'hidden',
-                      border: '2px solid #333'
-                    }}
-                  >
-                    <img
-                      src={img.url}
-                      alt={img.filename}
-                      style={{
-                        width: '100%',
-                        height: '100%',
-                        objectFit: 'cover'
-                      }}
-                    />
-                    <button
-                      onClick={() => removeUploadedImage(idx)}
-                      style={{
-                        position: 'absolute',
-                        top: '4px',
-                        right: '4px',
-                        background: 'rgba(0, 0, 0, 0.7)',
-                        border: 'none',
-                        borderRadius: '50%',
-                        width: '24px',
-                        height: '24px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        cursor: 'pointer',
-                        color: '#fff'
-                      }}
-                    >
-                      <X size={14} />
-                    </button>
+      <div className="workspace-content">
+        {/* Left Panel - Chat & Agent Status */}
+        <div className="left-panel">
+          <div className="chat-section">
+            <h3>AI Workspace</h3>
+            
+            {/* Agent Status Display */}
+            {agentStatus.length > 0 && (
+              <div className="agent-status-container">
+                {agentStatus.map((status, index) => (
+                  <div key={index} className="agent-status-item">
+                    <span className="status-text">{status.status}</span>
+                    {status.credits > 0 && (
+                      <span className="status-credits">-{status.credits} credits</span>
+                    )}
                   </div>
                 ))}
               </div>
             )}
             
-            <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-end' }}>
-              {/* Clip Icon Button */}
-              <div {...getRootProps()} style={{ cursor: 'pointer' }}>
-                <input {...getInputProps()} />
-                <button
-                  type="button"
-                  disabled={uploadingFile || loading || buildingAsync}
-                  style={{
-                    background: '#1a1a1a',
-                    border: '1px solid #333',
-                    borderRadius: '8px',
-                    padding: '12px',
-                    color: uploadingFile ? '#666' : '#999',
-                    cursor: uploadingFile || loading || buildingAsync ? 'not-allowed' : 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    height: '60px'
-                  }}
-                >
-                  {uploadingFile ? (
-                    <Loader2 size={20} style={{ animation: 'spin 1s linear infinite' }} />
-                  ) : (
-                    <Paperclip size={20} />
-                  )}
-                </button>
-              </div>
-              
+            {/* Input Area */}
+            <div className="chat-input-area">
               <textarea
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyPress={handleKeyPress}
-                placeholder="Describe your website..."
-                disabled={loading || buildingAsync}
-                style={{
-                  flex: 1,
-                  background: '#1a1a1a',
-                  border: '1px solid #333',
-                  borderRadius: '8px',
-                  padding: '12px',
-                  color: '#fff',
-                  resize: 'none',
-                  minHeight: '60px',
-                  fontFamily: 'inherit'
-                }}
+                className="chat-input"
+                placeholder="Describe your website... (e.g., Create a modern portfolio with dark theme)"
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+                disabled={generating}
+                rows="4"
               />
               <button
-                onClick={handleSendMessage}
-                disabled={!input.trim() || loading || buildingAsync}
-                style={{
-                  background: input.trim() && !loading && !buildingAsync ? '#7c3aed' : '#333',
-                  border: 'none',
-                  borderRadius: '8px',
-                  padding: '12px 24px',
-                  color: '#fff',
-                  cursor: input.trim() && !loading && !buildingAsync ? 'pointer' : 'not-allowed',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  height: '60px'
-                }}
+                className="generate-btn"
+                onClick={handleGenerate}
+                disabled={generating || !message.trim()}
               >
-                <Send size={18} />
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* Preview */}
-        <div style={{
-          background: '#fff',
-          display: 'flex',
-          flexDirection: 'column'
-        }}>
-          <div style={{
-            padding: '16px 24px',
-            borderBottom: '1px solid #e5e7eb',
-            background: '#f9fafb',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center'
-          }}>
-            <h3 style={{ fontSize: '0.875rem', fontWeight: '600', color: '#374151' }}>
-              Live Preview
-            </h3>
-            
-            <div style={{ display: 'flex', gap: '8px' }}>
-              {deploymentUrl && (
-                <a
-                  href={deploymentUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{
-                    background: '#10b981',
-                    color: '#fff',
-                    padding: '6px 12px',
-                    borderRadius: '6px',
-                    fontSize: '0.875rem',
-                    textDecoration: 'none',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '6px',
-                    border: 'none'
-                  }}
-                >
-                  <ExternalLink size={14} />
-                  View Live
-                </a>
-              )}
-              
-              <button
-                onClick={handleValidate}
-                disabled={validating || !project?.generated_code}
-                style={{
-                  background: validating ? '#9ca3af' : project?.generated_code ? '#3b82f6' : '#e5e7eb',
-                  color: project?.generated_code ? '#fff' : '#9ca3af',
-                  padding: '6px 12px',
-                  borderRadius: '6px',
-                  fontSize: '0.875rem',
-                  cursor: project?.generated_code && !validating ? 'pointer' : 'not-allowed',
-                  border: 'none',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px'
-                }}
-              >
-                {validating ? (
+                {generating ? (
                   <>
-                    <Loader2 size={14} style={{ animation: 'spin 1s linear infinite' }} />
-                    Validating...
+                    <span className="spinner-small"></span>
+                    Generating...
                   </>
                 ) : (
                   <>
-                    <CheckCircle size={14} />
-                    Validate
-                  </>
-                )}
-              </button>
-              
-              <button
-                onClick={openInNewTab}
-                disabled={!project?.generated_code}
-                style={{
-                  background: project?.generated_code ? '#10b981' : '#e5e7eb',
-                  color: project?.generated_code ? '#fff' : '#9ca3af',
-                  padding: '6px 12px',
-                  borderRadius: '6px',
-                  fontSize: '0.875rem',
-                  cursor: project?.generated_code ? 'pointer' : 'not-allowed',
-                  border: 'none',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px'
-                }}
-              >
-                <ExternalLink size={14} />
-                Open in New Tab
-              </button>
-              
-              <button
-                onClick={handleDeploy}
-                disabled={deploying || !project?.generated_code}
-                style={{
-                  background: deploying ? '#9ca3af' : project?.generated_code ? '#7c3aed' : '#e5e7eb',
-                  color: project?.generated_code ? '#fff' : '#9ca3af',
-                  padding: '6px 12px',
-                  borderRadius: '6px',
-                  fontSize: '0.875rem',
-                  cursor: project?.generated_code && !deploying ? 'pointer' : 'not-allowed',
-                  border: 'none',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px'
-                }}
-              >
-                {deploying ? (
-                  <>
-                    <Loader2 size={14} style={{ animation: 'spin 1s linear infinite' }} />
-                    Deploying...
-                  </>
-                ) : (
-                  <>
-                    <Rocket size={14} />
-                    Deploy to Vercel
+                    ✨ Generate Website
                   </>
                 )}
               </button>
             </div>
           </div>
-
-          <div style={{ flex: 1, overflow: 'auto' }}>
-            {project?.generated_code ? (
-              <iframe
-                srcDoc={project.generated_code}
-                style={{
-                  width: '100%',
-                  height: '100%',
-                  border: 'none'
-                }}
-                title="preview"
-              />
-            ) : (
-              <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                height: '100%',
-                color: '#9ca3af'
-              }}>
-                <p>No preview available yet</p>
-              </div>
-            )}
-          </div>
         </div>
+
+        {/* Right Panel - Preview */}
+        {showPreview && generatedCode && (
+          <div className="right-panel">
+            <div className="preview-header">
+              <h3>Live Preview</h3>
+            </div>
+            <iframe
+              className="preview-iframe"
+              srcDoc={generatedCode}
+              title="Website Preview"
+            />
+          </div>
+        )}
       </div>
-
-      {/* Validation Results Modal */}
-      {showValidationModal && validationResults && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          background: 'rgba(0, 0, 0, 0.8)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 1000,
-          padding: '20px'
-        }}>
-          <div style={{
-            background: '#fff',
-            borderRadius: '12px',
-            maxWidth: '900px',
-            width: '100%',
-            maxHeight: '90vh',
-            overflow: 'auto',
-            boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)'
-          }}>
-            {/* Modal Header */}
-            <div style={{
-              padding: '24px',
-              borderBottom: '1px solid #e5e7eb',
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center'
-            }}>
-              <div>
-                <h2 style={{ fontSize: '1.5rem', fontWeight: '700', color: '#111', marginBottom: '8px' }}>
-                  Validation Results
-                </h2>
-                <p style={{ color: '#6b7280', fontSize: '0.875rem' }}>
-                  {validationResults.passed_checks}/{validationResults.total_checks} checks passed • Score: {validationResults.overall_score}/100
-                </p>
-              </div>
-              <button
-                onClick={() => setShowValidationModal(false)}
-                style={{
-                  background: 'transparent',
-                  border: 'none',
-                  fontSize: '1.5rem',
-                  color: '#6b7280',
-                  cursor: 'pointer',
-                  padding: '4px 8px'
-                }}
-              >
-                ×
-              </button>
-            </div>
-
-            {/* Overall Score */}
-            <div style={{ padding: '24px', background: '#f9fafb' }}>
-              <div style={{
-                background: '#fff',
-                padding: '20px',
-                borderRadius: '8px',
-                border: '2px solid ' + (validationResults.overall_score >= 90 ? '#10b981' : 
-                                        validationResults.overall_score >= 75 ? '#3b82f6' : 
-                                        validationResults.overall_score >= 60 ? '#f59e0b' : '#ef4444')
-              }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                  <div style={{
-                    fontSize: '3rem',
-                    fontWeight: '700',
-                    color: validationResults.overall_score >= 90 ? '#10b981' : 
-                           validationResults.overall_score >= 75 ? '#3b82f6' : 
-                           validationResults.overall_score >= 60 ? '#f59e0b' : '#ef4444'
-                  }}>
-                    {validationResults.overall_score}
-                  </div>
-                  <div>
-                    <div style={{ fontSize: '1.25rem', fontWeight: '600', color: '#111' }}>
-                      {validationResults.overall_score >= 90 ? 'EXCELLENT' : 
-                       validationResults.overall_score >= 75 ? 'GOOD' : 
-                       validationResults.overall_score >= 60 ? 'NEEDS IMPROVEMENT' : 'POOR'}
-                    </div>
-                    <div style={{ fontSize: '0.875rem', color: '#6b7280' }}>
-                      {validationResults.all_passed ? 'All checks passed! 🎉' : 'Some improvements needed'}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Individual Checks */}
-            <div style={{ padding: '24px' }}>
-              <h3 style={{ fontSize: '1.125rem', fontWeight: '600', color: '#111', marginBottom: '16px' }}>
-                Detailed Results
-              </h3>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                {Object.entries(validationResults.results).map(([key, result]) => (
-                  <div
-                    key={key}
-                    style={{
-                      border: '1px solid #e5e7eb',
-                      borderRadius: '8px',
-                      padding: '16px',
-                      background: result.passed ? '#f0fdf4' : '#fef2f2'
-                    }}
-                  >
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                        {result.passed ? (
-                          <CheckCircle size={20} style={{ color: '#10b981' }} />
-                        ) : (
-                          <XCircle size={20} style={{ color: '#ef4444' }} />
-                        )}
-                        <span style={{ fontWeight: '600', color: '#111' }}>
-                          {result.check_name}
-                        </span>
-                      </div>
-                      <span style={{
-                        fontWeight: '700',
-                        color: result.score >= 90 ? '#10b981' : 
-                               result.score >= 75 ? '#3b82f6' : 
-                               result.score >= 60 ? '#f59e0b' : '#ef4444'
-                      }}>
-                        {result.score}/100
-                      </span>
-                    </div>
-
-                    {result.issues && result.issues.length > 0 && (
-                      <div style={{ marginTop: '12px' }}>
-                        <div style={{ fontSize: '0.875rem', fontWeight: '600', color: '#6b7280', marginBottom: '8px' }}>
-                          Issues Found:
-                        </div>
-                        <ul style={{ margin: 0, paddingLeft: '20px', fontSize: '0.875rem', color: '#374151' }}>
-                          {result.issues.slice(0, 3).map((issue, idx) => (
-                            <li key={idx} style={{ marginBottom: '4px' }}>
-                              {issue.message}
-                            </li>
-                          ))}
-                          {result.issues.length > 3 && (
-                            <li style={{ color: '#6b7280', fontStyle: 'italic' }}>
-                              +{result.issues.length - 3} more issues
-                            </li>
-                          )}
-                        </ul>
-                      </div>
-                    )}
-
-                    {result.recommendations && result.recommendations.length > 0 && (
-                      <div style={{ marginTop: '12px', padding: '12px', background: '#fff', borderRadius: '6px', border: '1px solid #e5e7eb' }}>
-                        <div style={{ fontSize: '0.875rem', fontWeight: '600', color: '#6b7280', marginBottom: '6px' }}>
-                          💡 Recommendations:
-                        </div>
-                        <ul style={{ margin: 0, paddingLeft: '20px', fontSize: '0.875rem', color: '#374151' }}>
-                          {result.recommendations.slice(0, 2).map((rec, idx) => (
-                            <li key={idx} style={{ marginBottom: '4px' }}>
-                              {rec}
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Modal Footer */}
-            <div style={{
-              padding: '24px',
-              borderTop: '1px solid #e5e7eb',
-              display: 'flex',
-              justifyContent: 'flex-end',
-              gap: '12px'
-            }}>
-              <button
-                onClick={() => setShowValidationModal(false)}
-                style={{
-                  background: '#e5e7eb',
-                  color: '#374151',
-                  padding: '10px 20px',
-                  borderRadius: '6px',
-                  border: 'none',
-                  cursor: 'pointer',
-                  fontWeight: '500'
-                }}
-              >
-                Close
-              </button>
-              <button
-                onClick={() => {
-                  setShowValidationModal(false);
-                  handleValidate();
-                }}
-                style={{
-                  background: '#7c3aed',
-                  color: '#fff',
-                  padding: '10px 20px',
-                  borderRadius: '6px',
-                  border: 'none',
-                  cursor: 'pointer',
-                  fontWeight: '500'
-                }}
-              >
-                Re-validate
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
 
-export default WorkspaceV2;
+export default Workspace;
