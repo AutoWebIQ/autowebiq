@@ -23,13 +23,12 @@ import time
 from datetime import datetime
 
 # Test Configuration
-BASE_URL = "http://localhost:8001/api"
+BASE_URL = "https://autowebiq.com/api"
 DEMO_EMAIL = "demo@test.com"
 DEMO_PASSWORD = "Demo123456"
 
-# Headers with required Host header for local testing
+# Headers
 HEADERS = {
-    "Host": "api.autowebiq.com",
     "Content-Type": "application/json",
     "Accept": "application/json"
 }
