@@ -709,7 +709,8 @@ metadata:
 
 test_plan:
   current_focus:
-    - "PRODUCTION VERIFICATION TEST - autowebiq.com Domain Readiness"
+    - "PRODUCTION LOGIN FIX - Frontend Rebuild with Correct Backend URL"
+    - "Complete Authentication Flow Testing"
   stuck_tasks: []
   test_all: true
   test_priority: "production_verification"
