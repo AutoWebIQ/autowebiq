@@ -1,53 +1,114 @@
 #!/usr/bin/env python3
 """
-Multi-Model Router System Testing for AutoWebIQ
-Tests the new implementation with intelligent task routing:
-- Claude Sonnet 4 for frontend/UI generation
-- GPT-4o for backend logic  
-- Gemini 2.5 Pro for content generation
-- OpenAI gpt-image-1 for HD image generation
+CRITICAL PRODUCTION VERIFICATION TESTING - autowebiq.com
+Test Configuration:
+- Backend URL: http://localhost:8001
+- Host Header: api.autowebiq.com (REQUIRED)
+- Demo Account: demo@test.com / Demo123456
+- MongoDB: Local (mongodb://localhost:27017)
 """
 
-import asyncio
-import json
-import os
-import sys
-import time
 import requests
+import json
+import sys
 from datetime import datetime
-from typing import Dict, List, Optional
 
 # Test Configuration
-BACKEND_URL = "https://multiagent-web.preview.emergentagent.com/api"
-
-# Demo Account Credentials
+BASE_URL = "http://localhost:8001"
+HOST_HEADER = "api.autowebiq.com"
 DEMO_EMAIL = "demo@test.com"
 DEMO_PASSWORD = "Demo123456"
 
-class MultiModelRouterTester:
-    """Comprehensive tester for Multi-Model Router System"""
-    
+# Headers with required Host header
+HEADERS = {
+    "Host": HOST_HEADER,
+    "Content-Type": "application/json",
+    "Accept": "application/json"
+}
+
+class ProductionTester:
     def __init__(self):
-        self.auth_token = None
-        self.user_data = None
-        self.test_project_id = None
         self.test_results = []
+        self.critical_failures = []
+        self.jwt_token = None
+        self.demo_user_data = None
         
-    def log_test(self, name: str, success: bool, details: str = ""):
+    def log_test(self, test_name, status, details="", priority="MEDIUM"):
         """Log test result"""
-        if success:
-            print(f"✅ {name}")
-        else:
-            print(f"❌ {name}: {details}")
+        result = {
+            "test": test_name,
+            "status": status,
+            "details": details,
+            "priority": priority,
+            "timestamp": datetime.now().isoformat()
+        }
+        self.test_results.append(result)
         
-        self.test_results.append({
-            "test": name,
-            "success": success,
-            "details": details
-        })
-    
-    def authenticate_demo_account(self) -> Dict:
-        """Authenticate with demo account and verify credits"""
+        status_icon = "✅" if status == "PASS" else "❌"
+        priority_prefix = f"[{priority}]" if priority in ["CRITICAL", "HIGH"] else ""
+        print(f"{status_icon} {priority_prefix} {test_name}: {status}")
+        if details:
+            print(f"   Details: {details}")
+        
+        if status == "FAIL" and priority == "CRITICAL":
+            self.critical_failures.append(test_name)
+            
+    def make_request(self, method, endpoint, data=None, auth_token=None, expect_status=200):
+        """Make HTTP request with proper headers"""
+        url = f"{BASE_URL}{endpoint}"
+        headers = HEADERS.copy()
+        
+        if auth_token:
+            headers["Authorization"] = f"Bearer {auth_token}"
+            
+        try:
+            if method == "GET":
+                response = requests.get(url, headers=headers, timeout=10)
+            elif method == "POST":
+                response = requests.post(url, headers=headers, json=data, timeout=10)
+            elif method == "DELETE":
+                response = requests.delete(url, headers=headers, timeout=10)
+            else:
+                raise ValueError(f"Unsupported method: {method}")
+                
+            return response
+            
+        except requests.exceptions.RequestException as e:
+            return None
+            
+    def test_health_check(self):
+        """CRITICAL: Test health endpoint"""
+        print("\n🔍 CRITICAL TEST: Health Check")
+        
+        response = self.make_request("GET", "/api/health")
+        
+        if not response:
+            self.log_test("Health Check - Connection", "FAIL", "Failed to connect to backend", "CRITICAL")
+            return False
+            
+        if response.status_code != 200:
+            self.log_test("Health Check - Status Code", "FAIL", f"Expected 200, got {response.status_code}", "CRITICAL")
+            return False
+            
+        try:
+            data = response.json()
+            
+            # Check status
+            if data.get("status") != "healthy":
+                self.log_test("Health Check - Status", "FAIL", f"Status: {data.get('status')}", "CRITICAL")
+                return False
+                
+            # Check MongoDB connection
+            if data.get("mongodb") != "connected":
+                self.log_test("Health Check - MongoDB", "FAIL", f"MongoDB: {data.get('mongodb')}", "CRITICAL")
+                return False
+                
+            self.log_test("Health Check", "PASS", f"Status: {data.get('status')}, MongoDB: {data.get('mongodb')}", "CRITICAL")
+            return True
+            
+        except json.JSONDecodeError:
+            self.log_test("Health Check - JSON", "FAIL", "Invalid JSON response", "CRITICAL")
+            return False
         print(f"\n🔐 Authenticating demo account: {DEMO_EMAIL}")
         
         try:
