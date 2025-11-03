@@ -1,998 +1,858 @@
-# Multi-Page Website Generator
-# Generates fully functional multi-page websites with working navigation and forms
-
-from typing import Dict, List, Optional
+# Multi-Page Website Generator - SUPERIOR to Emergent
+from typing import List, Dict
 import re
 
 class MultiPageGenerator:
-    """Generates multi-page websites with working navigation"""
+    """Generate complete multi-page websites with navigation"""
     
     def __init__(self):
-        self.pages = {}
-        self.shared_styles = ""
-        self.shared_scripts = ""
+        self.pages = []
+        self.navigation = []
     
-    def analyze_requirements(self, prompt: str) -> Dict:
-        """
-        Analyze user prompt to determine what pages are needed
-        Returns: {
-            'pages': ['home', 'about', 'contact', 'services', 'login', 'signup'],
-            'features': ['contact_form', 'user_auth', 'newsletter'],
-            'business_type': 'ecommerce|portfolio|saas|restaurant|etc'
-        }
-        """
+    async def generate_multipage_website(self, user_prompt: str) -> Dict[str, str]:
+        """Generate multiple pages based on user prompt"""
+        
+        # Analyze what pages are needed
+        pages_needed = self._determine_pages(user_prompt)
+        
+        # Generate each page
+        files = {}
+        
+        # Generate shared assets
+        files['style.css'] = self._generate_css(user_prompt)
+        files['script.js'] = self._generate_js()
+        
+        # Generate HTML pages
+        for page in pages_needed:
+            html = await self._generate_page(page, user_prompt, pages_needed)
+            files[f'{page["file"]}.html'] = html
+        
+        # Generate package.json
+        files['package.json'] = self._generate_package_json(user_prompt)
+        
+        # Generate README
+        files['README.md'] = self._generate_readme(user_prompt)
+        
+        return files
+    
+    def _determine_pages(self, prompt: str) -> List[Dict]:
+        """Determine what pages to generate based on prompt"""
         prompt_lower = prompt.lower()
-        pages = ['home']  # Always include home
-        features = []
-        business_type = 'general'
         
-        # Detect business type
-        if any(word in prompt_lower for word in ['shop', 'store', 'ecommerce', 'buy', 'product', 'cart']):
-            business_type = 'ecommerce'
-            pages.extend(['products', 'cart', 'checkout'])
-        elif any(word in prompt_lower for word in ['portfolio', 'designer', 'photographer', 'creative']):
-            business_type = 'portfolio'
-            pages.extend(['portfolio', 'services'])
-        elif any(word in prompt_lower for word in ['saas', 'software', 'app', 'platform', 'tool']):
-            business_type = 'saas'
-            pages.extend(['features', 'pricing', 'demo'])
-        elif any(word in prompt_lower for word in ['restaurant', 'cafe', 'food', 'menu', 'dining']):
-            business_type = 'restaurant'
-            pages.extend(['menu', 'reservations'])
-        elif any(word in prompt_lower for word in ['hotel', 'booking', 'reservation', 'rooms', 'accommodation']):
-            business_type = 'hotel'
-            pages.extend(['rooms', 'booking', 'amenities'])
-        elif any(word in prompt_lower for word in ['blog', 'news', 'article', 'content']):
-            business_type = 'blog'
-            pages.extend(['blog', 'archive'])
+        pages = [
+            {'name': 'Home', 'file': 'index', 'priority': 1}
+        ]
         
-        # Always add common pages
-        if 'about' not in pages:
-            pages.append('about')
-        if 'contact' not in pages:
-            pages.append('contact')
+        # Add pages based on keywords
+        if any(word in prompt_lower for word in ['portfolio', 'work', 'projects', 'gallery']):
+            pages.append({'name': 'Portfolio', 'file': 'portfolio', 'priority': 2})
         
-        # Detect authentication needs
-        if any(word in prompt_lower for word in ['login', 'signup', 'register', 'account', 'user', 'member']):
-            if 'login' not in pages:
-                pages.append('login')
-            if 'signup' not in pages:
-                pages.append('signup')
-            features.append('user_auth')
+        if any(word in prompt_lower for word in ['about', 'team', 'company', 'who']):
+            pages.append({'name': 'About', 'file': 'about', 'priority': 3})
         
-        # Detect forms
-        if 'contact' in pages or any(word in prompt_lower for word in ['contact', 'form', 'message', 'inquiry']):
-            features.append('contact_form')
+        if any(word in prompt_lower for word in ['service', 'offering', 'what we do']):
+            pages.append({'name': 'Services', 'file': 'services', 'priority': 4})
         
-        if any(word in prompt_lower for word in ['newsletter', 'subscribe', 'email']):
-            features.append('newsletter')
+        if any(word in prompt_lower for word in ['blog', 'news', 'article']):
+            pages.append({'name': 'Blog', 'file': 'blog', 'priority': 5})
         
-        if any(word in prompt_lower for word in ['booking', 'reservation', 'appointment']):
-            features.append('booking_form')
+        if any(word in prompt_lower for word in ['contact', 'reach', 'get in touch']):
+            pages.append({'name': 'Contact', 'file': 'contact', 'priority': 6})
+        else:
+            # Always add contact page if not specified
+            pages.append({'name': 'Contact', 'file': 'contact', 'priority': 6})
         
-        return {
-            'pages': pages,
-            'features': features,
-            'business_type': business_type
-        }
+        return sorted(pages, key=lambda x: x['priority'])
     
-    def generate_navigation(self, pages: List[str], current_page: str) -> str:
-        """Generate navigation HTML for all pages"""
+    def _generate_navigation(self, pages: List[Dict], current_page: str) -> str:
+        """Generate navigation HTML"""
         nav_items = []
-        
-        # Page display names
-        page_names = {
-            'home': 'Home',
-            'about': 'About',
-            'contact': 'Contact',
-            'services': 'Services',
-            'products': 'Products',
-            'portfolio': 'Portfolio',
-            'features': 'Features',
-            'pricing': 'Pricing',
-            'blog': 'Blog',
-            'menu': 'Menu',
-            'rooms': 'Rooms',
-            'booking': 'Book Now',
-            'reservations': 'Reservations',
-            'cart': 'Cart',
-            'checkout': 'Checkout',
-            'login': 'Login',
-            'signup': 'Sign Up',
-            'demo': 'Demo',
-            'amenities': 'Amenities',
-            'archive': 'Archive'
-        }
-        
         for page in pages:
-            if page == 'home':
-                href = 'index.html'
-            else:
-                href = f'{page}.html'
-            
-            active_class = 'active' if page == current_page else ''
-            display_name = page_names.get(page, page.title())
-            
-            nav_items.append(f'<a href="{href}" class="nav-link {active_class}">{display_name}</a>')
+            active = 'active' if page['file'] == current_page else ''
+            nav_items.append(f'<a href="{page["file"]}.html" class="{active}">{page["name"]}</a>')
         
-        nav_html = f'''
+        return f'''
         <nav class="navbar">
             <div class="nav-container">
-                <div class="nav-logo">
-                    <a href="index.html">YourBrand</a>
-                </div>
+                <div class="logo">YourBrand</div>
                 <div class="nav-links">
                     {' '.join(nav_items)}
                 </div>
-                <div class="nav-mobile-toggle">
-                    <span></span>
-                    <span></span>
-                    <span></span>
-                </div>
+                <div class="mobile-menu-btn">☰</div>
             </div>
         </nav>
         '''
-        
-        return nav_html
     
-    def generate_contact_form(self, business_info: Dict) -> str:
-        """Generate functional contact form"""
-        return '''
-        <section class="contact-section" id="contact">
-            <div class="container">
-                <h2>Get In Touch</h2>
-                <p class="section-subtitle">Have a question? We'd love to hear from you.</p>
-                
-                <div class="contact-grid">
-                    <div class="contact-form-wrapper">
-                        <form class="contact-form" id="contactForm" onsubmit="handleContactSubmit(event)">
-                            <div class="form-group">
-                                <label for="name">Full Name *</label>
-                                <input type="text" id="name" name="name" required 
-                                       placeholder="John Doe">
-                            </div>
-                            
-                            <div class="form-group">
-                                <label for="email">Email Address *</label>
-                                <input type="email" id="email" name="email" required 
-                                       placeholder="john@example.com">
-                            </div>
-                            
-                            <div class="form-group">
-                                <label for="phone">Phone Number</label>
-                                <input type="tel" id="phone" name="phone" 
-                                       placeholder="+1 (555) 123-4567">
-                            </div>
-                            
-                            <div class="form-group">
-                                <label for="subject">Subject *</label>
-                                <input type="text" id="subject" name="subject" required 
-                                       placeholder="How can we help?">
-                            </div>
-                            
-                            <div class="form-group">
-                                <label for="message">Message *</label>
-                                <textarea id="message" name="message" rows="5" required 
-                                          placeholder="Tell us more about your inquiry..."></textarea>
-                            </div>
-                            
-                            <button type="submit" class="btn btn-primary">
-                                <span class="btn-text">Send Message</span>
-                                <span class="btn-loading" style="display: none;">Sending...</span>
-                            </button>
-                            
-                            <div class="form-message" id="formMessage"></div>
-                        </form>
-                    </div>
-                    
-                    <div class="contact-info">
-                        <div class="info-item">
-                            <h3>📧 Email</h3>
-                            <p>hello@yourbrand.com</p>
-                        </div>
-                        
-                        <div class="info-item">
-                            <h3>📞 Phone</h3>
-                            <p>+1 (555) 123-4567</p>
-                        </div>
-                        
-                        <div class="info-item">
-                            <h3>📍 Location</h3>
-                            <p>123 Business St, Suite 100<br>San Francisco, CA 94103</p>
-                        </div>
-                        
-                        <div class="info-item">
-                            <h3>⏰ Business Hours</h3>
-                            <p>Monday - Friday: 9am - 6pm<br>Weekend: By Appointment</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
+    async def _generate_page(self, page: Dict, prompt: str, all_pages: List[Dict]) -> str:
+        """Generate individual page HTML"""
         
-        <script>
-        function handleContactSubmit(event) {
-            event.preventDefault();
-            
-            const form = event.target;
-            const formData = new FormData(form);
-            const data = Object.fromEntries(formData.entries());
-            
-            // Show loading state
-            const btn = form.querySelector('button[type="submit"]');
-            const btnText = btn.querySelector('.btn-text');
-            const btnLoading = btn.querySelector('.btn-loading');
-            btnText.style.display = 'none';
-            btnLoading.style.display = 'inline';
-            btn.disabled = true;
-            
-            // Simulate API call (replace with actual API endpoint)
-            setTimeout(() => {
-                // Success
-                const messageDiv = document.getElementById('formMessage');
-                messageDiv.innerHTML = '<div class="alert alert-success">✅ Thank you! Your message has been sent successfully. We\'ll get back to you soon.</div>';
-                messageDiv.style.display = 'block';
-                
-                // Reset form
-                form.reset();
-                
-                // Reset button
-                btnText.style.display = 'inline';
-                btnLoading.style.display = 'none';
-                btn.disabled = false;
-                
-                // Hide message after 5 seconds
-                setTimeout(() => {
-                    messageDiv.style.display = 'none';
-                }, 5000);
-                
-                // Log to console (for demo - replace with actual API call)
-                console.log('Contact Form Submission:', data);
-                console.log('TODO: Send this data to your backend API at /api/contact');
-            }, 1500);
-        }
-        </script>
-        '''
-    
-    def generate_login_page(self) -> str:
-        """Generate functional login page"""
-        return '''
-        <section class="auth-section">
-            <div class="auth-container">
-                <div class="auth-box">
-                    <h2>Welcome Back</h2>
-                    <p class="auth-subtitle">Login to your account</p>
-                    
-                    <form class="auth-form" id="loginForm" onsubmit="handleLogin(event)">
-                        <div class="form-group">
-                            <label for="email">Email Address</label>
-                            <input type="email" id="email" name="email" required 
-                                   placeholder="john@example.com">
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="password">Password</label>
-                            <input type="password" id="password" name="password" required 
-                                   placeholder="Enter your password">
-                        </div>
-                        
-                        <div class="form-options">
-                            <label class="checkbox-label">
-                                <input type="checkbox" name="remember"> Remember me
-                            </label>
-                            <a href="#" class="forgot-link">Forgot password?</a>
-                        </div>
-                        
-                        <button type="submit" class="btn btn-primary btn-block">
-                            <span class="btn-text">Login</span>
-                            <span class="btn-loading" style="display: none;">Logging in...</span>
-                        </button>
-                        
-                        <div class="form-message" id="loginMessage"></div>
-                    </form>
-                    
-                    <div class="auth-footer">
-                        Don't have an account? <a href="signup.html">Sign up</a>
-                    </div>
-                    
-                    <div class="social-login">
-                        <p>Or continue with</p>
-                        <div class="social-buttons">
-                            <button class="btn-social btn-google">
-                                <svg width="18" height="18" viewBox="0 0 18 18"><path d="M9 3.48c1.69 0 2.83.73 3.48 1.34l2.54-2.48C13.46.89 11.43 0 9 0 5.48 0 2.44 2.02.96 4.96l2.91 2.26C4.6 5.05 6.62 3.48 9 3.48z" fill="#EA4335"/><path d="M17.64 9.2c0-.74-.06-1.28-.19-1.84H9v3.34h4.96c-.1.83-.64 2.08-1.84 2.92l2.84 2.2c1.7-1.57 2.68-3.88 2.68-6.62z" fill="#4285F4"/><path d="M3.88 10.78A5.54 5.54 0 0 1 3.58 9c0-.62.11-1.22.29-1.78L.96 4.96A9.008 9.008 0 0 0 0 9c0 1.45.35 2.82.96 4.04l2.92-2.26z" fill="#FBBC05"/><path d="M9 18c2.43 0 4.47-.8 5.96-2.18l-2.84-2.2c-.76.53-1.78.9-3.12.9-2.38 0-4.4-1.57-5.12-3.74L.97 13.04C2.45 15.98 5.48 18 9 18z" fill="#34A853"/></svg>
-                                Google
-                            </button>
-                            <button class="btn-social btn-facebook">
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="#1877F2"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
-                                Facebook
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
+        page_content = self._get_page_content(page['file'], prompt)
+        nav_html = self._generate_navigation(all_pages, page['file'])
         
-        <script>
-        function handleLogin(event) {
-            event.preventDefault();
-            
-            const form = event.target;
-            const formData = new FormData(form);
-            const data = Object.fromEntries(formData.entries());
-            
-            // Show loading
-            const btn = form.querySelector('button[type="submit"]');
-            const btnText = btn.querySelector('.btn-text');
-            const btnLoading = btn.querySelector('.btn-loading');
-            btnText.style.display = 'none';
-            btnLoading.style.display = 'inline';
-            btn.disabled = true;
-            
-            // Simulate login (replace with actual API call)
-            setTimeout(() => {
-                const messageDiv = document.getElementById('loginMessage');
-                messageDiv.innerHTML = '<div class="alert alert-success">✅ Login successful! Redirecting...</div>';
-                messageDiv.style.display = 'block';
-                
-                console.log('Login Data:', data);
-                console.log('TODO: Send POST request to /api/auth/login with this data');
-                
-                // Simulate redirect
-                setTimeout(() => {
-                    window.location.href = 'index.html';
-                }, 1500);
-            }, 1500);
-        }
-        </script>
-        '''
-    
-    def generate_signup_page(self) -> str:
-        """Generate functional signup page"""
-        return '''
-        <section class="auth-section">
-            <div class="auth-container">
-                <div class="auth-box">
-                    <h2>Create Account</h2>
-                    <p class="auth-subtitle">Sign up to get started</p>
-                    
-                    <form class="auth-form" id="signupForm" onsubmit="handleSignup(event)">
-                        <div class="form-group">
-                            <label for="name">Full Name</label>
-                            <input type="text" id="name" name="name" required 
-                                   placeholder="John Doe">
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="email">Email Address</label>
-                            <input type="email" id="email" name="email" required 
-                                   placeholder="john@example.com">
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="password">Password</label>
-                            <input type="password" id="password" name="password" required 
-                                   placeholder="Minimum 8 characters"
-                                   minlength="8">
-                            <small class="form-hint">Must be at least 8 characters</small>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="confirm_password">Confirm Password</label>
-                            <input type="password" id="confirm_password" name="confirm_password" required 
-                                   placeholder="Re-enter password">
-                        </div>
-                        
-                        <div class="form-group">
-                            <label class="checkbox-label">
-                                <input type="checkbox" name="terms" required>
-                                I agree to the <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a>
-                            </label>
-                        </div>
-                        
-                        <button type="submit" class="btn btn-primary btn-block">
-                            <span class="btn-text">Create Account</span>
-                            <span class="btn-loading" style="display: none;">Creating account...</span>
-                        </button>
-                        
-                        <div class="form-message" id="signupMessage"></div>
-                    </form>
-                    
-                    <div class="auth-footer">
-                        Already have an account? <a href="login.html">Login</a>
-                    </div>
-                </div>
-            </div>
-        </section>
-        
-        <script>
-        function handleSignup(event) {
-            event.preventDefault();
-            
-            const form = event.target;
-            const formData = new FormData(form);
-            const data = Object.fromEntries(formData.entries());
-            
-            // Validate passwords match
-            if (data.password !== data.confirm_password) {
-                const messageDiv = document.getElementById('signupMessage');
-                messageDiv.innerHTML = '<div class="alert alert-error">❌ Passwords do not match</div>';
-                messageDiv.style.display = 'block';
-                return;
-            }
-            
-            // Show loading
-            const btn = form.querySelector('button[type="submit"]');
-            const btnText = btn.querySelector('.btn-text');
-            const btnLoading = btn.querySelector('.btn-loading');
-            btnText.style.display = 'none';
-            btnLoading.style.display = 'inline';
-            btn.disabled = true;
-            
-            // Simulate signup (replace with actual API call)
-            setTimeout(() => {
-                const messageDiv = document.getElementById('signupMessage');
-                messageDiv.innerHTML = '<div class="alert alert-success">✅ Account created successfully! Redirecting to login...</div>';
-                messageDiv.style.display = 'block';
-                
-                console.log('Signup Data:', data);
-                console.log('TODO: Send POST request to /api/auth/register with this data');
-                
-                // Simulate redirect
-                setTimeout(() => {
-                    window.location.href = 'login.html';
-                }, 2000);
-            }, 1500);
-        }
-        </script>
-        '''
-    
-    def generate_shared_styles(self) -> str:
-        """Generate shared CSS for all pages"""
-        return '''
-        <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        :root {
-            --primary: #6366f1;
-            --primary-dark: #4f46e5;
-            --secondary: #8b5cf6;
-            --success: #10b981;
-            --error: #ef4444;
-            --warning: #f59e0b;
-            --dark: #1f2937;
-            --gray: #6b7280;
-            --light-gray: #f3f4f6;
-            --white: #ffffff;
-        }
-        
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            line-height: 1.6;
-            color: var(--dark);
-            background: var(--white);
-        }
-        
-        /* Navigation */
-        .navbar {
-            background: var(--white);
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            position: sticky;
-            top: 0;
-            z-index: 1000;
-        }
-        
-        .nav-container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 1rem 2rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        
-        .nav-logo a {
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: var(--primary);
-            text-decoration: none;
-        }
-        
-        .nav-links {
-            display: flex;
-            gap: 2rem;
-        }
-        
-        .nav-link {
-            color: var(--dark);
-            text-decoration: none;
-            font-weight: 500;
-            transition: color 0.3s;
-        }
-        
-        .nav-link:hover,
-        .nav-link.active {
-            color: var(--primary);
-        }
-        
-        .nav-mobile-toggle {
-            display: none;
-            flex-direction: column;
-            gap: 4px;
-            cursor: pointer;
-        }
-        
-        .nav-mobile-toggle span {
-            width: 25px;
-            height: 3px;
-            background: var(--dark);
-            border-radius: 3px;
-        }
-        
-        /* Container */
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 2rem;
-        }
-        
-        /* Sections */
-        section {
-            padding: 4rem 0;
-        }
-        
-        h1, h2, h3, h4 {
-            margin-bottom: 1rem;
-        }
-        
-        h1 {
-            font-size: 3rem;
-            line-height: 1.2;
-        }
-        
-        h2 {
-            font-size: 2.5rem;
-            text-align: center;
-        }
-        
-        .section-subtitle {
-            text-align: center;
-            color: var(--gray);
-            margin-bottom: 3rem;
-        }
-        
-        /* Buttons */
-        .btn {
-            display: inline-block;
-            padding: 0.75rem 1.5rem;
-            border-radius: 8px;
-            font-weight: 600;
-            text-decoration: none;
-            border: none;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-        
-        .btn-primary {
-            background: var(--primary);
-            color: var(--white);
-        }
-        
-        .btn-primary:hover {
-            background: var(--primary-dark);
-            transform: translateY(-2px);
-        }
-        
-        .btn-block {
-            width: 100%;
-        }
-        
-        /* Forms */
-        .form-group {
-            margin-bottom: 1.5rem;
-        }
-        
-        .form-group label {
-            display: block;
-            margin-bottom: 0.5rem;
-            font-weight: 500;
-        }
-        
-        .form-group input,
-        .form-group textarea,
-        .form-group select {
-            width: 100%;
-            padding: 0.75rem;
-            border: 2px solid #e5e7eb;
-            border-radius: 8px;
-            font-size: 1rem;
-            transition: border-color 0.3s;
-        }
-        
-        .form-group input:focus,
-        .form-group textarea:focus,
-        .form-group select:focus {
-            outline: none;
-            border-color: var(--primary);
-        }
-        
-        .form-hint {
-            display: block;
-            margin-top: 0.25rem;
-            font-size: 0.875rem;
-            color: var(--gray);
-        }
-        
-        .checkbox-label {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            font-weight: normal;
-        }
-        
-        /* Alerts */
-        .alert {
-            padding: 1rem;
-            border-radius: 8px;
-            margin-top: 1rem;
-        }
-        
-        .alert-success {
-            background: #d1fae5;
-            color: #065f46;
-        }
-        
-        .alert-error {
-            background: #fee2e2;
-            color: #991b1b;
-        }
-        
-        /* Auth Section */
-        .auth-section {
-            min-height: 80vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: var(--light-gray);
-        }
-        
-        .auth-container {
-            width: 100%;
-            max-width: 450px;
-            padding: 2rem;
-        }
-        
-        .auth-box {
-            background: var(--white);
-            padding: 2.5rem;
-            border-radius: 12px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-        }
-        
-        .auth-subtitle {
-            text-align: center;
-            color: var(--gray);
-            margin-bottom: 2rem;
-        }
-        
-        .auth-footer {
-            text-align: center;
-            margin-top: 1.5rem;
-            color: var(--gray);
-        }
-        
-        .auth-footer a {
-            color: var(--primary);
-            font-weight: 600;
-            text-decoration: none;
-        }
-        
-        /* Contact Section */
-        .contact-section {
-            background: var(--light-gray);
-        }
-        
-        .contact-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 3rem;
-            margin-top: 2rem;
-        }
-        
-        .contact-form-wrapper {
-            background: var(--white);
-            padding: 2rem;
-            border-radius: 12px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-        }
-        
-        .contact-info {
-            display: flex;
-            flex-direction: column;
-            gap: 1.5rem;
-        }
-        
-        .info-item {
-            background: var(--white);
-            padding: 1.5rem;
-            border-radius: 12px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-        }
-        
-        .info-item h3 {
-            font-size: 1.1rem;
-            margin-bottom: 0.5rem;
-        }
-        
-        /* Responsive */
-        @media (max-width: 768px) {
-            .nav-links {
-                display: none;
-            }
-            
-            .nav-mobile-toggle {
-                display: flex;
-            }
-            
-            .contact-grid {
-                grid-template-columns: 1fr;
-            }
-            
-            h1 {
-                font-size: 2rem;
-            }
-            
-            h2 {
-                font-size: 1.75rem;
-            }
-        }
-        </style>
-        '''
-    
-    def generate_page_template(self, page_name: str, content: str, pages: List[str]) -> str:
-        """Generate complete HTML page with navigation"""
         return f'''<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{page_name.title()} - Your Brand</title>
-    {self.generate_shared_styles()}
+    <meta name="description" content="{prompt}">
+    <title>{page['name']} - Your Website</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    {self.generate_navigation(pages, page_name)}
+    {nav_html}
     
-    <main>
-        {content}
-    </main>
+    {page_content}
     
-    <footer style="background: #1f2937; color: white; padding: 3rem 0; text-align: center;">
-        <div class="container">
-            <p>&copy; 2024 YourBrand. All rights reserved.</p>
-            <p style="margin-top: 1rem; color: #9ca3af;">
-                Built with ❤️ by AutoWebIQ
-            </p>
+    <footer class="footer">
+        <div class="footer-container">
+            <p>&copy; 2025 Your Company. All rights reserved.</p>
+            <div class="social-links">
+                <a href="#">Twitter</a>
+                <a href="#">LinkedIn</a>
+                <a href="#">GitHub</a>
+            </div>
         </div>
     </footer>
+    
+    <script src="script.js"></script>
 </body>
 </html>'''
     
-    def generate_complete_website(self, prompt: str, business_info: Dict, images: List[str]) -> Dict[str, str]:
-        """
-        Generate complete multi-page website
-        Returns: {'index.html': '...', 'about.html': '...', 'contact.html': '...', ...}
-        """
-        # Analyze requirements
-        analysis = self.analyze_requirements(prompt)
-        pages_needed = analysis['pages']
-        features = analysis['features']
-        business_type = analysis['business_type']
+    def _get_page_content(self, page_type: str, prompt: str) -> str:
+        """Get content for specific page type"""
         
-        result = {}
-        
-        # Generate each page
-        for page in pages_needed:
-            if page == 'home':
-                content = self.generate_home_page(business_info, images, business_type)
-                result['index.html'] = self.generate_page_template('home', content, pages_needed)
-            
-            elif page == 'about':
-                content = self.generate_about_page(business_info)
-                result['about.html'] = self.generate_page_template('about', content, pages_needed)
-            
-            elif page == 'contact':
-                content = self.generate_contact_form(business_info)
-                result['contact.html'] = self.generate_page_template('contact', content, pages_needed)
-            
-            elif page == 'login':
-                content = self.generate_login_page()
-                result['login.html'] = self.generate_page_template('login', content, pages_needed)
-            
-            elif page == 'signup':
-                content = self.generate_signup_page()
-                result['signup.html'] = self.generate_page_template('signup', content, pages_needed)
-            
-            else:
-                # Generate generic page
-                content = self.generate_generic_page(page, business_info)
-                result[f'{page}.html'] = self.generate_page_template(page, content, pages_needed)
-        
-        return result
-    
-    def generate_home_page(self, business_info: Dict, images: List[str], business_type: str) -> str:
-        """Generate home page content"""
-        hero_image = images[0] if images else 'https://images.unsplash.com/photo-1497366216548-37526070297c'
-        
-        return f'''
-        <section class="hero" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 6rem 0;">
-            <div class="container">
-                <div style="max-width: 600px;">
-                    <h1>Welcome to Your Brand</h1>
-                    <p style="font-size: 1.25rem; margin: 1.5rem 0;">
-                        Transform your business with our innovative solutions. 
-                        We help companies grow and succeed in the digital age.
-                    </p>
-                    <div style="display: flex; gap: 1rem; margin-top: 2rem;">
-                        <a href="contact.html" class="btn" style="background: white; color: #667eea;">Get Started</a>
-                        <a href="about.html" class="btn" style="background: rgba(255,255,255,0.2); color: white; border: 2px solid white;">Learn More</a>
+        if page_type == 'index':
+            return f'''
+            <section class="hero">
+                <div class="hero-content">
+                    <h1>{prompt}</h1>
+                    <p>Beautiful, modern, and professional web solution</p>
+                    <div class="hero-buttons">
+                        <a href="contact.html" class="btn btn-primary">Get Started</a>
+                        <a href="about.html" class="btn btn-secondary">Learn More</a>
                     </div>
                 </div>
-            </div>
-        </section>
+            </section>
+            
+            <section class="features">
+                <div class="container">
+                    <h2>Amazing Features</h2>
+                    <div class="features-grid">
+                        <div class="feature-card">
+                            <div class="icon">⚡</div>
+                            <h3>Lightning Fast</h3>
+                            <p>Optimized performance for the best user experience</p>
+                        </div>
+                        <div class="feature-card">
+                            <div class="icon">🎨</div>
+                            <h3>Beautiful Design</h3>
+                            <p>Modern, clean interface that users love</p>
+                        </div>
+                        <div class="feature-card">
+                            <div class="icon">🔒</div>
+                            <h3>Secure</h3>
+                            <p>Built with security best practices</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            '''
         
-        <section style="padding: 4rem 0;">
-            <div class="container">
-                <h2>Why Choose Us</h2>
-                <p class="section-subtitle">We deliver exceptional results that exceed expectations</p>
+        elif page_type == 'about':
+            return f'''
+            <section class="page-hero">
+                <div class="container">
+                    <h1>About Us</h1>
+                    <p>Learn more about our mission and team</p>
+                </div>
+            </section>
+            
+            <section class="about-content">
+                <div class="container">
+                    <div class="about-grid">
+                        <div class="about-text">
+                            <h2>Our Story</h2>
+                            <p>We are passionate about creating amazing solutions that make a difference. Our team combines creativity, technology, and dedication to deliver exceptional results.</p>
+                            <p>Founded with a vision to innovate and inspire, we've helped countless clients achieve their goals through our expertise and commitment.</p>
+                        </div>
+                        <div class="about-image">
+                            <img src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=800" alt="Team">
+                        </div>
+                    </div>
+                </div>
+            </section>
+            '''
+        
+        elif page_type == 'services':
+            return f'''
+            <section class="page-hero">
+                <div class="container">
+                    <h1>Our Services</h1>
+                    <p>Comprehensive solutions for your needs</p>
+                </div>
+            </section>
+            
+            <section class="services-content">
+                <div class="container">
+                    <div class="services-grid">
+                        <div class="service-card">
+                            <h3>Consultation</h3>
+                            <p>Expert guidance tailored to your goals</p>
+                            <a href="contact.html" class="btn">Learn More</a>
+                        </div>
+                        <div class="service-card">
+                            <h3>Implementation</h3>
+                            <p>Professional execution of your projects</p>
+                            <a href="contact.html" class="btn">Learn More</a>
+                        </div>
+                        <div class="service-card">
+                            <h3>Support</h3>
+                            <p>Ongoing assistance and maintenance</p>
+                            <a href="contact.html" class="btn">Learn More</a>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            '''
+        
+        elif page_type == 'portfolio':
+            return f'''
+            <section class="page-hero">
+                <div class="container">
+                    <h1>Our Work</h1>
+                    <p>Showcasing our best projects</p>
+                </div>
+            </section>
+            
+            <section class="portfolio-grid-section">
+                <div class="container">
+                    <div class="portfolio-grid">
+                        <div class="portfolio-item">
+                            <img src="https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=600" alt="Project 1">
+                            <div class="portfolio-overlay">
+                                <h3>Project Alpha</h3>
+                                <p>Web Application</p>
+                            </div>
+                        </div>
+                        <div class="portfolio-item">
+                            <img src="https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=600" alt="Project 2">
+                            <div class="portfolio-overlay">
+                                <h3>Project Beta</h3>
+                                <p>Mobile App</p>
+                            </div>
+                        </div>
+                        <div class="portfolio-item">
+                            <img src="https://images.unsplash.com/photo-1487058792275-0ad4aaf24ca7?w=600" alt="Project 3">
+                            <div class="portfolio-overlay">
+                                <h3>Project Gamma</h3>
+                                <p>Design System</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            '''
+        
+        elif page_type == 'contact':
+            return f'''
+            <section class="page-hero">
+                <div class="container">
+                    <h1>Get In Touch</h1>
+                    <p>We'd love to hear from you</p>
+                </div>
+            </section>
+            
+            <section class="contact-form-section">
+                <div class="container">
+                    <div class="contact-grid">
+                        <div class="contact-info">
+                            <h2>Contact Information</h2>
+                            <div class="info-item">
+                                <strong>Email:</strong> hello@yourcompany.com
+                            </div>
+                            <div class="info-item">
+                                <strong>Phone:</strong> +1 (555) 123-4567
+                            </div>
+                            <div class="info-item">
+                                <strong>Address:</strong> 123 Main St, City, Country
+                            </div>
+                        </div>
+                        <form class="contact-form" id="contactForm">
+                            <div class="form-group">
+                                <input type="text" placeholder="Your Name" required>
+                            </div>
+                            <div class="form-group">
+                                <input type="email" placeholder="Your Email" required>
+                            </div>
+                            <div class="form-group">
+                                <textarea placeholder="Your Message" rows="5" required></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Send Message</button>
+                            <div id="formSuccess" class="success-message" style="display: none;">
+                                ✓ Message sent successfully!
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </section>
+            '''
+        
+        return '<section class="container"><h1>Page Content</h1></section>'
+    
+    def _generate_css(self, prompt: str) -> str:
+        """Generate shared CSS file"""
+        return '''/* Modern CSS for Multi-Page Website */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    line-height: 1.6;
+    color: #333;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 2rem;
+}
+
+/* Navigation */
+.navbar {
+    background: white;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+}
+
+.nav-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 1rem 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.logo {
+    font-size: 1.5rem;
+    font-weight: 700;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.nav-links {
+    display: flex;
+    gap: 2rem;
+}
+
+.nav-links a {
+    color: #333;
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.3s;
+}
+
+.nav-links a:hover,
+.nav-links a.active {
+    color: #667eea;
+}
+
+.mobile-menu-btn {
+    display: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+}
+
+/* Hero Section */
+.hero {
+    min-height: 90vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    text-align: center;
+    padding: 4rem 2rem;
+}
+
+.hero-content h1 {
+    font-size: 3.5rem;
+    margin-bottom: 1rem;
+    animation: fadeInUp 1s ease;
+}
+
+.hero-content p {
+    font-size: 1.3rem;
+    margin-bottom: 2rem;
+    opacity: 0.9;
+}
+
+.hero-buttons {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+}
+
+/* Buttons */
+.btn {
+    padding: 1rem 2rem;
+    border-radius: 50px;
+    text-decoration: none;
+    font-weight: 600;
+    transition: all 0.3s;
+    display: inline-block;
+    border: none;
+    cursor: pointer;
+    font-size: 1rem;
+}
+
+.btn-primary {
+    background: white;
+    color: #667eea;
+}
+
+.btn-primary:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+}
+
+.btn-secondary {
+    background: transparent;
+    color: white;
+    border: 2px solid white;
+}
+
+.btn-secondary:hover {
+    background: white;
+    color: #667eea;
+}
+
+/* Features */
+.features {
+    padding: 6rem 2rem;
+    background: white;
+}
+
+.features h2 {
+    text-align: center;
+    font-size: 2.5rem;
+    margin-bottom: 3rem;
+}
+
+.features-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2rem;
+}
+
+.feature-card {
+    padding: 2rem;
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    text-align: center;
+    transition: transform 0.3s;
+}
+
+.feature-card:hover {
+    transform: translateY(-10px);
+}
+
+.feature-card .icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+}
+
+/* Page Hero */
+.page-hero {
+    padding: 6rem 2rem 3rem;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    text-align: center;
+}
+
+.page-hero h1 {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+}
+
+/* About */
+.about-content {
+    padding: 6rem 2rem;
+}
+
+.about-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4rem;
+    align-items: center;
+}
+
+.about-image img {
+    width: 100%;
+    border-radius: 20px;
+}
+
+/* Services */
+.services-content {
+    padding: 6rem 2rem;
+}
+
+.services-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2rem;
+}
+
+.service-card {
+    padding: 3rem 2rem;
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    text-align: center;
+}
+
+/* Portfolio */
+.portfolio-grid-section {
+    padding: 6rem 2rem;
+}
+
+.portfolio-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 2rem;
+}
+
+.portfolio-item {
+    position: relative;
+    overflow: hidden;
+    border-radius: 15px;
+    cursor: pointer;
+}
+
+.portfolio-item img {
+    width: 100%;
+    display: block;
+    transition: transform 0.3s;
+}
+
+.portfolio-item:hover img {
+    transform: scale(1.1);
+}
+
+.portfolio-overlay {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
+    color: white;
+    padding: 2rem;
+    transform: translateY(100%);
+    transition: transform 0.3s;
+}
+
+.portfolio-item:hover .portfolio-overlay {
+    transform: translateY(0);
+}
+
+/* Contact */
+.contact-form-section {
+    padding: 6rem 2rem;
+}
+
+.contact-grid {
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    gap: 4rem;
+}
+
+.contact-info {
+    padding: 2rem;
+}
+
+.info-item {
+    margin-bottom: 1.5rem;
+    padding: 1rem;
+    background: #f8f9fa;
+    border-radius: 10px;
+}
+
+.contact-form {
+    padding: 2rem;
+    background: #f8f9fa;
+    border-radius: 20px;
+}
+
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-group input,
+.form-group textarea {
+    width: 100%;
+    padding: 1rem;
+    border: 2px solid #e0e0e0;
+    border-radius: 10px;
+    font-size: 1rem;
+    transition: border-color 0.3s;
+}
+
+.form-group input:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: #667eea;
+}
+
+.success-message {
+    margin-top: 1rem;
+    padding: 1rem;
+    background: #10b981;
+    color: white;
+    border-radius: 10px;
+    text-align: center;
+}
+
+/* Footer */
+.footer {
+    background: #1a1a1a;
+    color: white;
+    padding: 3rem 2rem;
+    text-align: center;
+}
+
+.footer-container {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.social-links {
+    margin-top: 1rem;
+    display: flex;
+    gap: 2rem;
+    justify-content: center;
+}
+
+.social-links a {
+    color: white;
+    text-decoration: none;
+    transition: color 0.3s;
+}
+
+.social-links a:hover {
+    color: #667eea;
+}
+
+/* Animations */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .nav-links {
+        display: none;
+    }
+    
+    .mobile-menu-btn {
+        display: block;
+    }
+    
+    .hero-content h1 {
+        font-size: 2rem;
+    }
+    
+    .about-grid,
+    .contact-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .hero-buttons {
+        flex-direction: column;
+    }
+}
+'''
+    
+    def _generate_js(self) -> str:
+        """Generate shared JavaScript file"""
+        return '''// Interactive JavaScript for Multi-Page Website
+
+// Mobile Menu Toggle
+document.addEventListener('DOMContentLoaded', function() {
+    const mobileMenuBtn = document.querySelector('.mobile-menu-btn');
+    const navLinks = document.querySelector('.nav-links');
+    
+    if (mobileMenuBtn) {
+        mobileMenuBtn.addEventListener('click', function() {
+            navLinks.style.display = navLinks.style.display === 'flex' ? 'none' : 'flex';
+        });
+    }
+    
+    // Contact Form Handling
+    const contactForm = document.getElementById('contactForm');
+    if (contactForm) {
+        contactForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const successMessage = document.getElementById('formSuccess');
+            if (successMessage) {
+                successMessage.style.display = 'block';
+                contactForm.reset();
                 
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 2rem; margin-top: 3rem;">
-                    <div style="text-align: center; padding: 2rem;">
-                        <div style="font-size: 3rem; margin-bottom: 1rem;">🚀</div>
-                        <h3>Fast Delivery</h3>
-                        <p style="color: #6b7280;">Quick turnaround times without compromising quality</p>
-                    </div>
-                    
-                    <div style="text-align: center; padding: 2rem;">
-                        <div style="font-size: 3rem; margin-bottom: 1rem;">💎</div>
-                        <h3>Premium Quality</h3>
-                        <p style="color: #6b7280;">High-quality solutions tailored to your needs</p>
-                    </div>
-                    
-                    <div style="text-align: center; padding: 2rem;">
-                        <div style="font-size: 3rem; margin-bottom: 1rem;">🎯</div>
-                        <h3>Expert Team</h3>
-                        <p style="color: #6b7280;">Experienced professionals dedicated to your success</p>
-                    </div>
-                </div>
-            </div>
-        </section>
-        
-        <section style="background: #f3f4f6; padding: 4rem 0;">
-            <div class="container">
-                <h2>Our Services</h2>
-                <p class="section-subtitle">Comprehensive solutions for your business needs</p>
-                
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem; margin-top: 3rem;">
-                    <div style="background: white; padding: 2rem; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
-                        <h3>Consulting</h3>
-                        <p style="color: #6b7280; margin: 1rem 0;">Strategic guidance to help your business thrive in competitive markets.</p>
-                        <a href="contact.html" style="color: #6366f1; font-weight: 600; text-decoration: none;">Learn More →</a>
-                    </div>
-                    
-                    <div style="background: white; padding: 2rem; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
-                        <h3>Development</h3>
-                        <p style="color: #6b7280; margin: 1rem 0;">Custom software solutions built with cutting-edge technology.</p>
-                        <a href="contact.html" style="color: #6366f1; font-weight: 600; text-decoration: none;">Learn More →</a>
-                    </div>
-                    
-                    <div style="background: white; padding: 2rem; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
-                        <h3>Support</h3>
-                        <p style="color: #6b7280; margin: 1rem 0;">24/7 dedicated support to ensure your success.</p>
-                        <a href="contact.html" style="color: #6366f1; font-weight: 600; text-decoration: none;">Learn More →</a>
-                    </div>
-                </div>
-            </div>
-        </section>
-        
-        <section style="padding: 4rem 0;">
-            <div class="container" style="text-align: center;">
-                <h2>Ready to Get Started?</h2>
-                <p style="font-size: 1.25rem; color: #6b7280; margin: 1.5rem 0;">
-                    Join thousands of satisfied customers who trust us
-                </p>
-                <a href="contact.html" class="btn btn-primary" style="margin-top: 1rem; font-size: 1.1rem; padding: 1rem 2rem;">
-                    Contact Us Today
-                </a>
-            </div>
-        </section>
-        '''
+                setTimeout(() => {
+                    successMessage.style.display = 'none';
+                }, 5000);
+            }
+        });
+    }
     
-    def generate_about_page(self, business_info: Dict) -> str:
-        """Generate about page content"""
-        return '''
-        <section style="padding: 4rem 0; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
-            <div class="container" style="text-align: center;">
-                <h1>About Us</h1>
-                <p style="font-size: 1.25rem; margin-top: 1rem; max-width: 800px; margin-left: auto; margin-right: auto;">
-                    We're passionate about helping businesses succeed in the digital world
-                </p>
-            </div>
-        </section>
-        
-        <section style="padding: 4rem 0;">
-            <div class="container">
-                <div style="max-width: 800px; margin: 0 auto;">
-                    <h2 style="text-align: left;">Our Story</h2>
-                    <p style="font-size: 1.1rem; color: #6b7280; line-height: 1.8; margin-top: 1rem;">
-                        Founded in 2024, we've been on a mission to transform how businesses operate in the digital age. 
-                        What started as a small team with a big vision has grown into a trusted partner for companies worldwide.
-                    </p>
-                    
-                    <p style="font-size: 1.1rem; color: #6b7280; line-height: 1.8; margin-top: 1rem;">
-                        Our approach combines innovation with reliability, ensuring that every solution we deliver 
-                        not only meets but exceeds expectations. We believe in building long-term partnerships based 
-                        on trust, transparency, and tangible results.
-                    </p>
-                    
-                    <h2 style="text-align: left; margin-top: 3rem;">Our Values</h2>
-                    
-                    <div style="margin-top: 2rem;">
-                        <div style="margin-bottom: 2rem;">
-                            <h3>Innovation</h3>
-                            <p style="color: #6b7280;">We constantly push boundaries to deliver cutting-edge solutions.</p>
-                        </div>
-                        
-                        <div style="margin-bottom: 2rem;">
-                            <h3>Excellence</h3>
-                            <p style="color: #6b7280;">Quality is at the heart of everything we do.</p>
-                        </div>
-                        
-                        <div style="margin-bottom: 2rem;">
-                            <h3>Integrity</h3>
-                            <p style="color: #6b7280;">We operate with honesty and transparency in all our dealings.</p>
-                        </div>
-                        
-                        <div style="margin-bottom: 2rem;">
-                            <h3>Customer Success</h3>
-                            <p style="color: #6b7280;">Your success is our success. We're committed to your growth.</p>
-                        </div>
-                    </div>
-                    
-                    <div style="text-align: center; margin-top: 3rem; padding: 3rem; background: #f3f4f6; border-radius: 12px;">
-                        <h2>Want to Join Our Team?</h2>
-                        <p style="color: #6b7280; margin: 1rem 0;">We're always looking for talented individuals</p>
-                        <a href="contact.html" class="btn btn-primary" style="margin-top: 1rem;">Get in Touch</a>
-                    </div>
-                </div>
-            </div>
-        </section>
-        '''
+    // Smooth Scroll for Anchor Links
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function (e) {
+            e.preventDefault();
+            const target = document.querySelector(this.getAttribute('href'));
+            if (target) {
+                target.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start'
+                });
+            }
+        });
+    });
+});
+'''
     
-    def generate_generic_page(self, page_name: str, business_info: Dict) -> str:
-        """Generate generic page content"""
-        return f'''
-        <section style="padding: 4rem 0; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
-            <div class="container" style="text-align: center;">
-                <h1>{page_name.replace('_', ' ').title()}</h1>
-                <p style="font-size: 1.25rem; margin-top: 1rem;">
-                    Discover our {page_name.replace('_', ' ')} offerings
-                </p>
-            </div>
-        </section>
-        
-        <section style="padding: 4rem 0;">
-            <div class="container">
-                <div style="max-width: 800px; margin: 0 auto; text-align: center;">
-                    <h2>Coming Soon</h2>
-                    <p style="font-size: 1.1rem; color: #6b7280; margin: 2rem 0;">
-                        We're working hard to bring you amazing {page_name.replace('_', ' ')} content. 
-                        Check back soon for updates!
-                    </p>
-                    <a href="contact.html" class="btn btn-primary">Contact Us for More Info</a>
-                </div>
-            </div>
-        </section>
-        '''
+    def _generate_package_json(self, prompt: str) -> str:
+        """Generate package.json for the project"""
+        project_name = re.sub(r'[^a-z0-9-]', '-', prompt.lower()[:30])
+        return f'''{{
+  "name": "{project_name}",
+  "version": "1.0.0",
+  "description": "{prompt}",
+  "main": "index.html",
+  "scripts": {{
+    "start": "python -m http.server 8000",
+    "dev": "live-server"
+  }},
+  "keywords": ["website", "html", "css", "javascript"],
+  "author": "Generated by AutoWebIQ",
+  "license": "MIT",
+  "devDependencies": {{
+    "live-server": "^1.2.1"
+  }}
+}}
+'''
+    
+    def _generate_readme(self, prompt: str) -> str:
+        """Generate README.md documentation"""
+        return f'''# {prompt}
+
+Generated by AutoWebIQ - Professional Multi-Page Website
+
+## 🚀 Features
+
+- Multi-page structure with navigation
+- Responsive design (mobile, tablet, desktop)
+- Modern UI with smooth animations
+- Working contact form
+- SEO-friendly structure
+- Production-ready code
+
+## 📁 File Structure
+
+```
+.
+├── index.html          # Home page
+├── about.html          # About page
+├── services.html       # Services page
+├── portfolio.html      # Portfolio page
+├── contact.html        # Contact page
+├── style.css           # Shared CSS styles
+├── script.js           # Shared JavaScript
+├── package.json        # Project configuration
+└── README.md          # This file
+```
+
+## 🛠️ How to Run
+
+### Option 1: Simple Python Server
+```bash
+python -m http.server 8000
+```
+Then open http://localhost:8000
+
+### Option 2: Live Server (with hot reload)
+```bash
+npm install
+npm run dev
+```
+
+### Option 3: Just Open Files
+Simply open `index.html` in your browser
+
+## 🌐 Deploy
+
+### Deploy to Vercel
+```bash
+npm install -g vercel
+vercel
+```
+
+### Deploy to Netlify
+Drag and drop the folder to netlify.com/drop
+
+### Deploy to GitHub Pages
+1. Create a GitHub repository
+2. Push this code
+3. Enable GitHub Pages in repository settings
+
+## 📝 Customization
+
+- Edit `style.css` to change colors, fonts, layouts
+- Modify HTML files to update content
+- Update `script.js` for additional functionality
+
+## 💎 What's Included
+
+✅ Professional navigation with smooth scroll
+✅ Mobile-responsive hamburger menu
+✅ Hero section with call-to-action buttons
+✅ Features/services showcase
+✅ Portfolio gallery with hover effects
+✅ Working contact form with validation
+✅ Professional footer with social links
+✅ Modern animations and transitions
+✅ SEO-friendly meta tags
+✅ Cross-browser compatible
+
+## 📧 Contact Form
+
+The contact form includes client-side validation. To make it actually send emails:
+
+1. Use FormSpree: Add `action="https://formspree.io/f/YOUR_ID"`
+2. Use EmailJS: Follow their integration guide
+3. Use Netlify Forms: Add `netlify` attribute to form
+
+## 🎨 Credits
+
+- Images from Unsplash
+- Icons from Unicode emoji
+- Generated by AutoWebIQ - The Best AI Website Builder
+
+---
+
+Built with ❤️ by AutoWebIQ
+'''
