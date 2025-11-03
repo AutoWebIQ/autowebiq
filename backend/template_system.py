@@ -5,20 +5,24 @@ import json
 from typing import Dict, List, Optional
 from datetime import datetime, timezone
 import re
-from sqlalchemy import select
-from database import AsyncSessionLocal, Template as DBTemplate, Component as DBComponent
+import os
+from motor.motor_asyncio import AsyncIOMotorClient
+
+# MongoDB connection for templates
+mongo_client = AsyncIOMotorClient(os.environ.get('MONGO_URL', 'mongodb://localhost:27017'))
+db = mongo_client[os.environ.get('DB_NAME', 'autowebiq_db')]
 
 class TemplateLibrary:
     """Manages the template library with selection and customization"""
     
     def __init__(self):
-        """Initialize with PostgreSQL"""
+        """Initialize with MongoDB"""
         pass
         
     async def initialize_library(self):
         """Initialize template and component library in database"""
-        # PostgreSQL tables are already created with proper indexes
-        print("✅ Template library initialized (PostgreSQL)")
+        # MongoDB collections are already populated
+        print("✅ Template library initialized (MongoDB)")
     
     async def select_template(self, user_prompt: str, project_type: str = None) -> Dict:
         """Select best matching template based on user prompt"""
@@ -26,35 +30,18 @@ class TemplateLibrary:
         # Extract features from prompt
         features = self._extract_features(user_prompt.lower())
         
-        # Query PostgreSQL for templates
-        async with AsyncSessionLocal() as session:
-            query = select(DBTemplate)
-            if project_type:
-                query = query.where(DBTemplate.category == project_type)
-            
-            result = await session.execute(query)
-            templates = result.scalars().all()
+        # Query MongoDB for templates
+        query = {}
+        if project_type:
+            query['category'] = project_type
+        
+        templates = await db.templates.find(query, {"_id": 0}).to_list(length=None)
         
         if not templates:
             return None
         
-        # Convert to dict format
-        template_dicts = []
-        for t in templates:
-            template_dicts.append({
-                'template_id': t.id,
-                'name': t.name,
-                'description': t.description,
-                'category': t.category,
-                'tags': t.tags or [],
-                'html_structure': t.html_structure,
-                'customization_zones': t.customization_zones or [],
-                'features': t.features or [],
-                'color_schemes': t.color_schemes or [],
-                'seo_score': t.seo_score,
-                'lighthouse_score': t.lighthouse_score,
-                'responsive': t.responsive
-            })
+        # Templates are already in dict format from MongoDB
+        template_dicts = templates
         
         # Score each template
         scored_templates = []
