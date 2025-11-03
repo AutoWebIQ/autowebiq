@@ -13,7 +13,7 @@ import asyncio
 import aiohttp
 import json
 
-BACKEND_URL = "https://multiagent-ide.preview.emergentagent.com/api"
+BACKEND_URL = "https://autowebiq-1.preview.emergentagent.com/api"
 DEMO_EMAIL = "demo@test.com"
 DEMO_PASSWORD = "Demo123456"
 

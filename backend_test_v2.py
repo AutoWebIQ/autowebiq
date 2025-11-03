@@ -11,7 +11,7 @@ import os
 class AutoWebIQV2APITester:
     def __init__(self):
         # Get backend URL from frontend .env
-        self.base_url = "https://multiagent-ide.preview.emergentagent.com"
+        self.base_url = "https://autowebiq-1.preview.emergentagent.com"
         self.api_url = f"{self.base_url}/api"
         self.api_v2_url = f"{self.base_url}/api/v2"
         self.ws_url = self.base_url.replace("https://", "wss://")

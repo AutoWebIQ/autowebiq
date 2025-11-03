@@ -7,7 +7,7 @@ import json
 def test_review_criteria():
     """Test all success criteria from the review request"""
     
-    base_url = "https://multiagent-ide.preview.emergentagent.com/api"
+    base_url = "https://autowebiq-1.preview.emergentagent.com/api"
     
     print("🎯 TESTING REVIEW REQUEST SUCCESS CRITERIA")
     print("=" * 60)

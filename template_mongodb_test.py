@@ -13,7 +13,7 @@ Test Scenarios:
 4. Confirm templates are loaded from MongoDB
 5. Confirm generation starts successfully
 
-Backend URL: https://multiagent-ide.preview.emergentagent.com/api
+Backend URL: https://autowebiq-1.preview.emergentagent.com/api
 """
 
 import asyncio
@@ -23,7 +23,7 @@ import time
 from datetime import datetime
 
 # Backend URL from environment
-BACKEND_URL = "https://multiagent-ide.preview.emergentagent.com/api"
+BACKEND_URL = "https://autowebiq-1.preview.emergentagent.com/api"
 
 # Demo account credentials
 DEMO_EMAIL = "demo@test.com"

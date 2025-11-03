@@ -39,14 +39,14 @@ Since Firebase handles authentication in the frontend, you can test backend APIs
 
 ```bash
 # Get demo user info (replace with actual JWT token after login)
-curl -X GET "https://multiagent-ide.preview.emergentagent.com/api/v2/users/me" \
+curl -X GET "https://autowebiq-1.preview.emergentagent.com/api/v2/users/me" \
   -H "Authorization: Bearer YOUR_JWT_TOKEN"
 
 # Check validation system
-curl -X GET "https://multiagent-ide.preview.emergentagent.com/api/v2/validate/checks"
+curl -X GET "https://autowebiq-1.preview.emergentagent.com/api/v2/validate/checks"
 
 # Check health
-curl -X GET "https://multiagent-ide.preview.emergentagent.com/api/health"
+curl -X GET "https://autowebiq-1.preview.emergentagent.com/api/health"
 ```
 
 ---
@@ -234,7 +234,7 @@ curl -X GET "https://multiagent-ide.preview.emergentagent.com/api/health"
 **Solution:**
 - Build website first
 - Check if project has generated code
-- Verify backend health: curl https://multiagent-ide.preview.emergentagent.com/api/health
+- Verify backend health: curl https://autowebiq-1.preview.emergentagent.com/api/health
 - Check browser console for errors
 
 ### Issue: Deploy button disabled
@@ -250,12 +250,12 @@ curl -X GET "https://multiagent-ide.preview.emergentagent.com/api/health"
 
 ### Check Backend Health:
 ```bash
-curl -s https://multiagent-ide.preview.emergentagent.com/api/health | python -m json.tool
+curl -s https://autowebiq-1.preview.emergentagent.com/api/health | python -m json.tool
 ```
 
 ### Check Validation System:
 ```bash
-curl -s https://multiagent-ide.preview.emergentagent.com/api/v2/validate/checks | python -m json.tool
+curl -s https://autowebiq-1.preview.emergentagent.com/api/v2/validate/checks | python -m json.tool
 ```
 
 ### Check Database Services:
