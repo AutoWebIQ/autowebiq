@@ -105,6 +105,30 @@
 user_problem_statement: "AutoWebIQ 2.0 Complete Rebuild: Make AutoWebIQ surpass Emergent in every parameter. Status: Phase 1-4 partially implemented. ✅ Razorpay subscriptions (backend complete), ✅ Manual deployment system (backend complete), ✅ World-class landing page (frontend complete), ✅ Agent Status Panel (Emergent-style, frontend complete), ✅ Enhanced workspace integration (in progress). Next: Complete dashboard enhancement, test all features, optimize performance."
 
 backend:
+  - task: "Razorpay Subscription System"
+    implemented: true
+    working: "NA"
+    file: "backend/subscription_manager.py, backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: "NA"
+          agent: "main"
+          comment: "✅ RAZORPAY SUBSCRIPTION SYSTEM IMPLEMENTED: Complete subscription management with 4 plans (Free/Starter/Pro/Enterprise). Features: create subscription, verify payment, check status, cancel subscription, monthly credit auto-refill. Endpoints: GET /api/subscriptions/plans, POST /api/subscriptions/create, POST /api/subscriptions/verify, GET /api/subscriptions/status, POST /api/subscriptions/cancel. Pricing: Free (20 credits), Starter ₹999/mo (200 credits), Pro ₹2999/mo (750 credits), Enterprise ₹9999/mo (unlimited). Ready for testing."
+  
+  - task: "Manual Deployment System (Emergent-style)"
+    implemented: true
+    working: "NA"
+    file: "backend/manual_deployment_manager.py, backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: "NA"
+          agent: "main"
+          comment: "✅ MANUAL DEPLOYMENT SYSTEM IMPLEMENTED: Instant preview hosting with subdomain support, similar to Emergent. Features: deploy project with custom subdomain, update deployment, delete deployment, list deployments, Cloudflare DNS integration. Endpoints: POST /api/deployments/deploy, GET /api/deployments/{project_id}, DELETE /api/deployments/{project_id}, GET /api/deployments. Automatic subdomain generation, SSL included. Ready for testing."
+  
   - task: "Dynamic Credit System Core"
     implemented: true
     working: true
