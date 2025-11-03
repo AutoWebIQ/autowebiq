@@ -11,7 +11,7 @@ import PrivacyPolicy from './pages/PrivacyPolicy';
 import ContactPage from './pages/ContactPage';
 import UserMenu from './components/UserMenu';
 import EmergentLanding from './components/EmergentLanding';
-import LandingPageV3 from './pages/LandingPageV3';
+import LandingPageNew from './pages/LandingPageNew';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
