@@ -3,6 +3,8 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from fastapi.responses import StreamingResponse, JSONResponse
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
+from fastapi.middleware.trustedhost import TrustedHostMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
 import os
 import logging
 from pathlib import Path
