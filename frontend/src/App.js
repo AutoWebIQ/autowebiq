@@ -4,6 +4,7 @@ import axios from 'axios';
 import Workspace from './pages/Workspace';
 import SubscriptionPage from './pages/SubscriptionPage';
 import DeploymentDashboard from './pages/DeploymentDashboard';
+import DashboardV3 from './pages/DashboardV3';
 import CreditsPage from './pages/CreditsPage';
 import TermsOfService from './pages/TermsOfService';
 import PrivacyPolicy from './pages/PrivacyPolicy';
