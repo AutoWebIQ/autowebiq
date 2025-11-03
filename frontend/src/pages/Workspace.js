@@ -135,6 +135,9 @@ const Workspace = ({ user, onLogout }) => {
               <button className="btn-icon" onClick={downloadCode} title="Download">
                 📥
               </button>
+              <button className="btn-icon" onClick={() => navigate(`/deployment/${projectId}`)} title="Deploy">
+                🚀
+              </button>
               <button 
                 className="btn-icon" 
                 onClick={() => setShowPreview(!showPreview)}
