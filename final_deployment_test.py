@@ -74,7 +74,8 @@ class FinalDeploymentTester:
             
             # Check required fields
             status = health_data.get('status')
-            mongodb_status = health_data.get('mongodb')
+            databases = health_data.get('databases', {})
+            mongodb_status = databases.get('mongodb')
             
             # Verify healthy status
             if status != 'healthy':
