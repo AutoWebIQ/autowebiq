@@ -23,12 +23,13 @@ import time
 from datetime import datetime
 
 # Test Configuration
-BASE_URL = "https://multiagent-web.preview.emergentagent.com/api"
+BASE_URL = "http://localhost:8001/api"
 DEMO_EMAIL = "demo@test.com"
 DEMO_PASSWORD = "Demo123456"
 
-# Headers
+# Headers with required Host header for local testing
 HEADERS = {
+    "Host": "api.autowebiq.com",
     "Content-Type": "application/json",
     "Accept": "application/json"
 }
