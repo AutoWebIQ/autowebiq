@@ -6,7 +6,7 @@ AutoWebIQ Production Readiness Testing
 This is the FINAL test before user deploys to autowebiq.com.
 MUST verify EVERYTHING works with 100% success rate.
 
-Backend URL: https://autowebiq-1.preview.emergentagent.com/api
+Backend URL: https://multiagent-web.preview.emergentagent.com/api
 
 Test Scope:
 1. Health Check (CRITICAL)
@@ -27,7 +27,7 @@ from datetime import datetime
 from typing import Dict, List, Optional
 
 # Test Configuration
-BACKEND_URL = "https://autowebiq-1.preview.emergentagent.com/api"
+BACKEND_URL = "https://multiagent-web.preview.emergentagent.com/api"
 DEMO_EMAIL = "demo@test.com"
 DEMO_PASSWORD = "Demo123456"
 

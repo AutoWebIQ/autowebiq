@@ -10,7 +10,7 @@ import json
 from datetime import datetime
 
 # Configuration
-BACKEND_URL = "https://autowebiq-1.preview.emergentagent.com/api"
+BACKEND_URL = "https://multiagent-web.preview.emergentagent.com/api"
 TEST_USER = {
     "email": "demo@test.com",
     "password": "Demo123456"

@@ -8,7 +8,7 @@ from datetime import datetime, timezone, timedelta
 class AutoWebIQFinalTester:
     def __init__(self):
         # Use the correct backend URL from frontend .env
-        self.base_url = "https://autowebiq-1.preview.emergentagent.com"
+        self.base_url = "https://multiagent-web.preview.emergentagent.com"
         self.api_url = f"{self.base_url}/api"
         self.tests_run = 0
         self.tests_passed = 0

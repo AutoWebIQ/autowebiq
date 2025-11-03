@@ -111,7 +111,7 @@ Add the following secrets:
 | `VERCEL_TOKEN` | `cu78ADldvJN75U3uXiAPrDmr` | Vercel API token |
 | `VERCEL_ORG_ID` | (Get from Vercel) | Your Vercel organization ID |
 | `VERCEL_PROJECT_ID` | (Get from Vercel) | AutoWebIQ project ID |
-| `REACT_APP_BACKEND_URL` | `https://autowebiq-1.preview.emergentagent.com` | Backend API URL |
+| `REACT_APP_BACKEND_URL` | `https://multiagent-web.preview.emergentagent.com` | Backend API URL |
 
 **To get Vercel IDs:**
 ```bash
