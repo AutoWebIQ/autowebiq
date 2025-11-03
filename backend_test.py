@@ -99,11 +99,13 @@ class ProductionTester:
                 return False
                 
             # Check MongoDB connection
-            if data.get("mongodb") != "connected":
-                self.log_test("Health Check - MongoDB", "FAIL", f"MongoDB: {data.get('mongodb')}", "CRITICAL")
+            databases = data.get("databases", {})
+            mongodb_status = databases.get("mongodb")
+            if mongodb_status != "connected":
+                self.log_test("Health Check - MongoDB", "FAIL", f"MongoDB: {mongodb_status}", "CRITICAL")
                 return False
                 
-            self.log_test("Health Check", "PASS", f"Status: {data.get('status')}, MongoDB: {data.get('mongodb')}", "CRITICAL")
+            self.log_test("Health Check", "PASS", f"Status: {data.get('status')}, MongoDB: {mongodb_status}", "CRITICAL")
             return True
             
         except json.JSONDecodeError:
