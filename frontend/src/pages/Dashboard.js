@@ -85,6 +85,9 @@ const Dashboard = ({ user, onLogout }) => {
           <span className="logo">⚡ AutoWebIQ</span>
         </div>
         <div className="header-right">
+          <button className="btn btn-outline" onClick={() => navigate('/subscriptions')}>
+            👑 Upgrade
+          </button>
           <div className="credits-badge">
             <span className="credits-icon">💎</span>
             <span className="credits-amount">{credits}</span>
