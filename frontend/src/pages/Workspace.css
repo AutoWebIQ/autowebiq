@@ -228,6 +228,13 @@
   animation: spin 0.6s linear infinite;
 }
 
+/* Agent Panel Container */
+.agent-panel-container {
+  flex: 1;
+  overflow: hidden;
+  margin-bottom: 1rem;
+}
+
 /* Preview */
 .preview-header {
   padding: 16px 24px;
