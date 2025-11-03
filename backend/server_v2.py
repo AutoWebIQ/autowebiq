@@ -158,6 +158,49 @@ async def websocket_endpoint(websocket: WebSocket, project_id: str):
             # Get user from token
             token = message_data.get('token')
             if not token:
+
+
+@app.get("/api/projects/{project_id}/download-zip")
+async def download_project_zip(project_id: str, user_id: str = Depends(get_current_user)):
+    """Download complete project as ZIP file with all pages and assets"""
+    import io
+    import zipfile
+    from fastapi.responses import StreamingResponse
+    
+    # Get project
+    project = await db.projects.find_one(
+        {'id': project_id, 'user_id': user_id},
+        {'_id': 0}
+    )
+    
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+    
+    # Create ZIP in memory
+    zip_buffer = io.BytesIO()
+    
+    with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
+        # Add all files
+        all_files = project.get('all_files', {})
+        
+        if all_files:
+            # Multi-page project
+            for filename, content in all_files.items():
+                zip_file.writestr(filename, content)
+        else:
+            # Single page fallback
+            zip_file.writestr('index.html', project.get('generated_code', ''))
+    
+    zip_buffer.seek(0)
+    
+    return StreamingResponse(
+        zip_buffer,
+        media_type="application/zip",
+        headers={
+            "Content-Disposition": f"attachment; filename={project['name'].replace(' ', '_')}.zip"
+        }
+    )
+
                 await websocket.send_json({"error": "No token provided"})
                 continue
             
