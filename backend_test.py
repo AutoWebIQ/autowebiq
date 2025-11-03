@@ -109,466 +109,422 @@ class ProductionTester:
         except json.JSONDecodeError:
             self.log_test("Health Check - JSON", "FAIL", "Invalid JSON response", "CRITICAL")
             return False
-        print(f"\n🔐 Authenticating demo account: {DEMO_EMAIL}")
+            
+    def test_demo_login(self):
+        """CRITICAL: Test demo account login"""
+        print("\n🔍 CRITICAL TEST: Demo Account Login")
         
+        login_data = {
+            "email": DEMO_EMAIL,
+            "password": DEMO_PASSWORD
+        }
+        
+        response = self.make_request("POST", "/api/auth/login", login_data)
+        
+        if not response:
+            self.log_test("Demo Login - Connection", "FAIL", "Failed to connect", "CRITICAL")
+            return False
+            
+        if response.status_code != 200:
+            self.log_test("Demo Login - Status Code", "FAIL", f"Expected 200, got {response.status_code}", "CRITICAL")
+            return False
+            
         try:
-            response = requests.post(f"{BACKEND_URL}/auth/login", json={
-                "email": DEMO_EMAIL,
-                "password": DEMO_PASSWORD
-            }, timeout=30)
+            data = response.json()
             
-            if response.status_code != 200:
-                raise Exception(f"Authentication failed: {response.status_code} - {response.text}")
+            # Check token
+            if not data.get("access_token"):
+                self.log_test("Demo Login - Token", "FAIL", "No access token returned", "CRITICAL")
+                return False
+                
+            # Check user data
+            user = data.get("user", {})
+            if user.get("email") != DEMO_EMAIL:
+                self.log_test("Demo Login - User Email", "FAIL", f"Expected {DEMO_EMAIL}, got {user.get('email')}", "CRITICAL")
+                return False
+                
+            # Store for later tests
+            self.jwt_token = data["access_token"]
+            self.demo_user_data = user
             
-            auth_data = response.json()
-            self.auth_token = auth_data["access_token"]
-            self.user_data = auth_data["user"]
+            credits = user.get("credits", 0)
+            self.log_test("Demo Login", "PASS", f"Token received, Credits: {credits}", "CRITICAL")
+            return True
             
-            print(f"✅ Authentication successful")
-            print(f"   User ID: {self.user_data['id']}")
-            print(f"   Credits: {self.user_data['credits']}")
+        except json.JSONDecodeError:
+            self.log_test("Demo Login - JSON", "FAIL", "Invalid JSON response", "CRITICAL")
+            return False
             
-            # Verify sufficient credits for testing
-            if self.user_data['credits'] < 50:
-                print(f"⚠️  Warning: Low credits ({self.user_data['credits']}). May need more for full testing.")
-            
-            self.log_test("Demo Account Authentication", True, f"Credits: {self.user_data['credits']}")
-            
-            return {
-                "success": True,
-                "user_id": self.user_data['id'],
-                "credits": self.user_data['credits']
-            }
-            
-        except Exception as e:
-            self.log_test("Demo Account Authentication", False, str(e))
-            return {"success": False, "error": str(e)}
-    
-    def create_test_project(self) -> Dict:
-        """Create a new test project for multi-model testing"""
-        print(f"\n📁 Creating test project...")
+    def test_user_registration(self):
+        """CRITICAL: Test new user registration"""
+        print("\n🔍 CRITICAL TEST: User Registration")
         
-        headers = {"Authorization": f"Bearer {self.auth_token}"}
+        # Generate unique test user
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        test_email = f"test_{timestamp}@test.com"
+        
+        register_data = {
+            "username": f"TestUser_{timestamp}",
+            "email": test_email,
+            "password": "Test123456"
+        }
+        
+        response = self.make_request("POST", "/api/auth/register", register_data)
+        
+        if not response:
+            self.log_test("User Registration - Connection", "FAIL", "Failed to connect", "CRITICAL")
+            return False
+            
+        if response.status_code != 200:
+            self.log_test("User Registration - Status Code", "FAIL", f"Expected 200, got {response.status_code}", "CRITICAL")
+            return False
+            
+        try:
+            data = response.json()
+            
+            # Check token
+            if not data.get("access_token"):
+                self.log_test("User Registration - Token", "FAIL", "No access token returned", "CRITICAL")
+                return False
+                
+            # Check user data
+            user = data.get("user", {})
+            if user.get("email") != test_email:
+                self.log_test("User Registration - Email", "FAIL", f"Expected {test_email}, got {user.get('email')}", "CRITICAL")
+                return False
+                
+            # Check credits (should be 20)
+            credits = user.get("credits", 0)
+            if credits != 20:
+                self.log_test("User Registration - Credits", "FAIL", f"Expected 20 credits, got {credits}", "CRITICAL")
+                return False
+                
+            self.log_test("User Registration", "PASS", f"User created with 20 credits", "CRITICAL")
+            return True
+            
+        except json.JSONDecodeError:
+            self.log_test("User Registration - JSON", "FAIL", "Invalid JSON response", "CRITICAL")
+            return False
+            
+    def test_auth_me(self):
+        """CRITICAL: Test /auth/me endpoint"""
+        print("\n🔍 CRITICAL TEST: Auth Me Endpoint")
+        
+        if not self.jwt_token:
+            self.log_test("Auth Me - No Token", "FAIL", "No JWT token available", "CRITICAL")
+            return False
+            
+        response = self.make_request("GET", "/api/auth/me", auth_token=self.jwt_token)
+        
+        if not response:
+            self.log_test("Auth Me - Connection", "FAIL", "Failed to connect", "CRITICAL")
+            return False
+            
+        if response.status_code != 200:
+            self.log_test("Auth Me - Status Code", "FAIL", f"Expected 200, got {response.status_code}", "CRITICAL")
+            return False
+            
+        try:
+            data = response.json()
+            
+            # Check user data
+            if data.get("email") != DEMO_EMAIL:
+                self.log_test("Auth Me - Email", "FAIL", f"Expected {DEMO_EMAIL}, got {data.get('email')}", "CRITICAL")
+                return False
+                
+            if not data.get("id"):
+                self.log_test("Auth Me - User ID", "FAIL", "No user ID returned", "CRITICAL")
+                return False
+                
+            credits = data.get("credits", 0)
+            self.log_test("Auth Me", "PASS", f"User data retrieved, Credits: {credits}", "CRITICAL")
+            return True
+            
+        except json.JSONDecodeError:
+            self.log_test("Auth Me - JSON", "FAIL", "Invalid JSON response", "CRITICAL")
+            return False
+            
+    def test_projects_list(self):
+        """HIGH: Test projects list"""
+        print("\n🔍 HIGH PRIORITY TEST: Projects List")
+        
+        if not self.jwt_token:
+            self.log_test("Projects List - No Token", "FAIL", "No JWT token available", "HIGH")
+            return False
+            
+        response = self.make_request("GET", "/api/projects", auth_token=self.jwt_token)
+        
+        if not response:
+            self.log_test("Projects List - Connection", "FAIL", "Failed to connect", "HIGH")
+            return False
+            
+        if response.status_code != 200:
+            self.log_test("Projects List - Status Code", "FAIL", f"Expected 200, got {response.status_code}", "HIGH")
+            return False
+            
+        try:
+            data = response.json()
+            
+            if "projects" not in data:
+                self.log_test("Projects List - Structure", "FAIL", "No 'projects' key in response", "HIGH")
+                return False
+                
+            projects = data["projects"]
+            if not isinstance(projects, list):
+                self.log_test("Projects List - Type", "FAIL", "Projects is not a list", "HIGH")
+                return False
+                
+            self.log_test("Projects List", "PASS", f"Retrieved {len(projects)} projects", "HIGH")
+            return True
+            
+        except json.JSONDecodeError:
+            self.log_test("Projects List - JSON", "FAIL", "Invalid JSON response", "HIGH")
+            return False
+            
+    def test_project_creation(self):
+        """HIGH: Test project creation"""
+        print("\n🔍 HIGH PRIORITY TEST: Project Creation")
+        
+        if not self.jwt_token:
+            self.log_test("Project Creation - No Token", "FAIL", "No JWT token available", "HIGH")
+            return False
+            
         project_data = {
-            "name": "Multi-Model Router Test - Coffee Shop",
-            "description": "Test project for verifying multi-model routing system with Claude, GPT, and Gemini"
+            "name": "Test Project Production",
+            "description": "Production verification test project",
+            "model": "claude-4.5-sonnet-200k"
         }
         
+        response = self.make_request("POST", "/api/projects/create", project_data, auth_token=self.jwt_token)
+        
+        if not response:
+            self.log_test("Project Creation - Connection", "FAIL", "Failed to connect", "HIGH")
+            return False
+            
+        if response.status_code != 200:
+            self.log_test("Project Creation - Status Code", "FAIL", f"Expected 200, got {response.status_code}", "HIGH")
+            return False
+            
         try:
-            response = requests.post(
-                f"{BACKEND_URL}/projects/create",
-                json=project_data,
-                headers=headers,
-                timeout=30
-            )
+            data = response.json()
             
-            if response.status_code != 200:
-                raise Exception(f"Project creation failed: {response.status_code} - {response.text}")
-            
-            project = response.json()
-            self.test_project_id = project["id"]
-            
-            print(f"✅ Test project created")
-            print(f"   Project ID: {self.test_project_id}")
-            print(f"   Name: {project['name']}")
-            
-            self.log_test("Test Project Creation", True, f"Project ID: {self.test_project_id}")
-            
-            return {
-                "success": True,
-                "project_id": self.test_project_id,
-                "project_name": project['name']
-            }
-            
-        except Exception as e:
-            self.log_test("Test Project Creation", False, str(e))
-            return {"success": False, "error": str(e)}
-    
-    def start_multi_model_build(self) -> Dict:
-        """Start website build with multi-model routing"""
-        print(f"\n🚀 Starting multi-model build...")
-        
-        headers = {"Authorization": f"Bearer {self.auth_token}"}
-        
-        # Test prompt for coffee shop (should trigger all models)
-        build_request = {
-            "project_id": self.test_project_id,
-            "prompt": "Create a modern coffee shop website with menu, location, and contact form",
-            "uploaded_images": []
-        }
-        
-        try:
-            print(f"📤 Sending build request...")
-            print(f"   Prompt: {build_request['prompt']}")
-            
-            # Start the build
-            response = requests.post(
-                f"{BACKEND_URL}/build-with-agents",
-                json=build_request,
-                headers=headers,
-                timeout=120  # Longer timeout for build
-            )
-            
-            if response.status_code == 402:
-                # Insufficient credits
-                error_data = response.json()
-                print(f"💳 Insufficient credits: {error_data.get('detail', 'Unknown error')}")
-                self.log_test("Multi-Model Build Request", False, "Insufficient credits")
-                return {
-                    "success": False,
-                    "error": "insufficient_credits",
-                    "details": error_data
-                }
-            
-            if response.status_code != 200:
-                raise Exception(f"Build request failed: {response.status_code} - {response.text}")
-            
-            build_result = response.json()
-            
-            print(f"✅ Build request completed")
-            print(f"   Status: {build_result.get('status', 'unknown')}")
-            
-            # Check for multi-model indicators in response
-            model_indicators = {
-                "claude_mentioned": False,
-                "gpt_mentioned": False,
-                "gemini_mentioned": False,
-                "image_generation": False
-            }
-            
-            response_text = json.dumps(build_result).lower()
-            
-            if any(term in response_text for term in ['claude', 'sonnet']):
-                model_indicators["claude_mentioned"] = True
-                print(f"🎯 Claude model detected in response")
-            
-            if any(term in response_text for term in ['gpt', 'openai']):
-                model_indicators["gpt_mentioned"] = True
-                print(f"🎯 GPT model detected in response")
-            
-            if 'gemini' in response_text:
-                model_indicators["gemini_mentioned"] = True
-                print(f"🎯 Gemini model detected in response")
-            
-            if any(term in response_text for term in ['image', 'generated', 'photo']):
-                model_indicators["image_generation"] = True
-                print(f"🎯 Image generation detected in response")
-            
-            models_detected = sum(model_indicators.values())
-            
-            self.log_test("Multi-Model Build Execution", True, f"Models detected: {models_detected}/4")
-            
-            return {
-                "success": True,
-                "build_result": build_result,
-                "model_indicators": model_indicators,
-                "models_detected": models_detected
-            }
-            
-        except Exception as e:
-            self.log_test("Multi-Model Build Execution", False, str(e))
-            return {"success": False, "error": str(e)}
-    
-    def verify_build_completion(self) -> Dict:
-        """Verify the build completed successfully and check quality"""
-        print(f"\n🔍 Verifying build completion...")
-        
-        headers = {"Authorization": f"Bearer {self.auth_token}"}
-        
-        try:
-            # Get project details
-            response = requests.get(
-                f"{BACKEND_URL}/projects/{self.test_project_id}",
-                headers=headers,
-                timeout=30
-            )
-            
-            if response.status_code != 200:
-                raise Exception(f"Failed to get project: {response.status_code}")
-            
-            project = response.json()
-            generated_code = project.get('generated_code', '')
-            
-            # Quality checks
-            quality_metrics = {
-                "has_html": bool(generated_code and len(generated_code) > 1000),
-                "has_doctype": "<!DOCTYPE html>" in generated_code,
-                "has_navigation": any(tag in generated_code.lower() for tag in ['<nav', '<header', 'navigation']),
-                "has_menu_section": any(word in generated_code.lower() for word in ['menu', 'coffee', 'drinks']),
-                "has_contact_form": any(tag in generated_code.lower() for tag in ['<form', 'contact', 'email']),
-                "has_location": any(word in generated_code.lower() for word in ['location', 'address', 'map']),
-                "responsive_design": 'viewport' in generated_code and ('responsive' in generated_code.lower() or '@media' in generated_code),
-                "modern_css": any(feature in generated_code.lower() for feature in ['flexbox', 'grid', 'transform', 'transition'])
-            }
-            
-            html_length = len(generated_code)
-            quality_score = sum(quality_metrics.values()) / len(quality_metrics) * 100
-            
-            print(f"✅ Build verification complete")
-            print(f"   HTML Length: {html_length:,} characters")
-            print(f"   Quality Score: {quality_score:.1f}%")
-            print(f"   Quality Metrics:")
-            for metric, passed in quality_metrics.items():
-                status = "✅" if passed else "❌"
-                print(f"     {status} {metric.replace('_', ' ').title()}: {passed}")
-            
-            success = quality_score >= 60  # At least 60% quality
-            self.log_test("Build Quality Verification", success, f"Quality: {quality_score:.1f}%, Length: {html_length}")
-            
-            return {
-                "success": success,
-                "html_length": html_length,
-                "quality_score": quality_score,
-                "quality_metrics": quality_metrics,
-                "generated_code": generated_code[:500] + "..." if len(generated_code) > 500 else generated_code
-            }
-            
-        except Exception as e:
-            self.log_test("Build Quality Verification", False, str(e))
-            return {"success": False, "error": str(e)}
-    
-    def verify_credit_deduction(self) -> Dict:
-        """Verify accurate credit deduction"""
-        print(f"\n💳 Verifying credit deduction...")
-        
-        headers = {"Authorization": f"Bearer {self.auth_token}"}
-        
-        try:
-            # Get current user data
-            response = requests.get(f"{BACKEND_URL}/auth/me", headers=headers, timeout=30)
-            
-            if response.status_code != 200:
-                raise Exception(f"Failed to get user data: {response.status_code}")
-            
-            current_user = response.json()
-            current_credits = current_user['credits']
-            initial_credits = self.user_data['credits']
-            
-            credits_used = initial_credits - current_credits
-            
-            print(f"✅ Credit verification:")
-            print(f"   Initial Credits: {initial_credits}")
-            print(f"   Current Credits: {current_credits}")
-            print(f"   Credits Used: {credits_used}")
-            
-            # Expected range for multi-model build (30-60 credits)
-            expected_min = 30
-            expected_max = 60
-            
-            accurate_deduction = expected_min <= credits_used <= expected_max
-            
-            if accurate_deduction:
-                print(f"   ✅ Credit deduction within expected range ({expected_min}-{expected_max})")
-            else:
-                print(f"   ⚠️  Credit deduction outside expected range ({expected_min}-{expected_max})")
-            
-            self.log_test("Credit Deduction Accuracy", accurate_deduction, f"Used: {credits_used} (expected: {expected_min}-{expected_max})")
-            
-            return {
-                "success": True,
-                "initial_credits": initial_credits,
-                "current_credits": current_credits,
-                "credits_used": credits_used,
-                "accurate_deduction": accurate_deduction
-            }
-            
-        except Exception as e:
-            self.log_test("Credit Deduction Accuracy", False, str(e))
-            return {"success": False, "error": str(e)}
-    
-    def test_model_router_endpoints(self) -> Dict:
-        """Test if model router endpoints are accessible"""
-        print(f"\n🎯 Testing model router system...")
-        
-        headers = {"Authorization": f"Bearer {self.auth_token}"}
-        
-        # Test health endpoint
-        try:
-            response = requests.get(f"{BACKEND_URL}/health", timeout=30)
-            health_status = response.status_code == 200
-            
-            if health_status:
-                health_data = response.json()
-                print(f"✅ Health check passed")
-                print(f"   Status: {health_data.get('status', 'unknown')}")
-            else:
-                print(f"❌ Health check failed: {response.status_code}")
-            
-            self.log_test("Health Check", health_status)
-            
-        except Exception as e:
-            self.log_test("Health Check", False, str(e))
-            health_status = False
-        
-        # Test models endpoint
-        try:
-            response = requests.get(f"{BACKEND_URL}/models", timeout=30)
-            models_status = response.status_code == 200
-            
-            if models_status:
-                models_data = response.json()
-                print(f"✅ Models endpoint accessible")
-                print(f"   Available models: {len(models_data)}")
+            if not data.get("id"):
+                self.log_test("Project Creation - ID", "FAIL", "No project ID returned", "HIGH")
+                return False
                 
-                # Check for expected models
-                model_names = list(models_data.keys()) if isinstance(models_data, dict) else []
-                expected_models = ['claude-4.5-sonnet-200k', 'gpt-5', 'claude-4-sonnet-20250514']
+            if data.get("name") != project_data["name"]:
+                self.log_test("Project Creation - Name", "FAIL", f"Name mismatch", "HIGH")
+                return False
                 
-                models_found = sum(1 for model in expected_models if any(model in name for name in model_names))
-                print(f"   Expected models found: {models_found}/{len(expected_models)}")
-            else:
-                print(f"❌ Models endpoint failed: {response.status_code}")
+            self.log_test("Project Creation", "PASS", f"Project created with ID: {data['id'][:8]}...", "HIGH")
+            return True
             
-            self.log_test("Models Endpoint", models_status)
+        except json.JSONDecodeError:
+            self.log_test("Project Creation - JSON", "FAIL", "Invalid JSON response", "HIGH")
+            return False
             
-        except Exception as e:
-            self.log_test("Models Endpoint", False, str(e))
-            models_status = False
+    def test_credit_balance(self):
+        """HIGH: Test credit balance endpoint"""
+        print("\n🔍 HIGH PRIORITY TEST: Credit Balance")
         
-        return {
-            "success": health_status and models_status,
-            "health_status": health_status,
-            "models_status": models_status
-        }
-    
-    def run_comprehensive_test(self) -> Dict:
-        """Run complete multi-model router system test"""
-        print(f"\n🧪 MULTI-MODEL ROUTER SYSTEM COMPREHENSIVE TEST")
-        print(f"=" * 60)
-        print(f"Testing intelligent task routing:")
-        print(f"  • Claude Sonnet 4 → Frontend/UI generation")
-        print(f"  • GPT-4o → Backend logic")
-        print(f"  • Gemini 2.5 Pro → Content generation")
-        print(f"  • OpenAI gpt-image-1 → HD image generation")
-        print(f"")
+        if not self.jwt_token:
+            self.log_test("Credit Balance - No Token", "FAIL", "No JWT token available", "HIGH")
+            return False
+            
+        response = self.make_request("GET", "/api/credits/balance", auth_token=self.jwt_token)
         
-        results = {
-            "test_start_time": datetime.now().isoformat(),
-            "authentication": {},
-            "project_creation": {},
-            "model_router_endpoints": {},
-            "build_execution": {},
-            "build_verification": {},
-            "credit_verification": {},
-            "overall_success": False
-        }
-        
+        if not response:
+            self.log_test("Credit Balance - Connection", "FAIL", "Failed to connect", "HIGH")
+            return False
+            
+        if response.status_code != 200:
+            self.log_test("Credit Balance - Status Code", "FAIL", f"Expected 200, got {response.status_code}", "HIGH")
+            return False
+            
         try:
-            # Step 1: Authentication
-            auth_result = self.authenticate_demo_account()
-            results["authentication"] = auth_result
+            data = response.json()
             
-            if not auth_result["success"]:
-                return results
+            if "balance" not in data:
+                self.log_test("Credit Balance - Structure", "FAIL", "No 'balance' key in response", "HIGH")
+                return False
+                
+            balance = data["balance"]
+            if not isinstance(balance, (int, float)):
+                self.log_test("Credit Balance - Type", "FAIL", "Balance is not a number", "HIGH")
+                return False
+                
+            self.log_test("Credit Balance", "PASS", f"Balance: {balance} credits", "HIGH")
+            return True
             
-            # Step 2: Project Creation
-            project_result = self.create_test_project()
-            results["project_creation"] = project_result
+        except json.JSONDecodeError:
+            self.log_test("Credit Balance - JSON", "FAIL", "Invalid JSON response", "HIGH")
+            return False
             
-            if not project_result["success"]:
-                return results
+    def test_credit_pricing(self):
+        """HIGH: Test credit pricing endpoint"""
+        print("\n🔍 HIGH PRIORITY TEST: Credit Pricing")
+        
+        response = self.make_request("GET", "/api/credits/pricing")
+        
+        if not response:
+            self.log_test("Credit Pricing - Connection", "FAIL", "Failed to connect", "HIGH")
+            return False
             
-            # Step 3: Model Router Endpoints
-            router_result = self.test_model_router_endpoints()
-            results["model_router_endpoints"] = router_result
+        if response.status_code != 200:
+            self.log_test("Credit Pricing - Status Code", "FAIL", f"Expected 200, got {response.status_code}", "HIGH")
+            return False
             
-            # Step 4: Multi-Model Build Execution
-            build_result = self.start_multi_model_build()
-            results["build_execution"] = build_result
+        try:
+            data = response.json()
             
-            if not build_result["success"]:
-                return results
+            # Should have agent_costs and model_costs
+            if "agent_costs" not in data or "model_costs" not in data:
+                self.log_test("Credit Pricing - Structure", "FAIL", "Missing agent_costs or model_costs", "HIGH")
+                return False
+                
+            agent_costs = data["agent_costs"]
+            model_costs = data["model_costs"]
             
-            # Step 5: Build Verification
-            verification_result = self.verify_build_completion()
-            results["build_verification"] = verification_result
+            if not isinstance(agent_costs, dict) or not isinstance(model_costs, dict):
+                self.log_test("Credit Pricing - Types", "FAIL", "Costs are not dictionaries", "HIGH")
+                return False
+                
+            self.log_test("Credit Pricing", "PASS", f"Agent costs: {len(agent_costs)}, Model costs: {len(model_costs)}", "HIGH")
+            return True
             
-            # Step 6: Credit Verification
-            credit_result = self.verify_credit_deduction()
-            results["credit_verification"] = credit_result
+        except json.JSONDecodeError:
+            self.log_test("Credit Pricing - JSON", "FAIL", "Invalid JSON response", "HIGH")
+            return False
             
-            # Calculate overall success
-            success_criteria = [
-                auth_result.get("success", False),
-                project_result.get("success", False),
-                router_result.get("success", False),
-                build_result.get("success", False),
-                verification_result.get("success", False),
-                credit_result.get("accurate_deduction", False)
+    def test_subscription_plans(self):
+        """MEDIUM: Test subscription plans"""
+        print("\n🔍 MEDIUM PRIORITY TEST: Subscription Plans")
+        
+        response = self.make_request("GET", "/api/subscriptions/plans")
+        
+        if not response:
+            self.log_test("Subscription Plans - Connection", "FAIL", "Failed to connect", "MEDIUM")
+            return False
+            
+        if response.status_code != 200:
+            self.log_test("Subscription Plans - Status Code", "FAIL", f"Expected 200, got {response.status_code}", "MEDIUM")
+            return False
+            
+        try:
+            data = response.json()
+            
+            if not data.get("success"):
+                self.log_test("Subscription Plans - Success", "FAIL", "Success flag is false", "MEDIUM")
+                return False
+                
+            plans = data.get("plans", [])
+            if len(plans) != 4:
+                self.log_test("Subscription Plans - Count", "FAIL", f"Expected 4 plans, got {len(plans)}", "MEDIUM")
+                return False
+                
+            # Check for required plans
+            plan_names = [plan.get("name", "") for plan in plans]
+            required_plans = ["Free", "Starter", "Pro", "Enterprise"]
+            
+            for required_plan in required_plans:
+                if required_plan not in plan_names:
+                    self.log_test("Subscription Plans - Missing Plan", "FAIL", f"Missing {required_plan} plan", "MEDIUM")
+                    return False
+                    
+            self.log_test("Subscription Plans", "PASS", f"All 4 plans found: {', '.join(plan_names)}", "MEDIUM")
+            return True
+            
+        except json.JSONDecodeError:
+            self.log_test("Subscription Plans - JSON", "FAIL", "Invalid JSON response", "MEDIUM")
+            return False
+            
+    def run_all_tests(self):
+        """Run all tests in priority order"""
+        print("🚀 STARTING CRITICAL PRODUCTION VERIFICATION TESTING")
+        print(f"Backend URL: {BASE_URL}")
+        print(f"Host Header: {HOST_HEADER}")
+        print(f"Demo Account: {DEMO_EMAIL}")
+        print("=" * 60)
+        
+        # CRITICAL TESTS (must pass 100%)
+        critical_tests = [
+            self.test_health_check,
+            self.test_demo_login,
+            self.test_user_registration,
+            self.test_auth_me
+        ]
+        
+        critical_passed = 0
+        for test in critical_tests:
+            if test():
+                critical_passed += 1
+            else:
+                print(f"\n🚨 CRITICAL TEST FAILED - STOPPING EXECUTION")
+                break
+                
+        # Only continue if all critical tests pass
+        if critical_passed == len(critical_tests):
+            print(f"\n✅ ALL CRITICAL TESTS PASSED ({critical_passed}/{len(critical_tests)})")
+            
+            # HIGH PRIORITY TESTS
+            high_tests = [
+                self.test_projects_list,
+                self.test_project_creation,
+                self.test_credit_balance,
+                self.test_credit_pricing
             ]
             
-            results["overall_success"] = all(success_criteria)
-            results["success_rate"] = sum(success_criteria) / len(success_criteria) * 100
+            for test in high_tests:
+                test()
+                
+            # MEDIUM PRIORITY TESTS
+            medium_tests = [
+                self.test_subscription_plans
+            ]
             
-            return results
+            for test in medium_tests:
+                test()
+        else:
+            print(f"\n❌ CRITICAL TESTS FAILED ({critical_passed}/{len(critical_tests)}) - PRODUCTION NOT READY")
             
-        except Exception as e:
-            print(f"❌ Comprehensive test failed: {str(e)}")
-            results["error"] = str(e)
-            return results
+        # Generate summary
+        self.generate_summary()
         
-        finally:
-            results["test_end_time"] = datetime.now().isoformat()
-            results["test_results"] = self.test_results
-
-def main():
-    """Main test execution"""
-    print(f"🚀 AutoWebIQ Multi-Model Router System Test")
-    
-    tester = MultiModelRouterTester()
-    results = tester.run_comprehensive_test()
-    
-    # Print final summary
-    print(f"\n" + "=" * 60)
-    print(f"🏁 MULTI-MODEL ROUTER TEST SUMMARY")
-    print(f"=" * 60)
-    
-    print(f"Overall Success: {'✅ PASSED' if results['overall_success'] else '❌ FAILED'}")
-    print(f"Success Rate: {results.get('success_rate', 0):.1f}%")
-    
-    print(f"\n📊 Test Results:")
-    print(f"  Authentication: {'✅' if results['authentication'].get('success') else '❌'}")
-    print(f"  Project Creation: {'✅' if results['project_creation'].get('success') else '❌'}")
-    print(f"  Model Router Endpoints: {'✅' if results['model_router_endpoints'].get('success') else '❌'}")
-    print(f"  Build Execution: {'✅' if results['build_execution'].get('success') else '❌'}")
-    print(f"  Build Quality: {'✅' if results['build_verification'].get('success') else '❌'}")
-    print(f"  Credit Deduction: {'✅' if results['credit_verification'].get('accurate_deduction') else '❌'}")
-    
-    if results.get('build_execution', {}).get('success'):
-        build_data = results['build_execution']
-        models_detected = build_data.get('models_detected', 0)
-        print(f"\n🎯 Multi-Model Detection:")
-        print(f"  Models Detected in Response: {models_detected}/4")
+    def generate_summary(self):
+        """Generate test summary"""
+        print("\n" + "=" * 60)
+        print("📊 PRODUCTION VERIFICATION TEST SUMMARY")
+        print("=" * 60)
         
-        indicators = build_data.get('model_indicators', {})
-        print(f"  Claude/Sonnet: {'✅' if indicators.get('claude_mentioned') else '❌'}")
-        print(f"  GPT/OpenAI: {'✅' if indicators.get('gpt_mentioned') else '❌'}")
-        print(f"  Gemini: {'✅' if indicators.get('gemini_mentioned') else '❌'}")
-        print(f"  Image Generation: {'✅' if indicators.get('image_generation') else '❌'}")
-    
-    if results.get('build_verification', {}).get('success'):
-        quality = results['build_verification']
-        print(f"\n📈 Build Quality Metrics:")
-        print(f"  HTML Length: {quality.get('html_length', 0):,} characters")
-        print(f"  Quality Score: {quality.get('quality_score', 0):.1f}%")
-    
-    if results.get('credit_verification', {}).get('success'):
-        credits = results['credit_verification']
-        print(f"\n💳 Credit Usage:")
-        print(f"  Credits Used: {credits.get('credits_used', 0)}")
-        print(f"  Remaining: {credits.get('current_credits', 0)}")
-    
-    # Print detailed test results
-    print(f"\n📋 Detailed Test Results:")
-    for i, test in enumerate(tester.test_results, 1):
-        status = "✅" if test['success'] else "❌"
-        print(f"  {i:2d}. {status} {test['test']}")
-        if test['details'] and not test['success']:
-            print(f"      Details: {test['details']}")
-    
-    # Return exit code based on success
-    return 0 if results['overall_success'] else 1
+        total_tests = len(self.test_results)
+        passed_tests = len([t for t in self.test_results if t["status"] == "PASS"])
+        failed_tests = total_tests - passed_tests
+        
+        critical_tests = [t for t in self.test_results if t["priority"] == "CRITICAL"]
+        critical_passed = len([t for t in critical_tests if t["status"] == "PASS"])
+        
+        print(f"Total Tests: {total_tests}")
+        print(f"Passed: {passed_tests} ✅")
+        print(f"Failed: {failed_tests} ❌")
+        print(f"Success Rate: {(passed_tests/total_tests)*100:.1f}%")
+        print(f"Critical Tests: {critical_passed}/{len(critical_tests)} passed")
+        
+        if self.critical_failures:
+            print(f"\n🚨 CRITICAL FAILURES:")
+            for failure in self.critical_failures:
+                print(f"   - {failure}")
+                
+        # Production readiness assessment
+        if critical_passed == len(critical_tests) and passed_tests >= total_tests * 0.95:
+            print(f"\n✅ PRODUCTION ASSESSMENT: READY FOR DEPLOYMENT")
+            print(f"   All critical tests passed, {(passed_tests/total_tests)*100:.1f}% success rate")
+        else:
+            print(f"\n❌ PRODUCTION ASSESSMENT: NOT READY")
+            print(f"   Critical failures or success rate below 95%")
+            
+        return passed_tests == total_tests
 
 if __name__ == "__main__":
-    exit_code = main()
-    sys.exit(exit_code)
+    tester = ProductionTester()
+    success = tester.run_all_tests()
+    sys.exit(0 if success else 1)
