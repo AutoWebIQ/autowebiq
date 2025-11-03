@@ -161,20 +161,6 @@ const Workspace = ({ user, onLogout }) => {
           
           <div className="chat-section">\n            <h3>AI Workspace</h3>
             
-            {/* Agent Status Display */}
-            {agentStatus.length > 0 && (
-              <div className="agent-status-container">
-                {agentStatus.map((status, index) => (
-                  <div key={index} className="agent-status-item">
-                    <span className="status-text">{status.status}</span>
-                    {status.credits > 0 && (
-                      <span className="status-credits">-{status.credits} credits</span>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
-            
             {/* Input Area */}
             <div className="chat-input-area">
               <textarea
