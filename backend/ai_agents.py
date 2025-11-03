@@ -38,7 +38,7 @@ class WebsiteBuilder:
                 pass
     
     async def build_website(self, user_prompt: str):
-        """Build website with gradual credit deduction (Emergent-style)"""
+        """Build website with gradual credit deduction - NOW WITH MULTI-PAGE SUPPORT"""
         try:
             # Check credits
             credits = await get_user_credits(self.user_id)
@@ -46,37 +46,46 @@ class WebsiteBuilder:
                 await self.send_status('❌ Insufficient credits', 0)
                 return
             
-            # Step 1: Planning Agent (2 credits)
-            await self.send_status('🤖 Planning Agent analyzing your requirements...', 0)
+            # Step 1: Planning Agent (2 credits) - ENHANCED
+            await self.send_status('🤖 Planning Agent analyzing requirements...', 0)
             await asyncio.sleep(1)
             plan = await self.planning_agent(user_prompt)
             await deduct_credits(self.user_id, get_action_cost('planning'), 'planning')
-            await self.send_status('✅ Planning complete - Strategy created', 2)
+            await self.send_status('✅ Planning complete - Multi-page structure determined', 2)
             
             # Step 2: Design Agent (3 credits)
-            await self.send_status('🎨 Design Agent creating beautiful UI/UX...', 0)
+            await self.send_status('🎨 Design Agent creating professional design system...', 0)
             await asyncio.sleep(1)
             design = await self.design_agent(plan)
             await deduct_credits(self.user_id, get_action_cost('design'), 'design')
-            await self.send_status('✅ Design complete - Color scheme and layout ready', 3)
+            await self.send_status('✅ Design complete - Colors, fonts, and layout ready', 3)
             
-            # Step 3: Code Generation Agent (5 credits)
-            await self.send_status('💻 Code Generation Agent building your website...', 0)
-            await self.send_status('📝 Writing HTML structure...', 0)
-            await asyncio.sleep(1)
-            await self.send_status('🎨 Styling with modern CSS...', 0)
-            await asyncio.sleep(1)
-            await self.send_status('⚡ Adding JavaScript interactivity...', 0)
+            # Step 3: Multi-Page Generation (5 credits) - NEW!
+            await self.send_status('💻 Generating multi-page website...', 0)
+            await asyncio.sleep(0.5)
+            await self.send_status('📄 Creating index.html, about.html, contact.html...', 0)
+            await asyncio.sleep(0.5)
+            await self.send_status('🎨 Generating style.css with modern design...', 0)
+            await asyncio.sleep(0.5)
+            await self.send_status('⚡ Adding script.js for interactivity...', 0)
+            await asyncio.sleep(0.5)
+            await self.send_status('📦 Creating package.json and README.md...', 0)
             
-            code = await self.code_generation_agent(user_prompt, plan, design)
+            # Generate multi-page website
+            from multipage_generator import MultiPageGenerator
+            generator = MultiPageGenerator()
+            files = await generator.generate_multipage_website(user_prompt)
+            
             await deduct_credits(self.user_id, get_action_cost('code_generation'), 'code_generation')
-            await self.send_status('✅ Code generation complete - Website ready!', 5)
+            await self.send_status('✅ Multi-page website generated - All files ready!', 5)
             
             # Step 4: Save to database
             await db.projects.update_one(
                 {'id': self.project_id},
                 {'$set': {
-                    'generated_code': code,
+                    'generated_code': files.get('index.html', ''),
+                    'all_files': files,  # Store all files
+                    'file_structure': list(files.keys()),
                     'status': 'completed',
                     'updated_at': datetime.now(timezone.utc).isoformat()
                 }}
@@ -84,12 +93,14 @@ class WebsiteBuilder:
             
             # Send final result
             new_balance = await get_user_credits(self.user_id)
-            await self.send_status('🎉 Website generated successfully! All features working.', 0)
+            await self.send_status('🎉 Complete! Generated: ' + ', '.join(files.keys()), 0)
             
             if self.websocket:
                 await self.websocket.send_json({
                     'type': 'complete',
-                    'code': code,
+                    'code': files.get('index.html', ''),
+                    'all_files': files,
+                    'file_count': len(files),
                     'total_credits_used': 10,
                     'new_balance': new_balance
                 })
