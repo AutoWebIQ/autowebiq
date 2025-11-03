@@ -153,7 +153,7 @@ class TemplateLibrary:
     async def get_components(self, component_ids: List[str]) -> List[Dict]:
         """Get components by IDs"""
         query = {"component_id": {"$in": component_ids}}
-        components = await self.components_collection.find(query).to_list(length=None)
+        components = await db.components.find(query, {"_id": 0}).to_list(length=None)
         return components
     
     async def get_components_by_category(self, category: str) -> List[Dict]:
