@@ -65,7 +65,7 @@ from motor.motor_asyncio import AsyncIOMotorClient
 
 # MongoDB connection for V1 endpoints
 mongo_client = AsyncIOMotorClient(os.environ.get('MONGO_URL', 'mongodb://localhost:27017'))
-db = mongo_client['autowebiq_db']
+db = mongo_client[os.environ.get('DB_NAME', 'autowebiq_db')]
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 security = HTTPBearer()
