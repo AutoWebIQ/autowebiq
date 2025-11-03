@@ -346,11 +346,11 @@ class ProductionTester:
         try:
             data = response.json()
             
-            if "balance" not in data:
-                self.log_test("Credit Balance - Structure", "FAIL", "No 'balance' key in response", "HIGH")
+            if "credits" not in data:
+                self.log_test("Credit Balance - Structure", "FAIL", "No 'credits' key in response", "HIGH")
                 return False
                 
-            balance = data["balance"]
+            balance = data["credits"]
             if not isinstance(balance, (int, float)):
                 self.log_test("Credit Balance - Type", "FAIL", "Balance is not a number", "HIGH")
                 return False
