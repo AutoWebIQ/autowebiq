@@ -163,9 +163,11 @@ class TemplateLibrary:
         return components
     
     async def increment_template_usage(self, template_id: str):
-        """Increment template usage count - PostgreSQL doesn't track this yet"""
-        # TODO: Add use_count column to Template model if needed
-        pass
+        """Increment template usage count in MongoDB"""
+        await db.templates.update_one(
+            {"template_id": template_id},
+            {"$inc": {"use_count": 1}}
+        )
 
 
 class TemplateCustomizer:
