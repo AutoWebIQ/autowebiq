@@ -3475,6 +3475,7 @@ async def get_components_by_category(category: str):
 
 
 
+# Production Middleware Configuration
 app.add_middleware(
     CORSMiddleware,
     allow_credentials=True,
@@ -3482,6 +3483,31 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Gzip compression for better performance
+app.add_middleware(GZipMiddleware, minimum_size=1000)
+
+# Trusted host middleware for security (production)
+if os.environ.get('ENVIRONMENT') == 'production':
+    allowed_hosts = [
+        'autowebiq.com',
+        'www.autowebiq.com',
+        'api.autowebiq.com',
+        '*.autowebiq.com'
+    ]
+    app.add_middleware(TrustedHostMiddleware, allowed_hosts=allowed_hosts)
+
+# Security headers middleware
+@app.middleware("http")
+async def add_security_headers(request: Request, call_next):
+    response = await call_next(request)
+    response.headers["X-Frame-Options"] = "SAMEORIGIN"
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-XSS-Protection"] = "1; mode=block"
+    response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+    if os.environ.get('ENVIRONMENT') == 'production':
+        response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+    return response
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
