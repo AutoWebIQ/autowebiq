@@ -101,6 +101,20 @@ async def startup_event():
     # Skip PostgreSQL initialization - using MongoDB for V1 endpoints
     # await init_db()
     logging.info("✅ Server started (MongoDB mode)")
+    
+    # Auto-load templates if not already loaded
+    try:
+        template_count = await db.templates.count_documents({})
+        if template_count == 0:
+            logging.info("📚 Templates not found, loading template library...")
+            from load_templates import load_templates
+            await load_templates()
+            logging.info("✅ Template library loaded successfully")
+        else:
+            logging.info(f"✅ Template library already loaded ({template_count} templates)")
+    except Exception as e:
+        logging.error(f"⚠️ Template loading error: {str(e)}")
+
 
 # Models
 class User(BaseModel):
