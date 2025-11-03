@@ -102,7 +102,7 @@
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
 
-user_problem_statement: "Phase 1: Implement Multi-Model Router System with intelligent task routing. Claude Sonnet 4 for frontend/UI, GPT-4o for backend logic, Gemini 2.5 Pro for content generation, and OpenAI gpt-image-1 for HD image generation. Enhance website generation quality with multi-model orchestration."
+user_problem_statement: "AutoWebIQ 2.0 Complete Rebuild: Make AutoWebIQ surpass Emergent in every parameter. Implement JWT + Firebase auth, Razorpay subscription plans (Starter/Pro/Enterprise), superior UI/UX with professional landing page and dashboard, gradual per-agent credit deduction with real-time tracking, full-stack generation (Claude Sonnet 4 frontend, GPT-4o backend, Gemini 2.5 Pro content, gpt-image-1 images), advanced workspace (Monaco editor, terminal, live preview), one-click Vercel deployment with Cloudflare CDN, and GitHub integration. Goal: Best AI development platform in the market."
 
 backend:
   - task: "Dynamic Credit System Core"
