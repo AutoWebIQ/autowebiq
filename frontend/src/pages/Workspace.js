@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import AgentStatusPanel from '../components/AgentStatusPanel';
 import './Workspace.css';
 
 const Workspace = ({ user, onLogout }) => {
