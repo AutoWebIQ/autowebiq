@@ -724,6 +724,311 @@ async def verify_payment(request: VerifyPaymentRequest, user_id: str = Depends(g
         )
         raise HTTPException(status_code=400, detail="Invalid payment signature")
 
+# ==================== SUBSCRIPTION ENDPOINTS ====================
+@api_router.get("/subscriptions/plans")
+async def get_subscription_plans():
+    """Get all available subscription plans"""
+    try:
+        plans = subscription_manager.get_all_plans()
+        return {"success": True, "plans": plans}
+    except Exception as e:
+        logger.error(f"Get plans error: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.post("/subscriptions/create")
+async def create_subscription(
+    plan_id: str = Body(...),
+    user_id: str = Depends(get_current_user)
+):
+    """Create a new subscription"""
+    try:
+        # Get user data
+        user = await db.users.find_one({"id": user_id}, {"_id": 0})
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        # Create subscription
+        subscription_data = await subscription_manager.create_subscription(
+            user_id=user_id,
+            plan_id=plan_id,
+            user_email=user['email']
+        )
+        
+        # Update user document
+        await db.users.update_one(
+            {"id": user_id},
+            {"$set": {
+                "subscription": {
+                    "subscription_id": subscription_data['subscription_id'],
+                    "plan_id": plan_id,
+                    "status": "created",
+                    "created_at": subscription_data['created_at']
+                }
+            }}
+        )
+        
+        return {
+            "success": True,
+            "subscription": subscription_data
+        }
+        
+    except Exception as e:
+        logger.error(f"Create subscription error: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.post("/subscriptions/verify")
+async def verify_subscription_payment(
+    subscription_id: str = Body(...),
+    payment_id: str = Body(...),
+    signature: str = Body(...),
+    user_id: str = Depends(get_current_user)
+):
+    """Verify subscription payment"""
+    try:
+        # Verify signature
+        is_valid = await subscription_manager.verify_subscription_payment(
+            subscription_id, payment_id, signature
+        )
+        
+        if not is_valid:
+            raise HTTPException(status_code=400, detail="Invalid signature")
+        
+        # Get subscription details
+        subscription_status = await subscription_manager.get_subscription_status(subscription_id)
+        
+        # Update user document
+        user = await db.users.find_one({"id": user_id}, {"_id": 0})
+        subscription = user.get('subscription', {})
+        plan_id = subscription.get('plan_id', 'free')
+        
+        # Add credits for the plan
+        credits_to_add = subscription_manager.get_credits_for_plan(plan_id)
+        
+        await db.users.update_one(
+            {"id": user_id},
+            {
+                "$set": {
+                    "subscription.status": "active",
+                    "subscription.last_credit_refill": datetime.now(timezone.utc).isoformat()
+                },
+                "$inc": {"credits": credits_to_add}
+            }
+        )
+        
+        # Get updated user
+        updated_user = await db.users.find_one({"id": user_id}, {"_id": 0})
+        
+        return {
+            "success": True,
+            "subscription": subscription_status,
+            "credits_added": credits_to_add,
+            "total_credits": updated_user['credits']
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Verify subscription error: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.get("/subscriptions/status")
+async def get_subscription_status_endpoint(user_id: str = Depends(get_current_user)):
+    """Get user's subscription status"""
+    try:
+        user = await db.users.find_one({"id": user_id}, {"_id": 0})
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        subscription = user.get('subscription', {})
+        
+        if not subscription or not subscription.get('subscription_id'):
+            return {
+                "success": True,
+                "subscription": {
+                    "status": "none",
+                    "plan_id": "free"
+                }
+            }
+        
+        # Get Razorpay subscription status
+        razorpay_status = await subscription_manager.get_subscription_status(
+            subscription['subscription_id']
+        )
+        
+        # Check if credits need refill
+        should_refill = await subscription_manager.should_refill_credits(user)
+        
+        if should_refill:
+            refill_result = await subscription_manager.refill_monthly_credits(user, db)
+            return {
+                "success": True,
+                "subscription": {**subscription, **razorpay_status},
+                "credits_refilled": refill_result
+            }
+        
+        return {
+            "success": True,
+            "subscription": {**subscription, **razorpay_status}
+        }
+        
+    except Exception as e:
+        logger.error(f"Get subscription status error: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.post("/subscriptions/cancel")
+async def cancel_subscription(
+    cancel_at_cycle_end: bool = Body(True),
+    user_id: str = Depends(get_current_user)
+):
+    """Cancel user's subscription"""
+    try:
+        user = await db.users.find_one({"id": user_id}, {"_id": 0})
+        subscription = user.get('subscription', {})
+        
+        if not subscription or not subscription.get('subscription_id'):
+            raise HTTPException(status_code=404, detail="No active subscription")
+        
+        # Cancel on Razorpay
+        cancel_result = await subscription_manager.cancel_subscription(
+            subscription['subscription_id'],
+            cancel_at_cycle_end
+        )
+        
+        # Update user document
+        await db.users.update_one(
+            {"id": user_id},
+            {"$set": {"subscription.status": "cancelled"}}
+        )
+        
+        return {
+            "success": True,
+            "cancellation": cancel_result
+        }
+        
+    except Exception as e:
+        logger.error(f"Cancel subscription error: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+# ==================== MANUAL DEPLOYMENT ENDPOINTS ====================
+@api_router.post("/deployments/deploy")
+async def deploy_project_manually(
+    project_id: str = Body(...),
+    subdomain: Optional[str] = Body(None),
+    user_id: str = Depends(get_current_user)
+):
+    """Deploy project with instant preview (Emergent-style)"""
+    try:
+        # Get project
+        project = await db.projects.find_one({"id": project_id, "user_id": user_id}, {"_id": 0})
+        if not project:
+            raise HTTPException(status_code=404, detail="Project not found")
+        
+        # Prepare files
+        files = manual_deployment_manager.prepare_files_from_project(project)
+        
+        # Deploy
+        deployment = await manual_deployment_manager.deploy_project(
+            project_id=project_id,
+            user_id=user_id,
+            files=files,
+            subdomain=subdomain
+        )
+        
+        # Update project with deployment info
+        await db.projects.update_one(
+            {"id": project_id},
+            {"$set": {
+                "deployment": deployment,
+                "updated_at": datetime.now(timezone.utc).isoformat()
+            }}
+        )
+        
+        return {
+            "success": True,
+            "deployment": deployment
+        }
+        
+    except Exception as e:
+        logger.error(f"Deploy project error: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.get("/deployments/{project_id}")
+async def get_deployment_info(
+    project_id: str,
+    user_id: str = Depends(get_current_user)
+):
+    """Get deployment information for a project"""
+    try:
+        # Verify ownership
+        project = await db.projects.find_one({"id": project_id, "user_id": user_id}, {"_id": 0})
+        if not project:
+            raise HTTPException(status_code=404, detail="Project not found")
+        
+        # Get deployment info
+        deployment = await manual_deployment_manager.get_deployment_info(project_id, db)
+        
+        if not deployment:
+            return {
+                "success": True,
+                "deployment": None,
+                "message": "No deployment found"
+            }
+        
+        return {
+            "success": True,
+            "deployment": deployment
+        }
+        
+    except Exception as e:
+        logger.error(f"Get deployment info error: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.delete("/deployments/{project_id}")
+async def delete_deployment(
+    project_id: str,
+    user_id: str = Depends(get_current_user)
+):
+    """Delete a deployment"""
+    try:
+        # Verify ownership
+        project = await db.projects.find_one({"id": project_id, "user_id": user_id}, {"_id": 0})
+        if not project:
+            raise HTTPException(status_code=404, detail="Project not found")
+        
+        # Delete deployment
+        result = await manual_deployment_manager.delete_deployment(project_id)
+        
+        # Update project
+        await db.projects.update_one(
+            {"id": project_id},
+            {"$unset": {"deployment": ""}}
+        )
+        
+        return {
+            "success": True,
+            "deletion": result
+        }
+        
+    except Exception as e:
+        logger.error(f"Delete deployment error: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.get("/deployments")
+async def list_user_deployments(user_id: str = Depends(get_current_user)):
+    """List all deployments for current user"""
+    try:
+        deployments = await manual_deployment_manager.list_user_deployments(user_id, db)
+        
+        return {
+            "success": True,
+            "count": len(deployments),
+            "deployments": deployments
+        }
+        
+    except Exception as e:
+        logger.error(f"List deployments error: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 # Projects
 @api_router.post("/projects/create")
 async def create_project(project_data: ProjectCreate, user_id: str = Depends(get_current_user)):
