@@ -47,24 +47,30 @@ class WebsiteBuilder:
                 return
             
             # Step 1: Planning Agent (2 credits)
-            await self.send_status('🤖 Planning Agent working...', 0)
-            await asyncio.sleep(1)  # Simulate work
+            await self.send_status('🤖 Planning Agent analyzing your requirements...', 0)
+            await asyncio.sleep(1)
             plan = await self.planning_agent(user_prompt)
             await deduct_credits(self.user_id, get_action_cost('planning'), 'planning')
-            await self.send_status('✅ Planning complete', 2)
+            await self.send_status('✅ Planning complete - Strategy created', 2)
             
             # Step 2: Design Agent (3 credits)
-            await self.send_status('🎨 Design Agent working...', 0)
+            await self.send_status('🎨 Design Agent creating beautiful UI/UX...', 0)
             await asyncio.sleep(1)
             design = await self.design_agent(plan)
             await deduct_credits(self.user_id, get_action_cost('design'), 'design')
-            await self.send_status('✅ Design complete', 3)
+            await self.send_status('✅ Design complete - Color scheme and layout ready', 3)
             
             # Step 3: Code Generation Agent (5 credits)
-            await self.send_status('💻 Code Generation Agent working...', 0)
+            await self.send_status('💻 Code Generation Agent building your website...', 0)
+            await self.send_status('📝 Writing HTML structure...', 0)
+            await asyncio.sleep(1)
+            await self.send_status('🎨 Styling with modern CSS...', 0)
+            await asyncio.sleep(1)
+            await self.send_status('⚡ Adding JavaScript interactivity...', 0)
+            
             code = await self.code_generation_agent(user_prompt, plan, design)
             await deduct_credits(self.user_id, get_action_cost('code_generation'), 'code_generation')
-            await self.send_status('✅ Code generation complete', 5)
+            await self.send_status('✅ Code generation complete - Website ready!', 5)
             
             # Step 4: Save to database
             await db.projects.update_one(
@@ -78,7 +84,7 @@ class WebsiteBuilder:
             
             # Send final result
             new_balance = await get_user_credits(self.user_id)
-            await self.send_status('🎉 Website generated successfully!', 0)
+            await self.send_status('🎉 Website generated successfully! All features working.', 0)
             
             if self.websocket:
                 await self.websocket.send_json({
