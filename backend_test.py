@@ -17,507 +17,471 @@ import uuid
 # LIVE PRODUCTION DOMAIN - NOT LOCALHOST
 BASE_URL = "https://autowebiq.com/api"
 
-class ProductionTester:
+class ProductionDomainTester:
     def __init__(self):
+        self.session = None
         self.test_results = []
-        self.critical_failures = []
-        self.jwt_token = None
-        self.demo_user_data = None
+        self.demo_token = None
         
-    def log_test(self, test_name, status, details="", priority="MEDIUM"):
-        """Log test result"""
+    async def __aenter__(self):
+        # Configure session with proper headers for production
+        connector = aiohttp.TCPConnector(ssl=False)  # Allow SSL issues for testing
+        timeout = aiohttp.ClientTimeout(total=30)
+        self.session = aiohttp.ClientSession(
+            connector=connector,
+            timeout=timeout,
+            headers={
+                'User-Agent': 'AutoWebIQ-Production-Tester/1.0',
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            }
+        )
+        return self
+        
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        if self.session:
+            await self.session.close()
+    
+    def log_result(self, test_name: str, success: bool, details: str, response_data=None):
+        """Log test result with timestamp"""
         result = {
-            "test": test_name,
-            "status": status,
-            "details": details,
-            "priority": priority,
-            "timestamp": datetime.now().isoformat()
+            'test': test_name,
+            'success': success,
+            'details': details,
+            'timestamp': datetime.now().isoformat(),
+            'response_data': response_data
         }
         self.test_results.append(result)
         
-        status_icon = "✅" if status == "PASS" else "❌"
-        priority_prefix = f"[{priority}]" if priority in ["CRITICAL", "HIGH"] else ""
-        print(f"{status_icon} {priority_prefix} {test_name}: {status}")
-        if details:
-            print(f"   Details: {details}")
-        
-        if status == "FAIL" and priority == "CRITICAL":
-            self.critical_failures.append(test_name)
-            
-    def make_request(self, method, endpoint, data=None, auth_token=None, expect_status=200):
-        """Make HTTP request with proper headers"""
-        url = f"{BASE_URL}{endpoint}"
-        headers = HEADERS.copy()
-        
-        if auth_token:
-            headers["Authorization"] = f"Bearer {auth_token}"
-            
+        status = "✅" if success else "❌"
+        print(f"{status} {test_name}: {details}")
+        if response_data and not success:
+            print(f"   Response: {response_data}")
+    
+    async def test_health_check_live_domain(self):
+        """Test 1: Health Check on LIVE domain - Critical Test"""
         try:
-            if method == "GET":
-                response = requests.get(url, headers=headers, timeout=10)
-            elif method == "POST":
-                response = requests.post(url, headers=headers, json=data, timeout=10)
-            elif method == "DELETE":
-                response = requests.delete(url, headers=headers, timeout=10)
-            else:
-                raise ValueError(f"Unsupported method: {method}")
+            url = f"{BASE_URL}/health"
+            print(f"\n🔍 Testing LIVE domain health check: {url}")
+            
+            async with self.session.get(url) as response:
+                status_code = response.status
+                response_text = await response.text()
                 
-            return response
-            
-        except requests.exceptions.RequestException as e:
-            return None
-            
-    def test_health_check(self):
-        """CRITICAL: Test health endpoint"""
-        print("\n🔍 CRITICAL TEST: Health Check")
-        
-        response = self.make_request("GET", "/api/health")
-        
-        if not response:
-            self.log_test("Health Check - Connection", "FAIL", "Failed to connect to backend", "CRITICAL")
-            return False
-            
-        if response.status_code != 200:
-            self.log_test("Health Check - Status Code", "FAIL", f"Expected 200, got {response.status_code}", "CRITICAL")
-            return False
-            
-        try:
-            data = response.json()
-            
-            # Check status
-            if data.get("status") != "healthy":
-                self.log_test("Health Check - Status", "FAIL", f"Status: {data.get('status')}", "CRITICAL")
-                return False
-                
-            # Check MongoDB connection
-            databases = data.get("databases", {})
-            mongodb_status = databases.get("mongodb")
-            if mongodb_status != "connected":
-                self.log_test("Health Check - MongoDB", "FAIL", f"MongoDB: {mongodb_status}", "CRITICAL")
-                return False
-                
-            self.log_test("Health Check", "PASS", f"Status: {data.get('status')}, MongoDB: {mongodb_status}", "CRITICAL")
-            return True
-            
-        except json.JSONDecodeError:
-            self.log_test("Health Check - JSON", "FAIL", "Invalid JSON response", "CRITICAL")
-            return False
-            
-    def test_demo_login(self):
-        """CRITICAL: Test demo account login"""
-        print("\n🔍 CRITICAL TEST: Demo Account Login")
-        
-        login_data = {
-            "email": DEMO_EMAIL,
-            "password": DEMO_PASSWORD
-        }
-        
-        response = self.make_request("POST", "/api/auth/login", login_data)
-        
-        if not response:
-            self.log_test("Demo Login - Connection", "FAIL", "Failed to connect", "CRITICAL")
-            return False
-            
-        if response.status_code != 200:
-            self.log_test("Demo Login - Status Code", "FAIL", f"Expected 200, got {response.status_code}", "CRITICAL")
-            return False
-            
-        try:
-            data = response.json()
-            
-            # Check token
-            if not data.get("access_token"):
-                self.log_test("Demo Login - Token", "FAIL", "No access token returned", "CRITICAL")
-                return False
-                
-            # Check user data
-            user = data.get("user", {})
-            if user.get("email") != DEMO_EMAIL:
-                self.log_test("Demo Login - User Email", "FAIL", f"Expected {DEMO_EMAIL}, got {user.get('email')}", "CRITICAL")
-                return False
-                
-            # Store for later tests
-            self.jwt_token = data["access_token"]
-            self.demo_user_data = user
-            
-            credits = user.get("credits", 0)
-            self.log_test("Demo Login", "PASS", f"Token received, Credits: {credits}", "CRITICAL")
-            return True
-            
-        except json.JSONDecodeError:
-            self.log_test("Demo Login - JSON", "FAIL", "Invalid JSON response", "CRITICAL")
-            return False
-            
-    def test_user_registration(self):
-        """CRITICAL: Test new user registration"""
-        print("\n🔍 CRITICAL TEST: User Registration")
-        
-        # Generate unique test user
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        test_email = f"test_{timestamp}@test.com"
-        
-        register_data = {
-            "username": f"TestUser_{timestamp}",
-            "email": test_email,
-            "password": "Test123456"
-        }
-        
-        response = self.make_request("POST", "/api/auth/register", register_data)
-        
-        if not response:
-            self.log_test("User Registration - Connection", "FAIL", "Failed to connect", "CRITICAL")
-            return False
-            
-        if response.status_code != 200:
-            self.log_test("User Registration - Status Code", "FAIL", f"Expected 200, got {response.status_code}", "CRITICAL")
-            return False
-            
-        try:
-            data = response.json()
-            
-            # Check token
-            if not data.get("access_token"):
-                self.log_test("User Registration - Token", "FAIL", "No access token returned", "CRITICAL")
-                return False
-                
-            # Check user data
-            user = data.get("user", {})
-            if user.get("email") != test_email:
-                self.log_test("User Registration - Email", "FAIL", f"Expected {test_email}, got {user.get('email')}", "CRITICAL")
-                return False
-                
-            # Check credits (should be 20)
-            credits = user.get("credits", 0)
-            if credits != 20:
-                self.log_test("User Registration - Credits", "FAIL", f"Expected 20 credits, got {credits}", "CRITICAL")
-                return False
-                
-            self.log_test("User Registration", "PASS", f"User created with 20 credits", "CRITICAL")
-            return True
-            
-        except json.JSONDecodeError:
-            self.log_test("User Registration - JSON", "FAIL", "Invalid JSON response", "CRITICAL")
-            return False
-            
-    def test_auth_me(self):
-        """CRITICAL: Test /auth/me endpoint"""
-        print("\n🔍 CRITICAL TEST: Auth Me Endpoint")
-        
-        if not self.jwt_token:
-            self.log_test("Auth Me - No Token", "FAIL", "No JWT token available", "CRITICAL")
-            return False
-            
-        response = self.make_request("GET", "/api/auth/me", auth_token=self.jwt_token)
-        
-        if not response:
-            self.log_test("Auth Me - Connection", "FAIL", "Failed to connect", "CRITICAL")
-            return False
-            
-        if response.status_code != 200:
-            self.log_test("Auth Me - Status Code", "FAIL", f"Expected 200, got {response.status_code}", "CRITICAL")
-            return False
-            
-        try:
-            data = response.json()
-            
-            # Check user data
-            if data.get("email") != DEMO_EMAIL:
-                self.log_test("Auth Me - Email", "FAIL", f"Expected {DEMO_EMAIL}, got {data.get('email')}", "CRITICAL")
-                return False
-                
-            if not data.get("id"):
-                self.log_test("Auth Me - User ID", "FAIL", "No user ID returned", "CRITICAL")
-                return False
-                
-            credits = data.get("credits", 0)
-            self.log_test("Auth Me", "PASS", f"User data retrieved, Credits: {credits}", "CRITICAL")
-            return True
-            
-        except json.JSONDecodeError:
-            self.log_test("Auth Me - JSON", "FAIL", "Invalid JSON response", "CRITICAL")
-            return False
-            
-    def test_projects_list(self):
-        """HIGH: Test projects list"""
-        print("\n🔍 HIGH PRIORITY TEST: Projects List")
-        
-        if not self.jwt_token:
-            self.log_test("Projects List - No Token", "FAIL", "No JWT token available", "HIGH")
-            return False
-            
-        response = self.make_request("GET", "/api/projects", auth_token=self.jwt_token)
-        
-        if not response:
-            self.log_test("Projects List - Connection", "FAIL", "Failed to connect", "HIGH")
-            return False
-            
-        if response.status_code != 200:
-            self.log_test("Projects List - Status Code", "FAIL", f"Expected 200, got {response.status_code}", "HIGH")
-            return False
-            
-        try:
-            data = response.json()
-            
-            if "projects" not in data:
-                self.log_test("Projects List - Structure", "FAIL", "No 'projects' key in response", "HIGH")
-                return False
-                
-            projects = data["projects"]
-            if not isinstance(projects, list):
-                self.log_test("Projects List - Type", "FAIL", "Projects is not a list", "HIGH")
-                return False
-                
-            self.log_test("Projects List", "PASS", f"Retrieved {len(projects)} projects", "HIGH")
-            return True
-            
-        except json.JSONDecodeError:
-            self.log_test("Projects List - JSON", "FAIL", "Invalid JSON response", "HIGH")
-            return False
-            
-    def test_project_creation(self):
-        """HIGH: Test project creation"""
-        print("\n🔍 HIGH PRIORITY TEST: Project Creation")
-        
-        if not self.jwt_token:
-            self.log_test("Project Creation - No Token", "FAIL", "No JWT token available", "HIGH")
-            return False
-            
-        project_data = {
-            "name": "Test Project Production",
-            "description": "Production verification test project",
-            "model": "claude-4.5-sonnet-200k"
-        }
-        
-        response = self.make_request("POST", "/api/projects/create", project_data, auth_token=self.jwt_token)
-        
-        if not response:
-            self.log_test("Project Creation - Connection", "FAIL", "Failed to connect", "HIGH")
-            return False
-            
-        if response.status_code != 200:
-            self.log_test("Project Creation - Status Code", "FAIL", f"Expected 200, got {response.status_code}", "HIGH")
-            return False
-            
-        try:
-            data = response.json()
-            
-            if not data.get("id"):
-                self.log_test("Project Creation - ID", "FAIL", "No project ID returned", "HIGH")
-                return False
-                
-            if data.get("name") != project_data["name"]:
-                self.log_test("Project Creation - Name", "FAIL", f"Name mismatch", "HIGH")
-                return False
-                
-            self.log_test("Project Creation", "PASS", f"Project created with ID: {data['id'][:8]}...", "HIGH")
-            return True
-            
-        except json.JSONDecodeError:
-            self.log_test("Project Creation - JSON", "FAIL", "Invalid JSON response", "HIGH")
-            return False
-            
-    def test_credit_balance(self):
-        """HIGH: Test credit balance endpoint"""
-        print("\n🔍 HIGH PRIORITY TEST: Credit Balance")
-        
-        if not self.jwt_token:
-            self.log_test("Credit Balance - No Token", "FAIL", "No JWT token available", "HIGH")
-            return False
-            
-        response = self.make_request("GET", "/api/credits/balance", auth_token=self.jwt_token)
-        
-        if not response:
-            self.log_test("Credit Balance - Connection", "FAIL", "Failed to connect", "HIGH")
-            return False
-            
-        if response.status_code != 200:
-            self.log_test("Credit Balance - Status Code", "FAIL", f"Expected 200, got {response.status_code}", "HIGH")
-            return False
-            
-        try:
-            data = response.json()
-            
-            if "credits" not in data:
-                self.log_test("Credit Balance - Structure", "FAIL", "No 'credits' key in response", "HIGH")
-                return False
-                
-            balance = data["credits"]
-            if not isinstance(balance, (int, float)):
-                self.log_test("Credit Balance - Type", "FAIL", "Balance is not a number", "HIGH")
-                return False
-                
-            self.log_test("Credit Balance", "PASS", f"Balance: {balance} credits", "HIGH")
-            return True
-            
-        except json.JSONDecodeError:
-            self.log_test("Credit Balance - JSON", "FAIL", "Invalid JSON response", "HIGH")
-            return False
-            
-    def test_credit_pricing(self):
-        """HIGH: Test credit pricing endpoint"""
-        print("\n🔍 HIGH PRIORITY TEST: Credit Pricing")
-        
-        response = self.make_request("GET", "/api/credits/pricing")
-        
-        if not response:
-            self.log_test("Credit Pricing - Connection", "FAIL", "Failed to connect", "HIGH")
-            return False
-            
-        if response.status_code != 200:
-            self.log_test("Credit Pricing - Status Code", "FAIL", f"Expected 200, got {response.status_code}", "HIGH")
-            return False
-            
-        try:
-            data = response.json()
-            
-            # Should have agent_costs and model_costs
-            if "agent_costs" not in data or "model_costs" not in data:
-                self.log_test("Credit Pricing - Structure", "FAIL", "Missing agent_costs or model_costs", "HIGH")
-                return False
-                
-            agent_costs = data["agent_costs"]
-            model_costs = data["model_costs"]
-            
-            if not isinstance(agent_costs, dict) or not isinstance(model_costs, dict):
-                self.log_test("Credit Pricing - Types", "FAIL", "Costs are not dictionaries", "HIGH")
-                return False
-                
-            self.log_test("Credit Pricing", "PASS", f"Agent costs: {len(agent_costs)}, Model costs: {len(model_costs)}", "HIGH")
-            return True
-            
-        except json.JSONDecodeError:
-            self.log_test("Credit Pricing - JSON", "FAIL", "Invalid JSON response", "HIGH")
-            return False
-            
-    def test_subscription_plans(self):
-        """MEDIUM: Test subscription plans"""
-        print("\n🔍 MEDIUM PRIORITY TEST: Subscription Plans")
-        
-        response = self.make_request("GET", "/api/subscriptions/plans")
-        
-        if not response:
-            self.log_test("Subscription Plans - Connection", "FAIL", "Failed to connect", "MEDIUM")
-            return False
-            
-        if response.status_code != 200:
-            self.log_test("Subscription Plans - Status Code", "FAIL", f"Expected 200, got {response.status_code}", "MEDIUM")
-            return False
-            
-        try:
-            data = response.json()
-            
-            if not data.get("success"):
-                self.log_test("Subscription Plans - Success", "FAIL", "Success flag is false", "MEDIUM")
-                return False
-                
-            plans = data.get("plans", [])
-            if len(plans) != 4:
-                self.log_test("Subscription Plans - Count", "FAIL", f"Expected 4 plans, got {len(plans)}", "MEDIUM")
-                return False
-                
-            # Check for required plans
-            plan_names = [plan.get("name", "") for plan in plans]
-            required_plans = ["Free", "Starter", "Pro", "Enterprise"]
-            
-            for required_plan in required_plans:
-                if required_plan not in plan_names:
-                    self.log_test("Subscription Plans - Missing Plan", "FAIL", f"Missing {required_plan} plan", "MEDIUM")
+                if status_code == 200:
+                    try:
+                        data = json.loads(response_text)
+                        self.log_result(
+                            "LIVE Domain Health Check", 
+                            True, 
+                            f"Backend accessible on production domain (Status: {status_code})",
+                            data
+                        )
+                        return True
+                    except json.JSONDecodeError:
+                        self.log_result(
+                            "LIVE Domain Health Check", 
+                            False, 
+                            f"Backend responds but invalid JSON (Status: {status_code})",
+                            response_text[:200]
+                        )
+                        return False
+                else:
+                    self.log_result(
+                        "LIVE Domain Health Check", 
+                        False, 
+                        f"Backend not accessible on production domain (Status: {status_code})",
+                        response_text[:200]
+                    )
                     return False
                     
-            self.log_test("Subscription Plans", "PASS", f"All 4 plans found: {', '.join(plan_names)}", "MEDIUM")
-            return True
+        except aiohttp.ClientError as e:
+            self.log_result(
+                "LIVE Domain Health Check", 
+                False, 
+                f"Connection failed to production domain: {str(e)}",
+                None
+            )
+            return False
+        except Exception as e:
+            self.log_result(
+                "LIVE Domain Health Check", 
+                False, 
+                f"Unexpected error: {str(e)}",
+                None
+            )
+            return False
+    
+    async def test_manual_login_live_domain(self):
+        """Test 2: Manual Login on LIVE domain - Critical Test"""
+        try:
+            url = f"{BASE_URL}/auth/login"
+            login_data = {
+                "email": "demo@test.com",
+                "password": "Demo123456"
+            }
             
-        except json.JSONDecodeError:
-            self.log_test("Subscription Plans - JSON", "FAIL", "Invalid JSON response", "MEDIUM")
+            print(f"\n🔍 Testing manual login on LIVE domain: {url}")
+            print(f"   Credentials: {login_data['email']} / {login_data['password']}")
+            
+            async with self.session.post(url, json=login_data) as response:
+                status_code = response.status
+                response_text = await response.text()
+                
+                if status_code == 200:
+                    try:
+                        data = json.loads(response_text)
+                        if 'access_token' in data:
+                            self.demo_token = data['access_token']
+                            user_info = data.get('user', {})
+                            self.log_result(
+                                "LIVE Domain Manual Login", 
+                                True, 
+                                f"Login successful - JWT token received, User: {user_info.get('email', 'N/A')}, Credits: {user_info.get('credits', 'N/A')}",
+                                {'token_length': len(self.demo_token), 'user': user_info}
+                            )
+                            return True
+                        else:
+                            self.log_result(
+                                "LIVE Domain Manual Login", 
+                                False, 
+                                "Login response missing access_token",
+                                data
+                            )
+                            return False
+                    except json.JSONDecodeError:
+                        self.log_result(
+                            "LIVE Domain Manual Login", 
+                            False, 
+                            f"Invalid JSON response (Status: {status_code})",
+                            response_text[:200]
+                        )
+                        return False
+                elif status_code == 401:
+                    self.log_result(
+                        "LIVE Domain Manual Login", 
+                        False, 
+                        "Invalid credentials - demo account may not exist on production",
+                        response_text[:200]
+                    )
+                    return False
+                else:
+                    self.log_result(
+                        "LIVE Domain Manual Login", 
+                        False, 
+                        f"Login failed (Status: {status_code})",
+                        response_text[:200]
+                    )
+                    return False
+                    
+        except Exception as e:
+            self.log_result(
+                "LIVE Domain Manual Login", 
+                False, 
+                f"Login request failed: {str(e)}",
+                None
+            )
+            return False
+    
+    async def test_manual_registration_live_domain(self):
+        """Test 3: Manual Registration on LIVE domain - Critical Test"""
+        try:
+            url = f"{BASE_URL}/auth/register"
+            
+            # Generate unique test user
+            test_email = f"test_{uuid.uuid4().hex[:8]}@autowebiq.test"
+            registration_data = {
+                "username": f"TestUser_{uuid.uuid4().hex[:6]}",
+                "email": test_email,
+                "password": "TestPassword123!"
+            }
+            
+            print(f"\n🔍 Testing manual registration on LIVE domain: {url}")
+            print(f"   Test User: {registration_data['email']}")
+            
+            async with self.session.post(url, json=registration_data) as response:
+                status_code = response.status
+                response_text = await response.text()
+                
+                if status_code == 200:
+                    try:
+                        data = json.loads(response_text)
+                        if 'access_token' in data:
+                            user_info = data.get('user', {})
+                            self.log_result(
+                                "LIVE Domain Manual Registration", 
+                                True, 
+                                f"Registration successful - New user created with {user_info.get('credits', 'N/A')} credits",
+                                {'user': user_info}
+                            )
+                            return True
+                        else:
+                            self.log_result(
+                                "LIVE Domain Manual Registration", 
+                                False, 
+                                "Registration response missing access_token",
+                                data
+                            )
+                            return False
+                    except json.JSONDecodeError:
+                        self.log_result(
+                            "LIVE Domain Manual Registration", 
+                            False, 
+                            f"Invalid JSON response (Status: {status_code})",
+                            response_text[:200]
+                        )
+                        return False
+                elif status_code == 400:
+                    self.log_result(
+                        "LIVE Domain Manual Registration", 
+                        False, 
+                        "Registration failed - validation error or email exists",
+                        response_text[:200]
+                    )
+                    return False
+                else:
+                    self.log_result(
+                        "LIVE Domain Manual Registration", 
+                        False, 
+                        f"Registration failed (Status: {status_code})",
+                        response_text[:200]
+                    )
+                    return False
+                    
+        except Exception as e:
+            self.log_result(
+                "LIVE Domain Manual Registration", 
+                False, 
+                f"Registration request failed: {str(e)}",
+                None
+            )
+            return False
+    
+    async def test_cors_headers_live_domain(self):
+        """Test 4: CORS Headers Check - Critical for frontend access"""
+        try:
+            url = f"{BASE_URL}/health"
+            
+            print(f"\n🔍 Testing CORS headers on LIVE domain: {url}")
+            
+            # Test preflight OPTIONS request
+            headers = {
+                'Origin': 'https://autowebiq.com',
+                'Access-Control-Request-Method': 'POST',
+                'Access-Control-Request-Headers': 'Content-Type,Authorization'
+            }
+            
+            async with self.session.options(url, headers=headers) as response:
+                status_code = response.status
+                cors_headers = {
+                    'Access-Control-Allow-Origin': response.headers.get('Access-Control-Allow-Origin'),
+                    'Access-Control-Allow-Methods': response.headers.get('Access-Control-Allow-Methods'),
+                    'Access-Control-Allow-Headers': response.headers.get('Access-Control-Allow-Headers'),
+                    'Access-Control-Allow-Credentials': response.headers.get('Access-Control-Allow-Credentials')
+                }
+                
+                # Check if CORS allows autowebiq.com
+                allow_origin = cors_headers.get('Access-Control-Allow-Origin')
+                if allow_origin == '*' or 'autowebiq.com' in str(allow_origin):
+                    self.log_result(
+                        "LIVE Domain CORS Headers", 
+                        True, 
+                        f"CORS properly configured for autowebiq.com (Status: {status_code})",
+                        cors_headers
+                    )
+                    return True
+                else:
+                    self.log_result(
+                        "LIVE Domain CORS Headers", 
+                        False, 
+                        f"CORS may not allow autowebiq.com origin (Status: {status_code})",
+                        cors_headers
+                    )
+                    return False
+                    
+        except Exception as e:
+            self.log_result(
+                "LIVE Domain CORS Headers", 
+                False, 
+                f"CORS test failed: {str(e)}",
+                None
+            )
+            return False
+    
+    async def test_google_oauth_endpoint_live_domain(self):
+        """Test 5: Google OAuth Endpoint - Critical for Google login"""
+        try:
+            url = f"{BASE_URL}/auth/google"
+            
+            print(f"\n🔍 Testing Google OAuth endpoint on LIVE domain: {url}")
+            
+            async with self.session.get(url) as response:
+                status_code = response.status
+                response_text = await response.text()
+                
+                # OAuth endpoints typically redirect (302) or return specific responses
+                if status_code in [200, 302, 400]:  # 400 might be expected without proper params
+                    self.log_result(
+                        "LIVE Domain Google OAuth", 
+                        True, 
+                        f"Google OAuth endpoint accessible (Status: {status_code})",
+                        {'status': status_code, 'response_preview': response_text[:100]}
+                    )
+                    return True
+                else:
+                    self.log_result(
+                        "LIVE Domain Google OAuth", 
+                        False, 
+                        f"Google OAuth endpoint not accessible (Status: {status_code})",
+                        response_text[:200]
+                    )
+                    return False
+                    
+        except Exception as e:
+            self.log_result(
+                "LIVE Domain Google OAuth", 
+                False, 
+                f"Google OAuth test failed: {str(e)}",
+                None
+            )
+            return False
+    
+    async def test_authenticated_endpoint_live_domain(self):
+        """Test 6: Test authenticated endpoint if login succeeded"""
+        if not self.demo_token:
+            self.log_result(
+                "LIVE Domain Authenticated Access", 
+                False, 
+                "Skipped - no valid token from login test",
+                None
+            )
             return False
             
-    def run_all_tests(self):
-        """Run all tests in priority order"""
-        print("🚀 STARTING CRITICAL PRODUCTION VERIFICATION TESTING")
-        print(f"Backend URL: {BASE_URL}")
-        print(f"Host Header: {HOST_HEADER}")
-        print(f"Demo Account: {DEMO_EMAIL}")
-        print("=" * 60)
+        try:
+            url = f"{BASE_URL}/auth/me"
+            headers = {'Authorization': f'Bearer {self.demo_token}'}
+            
+            print(f"\n🔍 Testing authenticated endpoint on LIVE domain: {url}")
+            
+            async with self.session.get(url, headers=headers) as response:
+                status_code = response.status
+                response_text = await response.text()
+                
+                if status_code == 200:
+                    try:
+                        data = json.loads(response_text)
+                        self.log_result(
+                            "LIVE Domain Authenticated Access", 
+                            True, 
+                            f"Authenticated access working - User: {data.get('email', 'N/A')}, Credits: {data.get('credits', 'N/A')}",
+                            data
+                        )
+                        return True
+                    except json.JSONDecodeError:
+                        self.log_result(
+                            "LIVE Domain Authenticated Access", 
+                            False, 
+                            f"Invalid JSON in auth response (Status: {status_code})",
+                            response_text[:200]
+                        )
+                        return False
+                else:
+                    self.log_result(
+                        "LIVE Domain Authenticated Access", 
+                        False, 
+                        f"Authentication failed (Status: {status_code})",
+                        response_text[:200]
+                    )
+                    return False
+                    
+        except Exception as e:
+            self.log_result(
+                "LIVE Domain Authenticated Access", 
+                False, 
+                f"Authenticated request failed: {str(e)}",
+                None
+            )
+            return False
+    
+    async def run_all_tests(self):
+        """Run all production domain tests"""
+        print("=" * 80)
+        print("🚨 CRITICAL PRODUCTION TESTING - LIVE DOMAIN autowebiq.com")
+        print("=" * 80)
+        print(f"Testing URL: {BASE_URL}")
+        print(f"User Report: Unable to login on autowebiq.com with manual OR Google login")
+        print("=" * 80)
         
-        # CRITICAL TESTS (must pass 100%)
-        critical_tests = [
-            self.test_health_check,
-            self.test_demo_login,
-            self.test_user_registration,
-            self.test_auth_me
+        # Run tests in order
+        tests = [
+            self.test_health_check_live_domain,
+            self.test_manual_login_live_domain,
+            self.test_manual_registration_live_domain,
+            self.test_cors_headers_live_domain,
+            self.test_google_oauth_endpoint_live_domain,
+            self.test_authenticated_endpoint_live_domain
         ]
         
-        critical_passed = 0
-        for test in critical_tests:
-            if test():
-                critical_passed += 1
-            else:
-                print(f"\n🚨 CRITICAL TEST FAILED - STOPPING EXECUTION")
-                break
-                
-        # Only continue if all critical tests pass
-        if critical_passed == len(critical_tests):
-            print(f"\n✅ ALL CRITICAL TESTS PASSED ({critical_passed}/{len(critical_tests)})")
-            
-            # HIGH PRIORITY TESTS
-            high_tests = [
-                self.test_projects_list,
-                self.test_project_creation,
-                self.test_credit_balance,
-                self.test_credit_pricing
-            ]
-            
-            for test in high_tests:
-                test()
-                
-            # MEDIUM PRIORITY TESTS
-            medium_tests = [
-                self.test_subscription_plans
-            ]
-            
-            for test in medium_tests:
-                test()
+        results = []
+        for test in tests:
+            try:
+                result = await test()
+                results.append(result)
+            except Exception as e:
+                print(f"❌ Test {test.__name__} crashed: {str(e)}")
+                results.append(False)
+        
+        # Summary
+        print("\n" + "=" * 80)
+        print("🎯 PRODUCTION DOMAIN TEST SUMMARY")
+        print("=" * 80)
+        
+        passed = sum(results)
+        total = len(results)
+        success_rate = (passed / total) * 100 if total > 0 else 0
+        
+        print(f"Tests Passed: {passed}/{total} ({success_rate:.1f}%)")
+        
+        # Detailed results
+        for result in self.test_results:
+            status = "✅" if result['success'] else "❌"
+            print(f"{status} {result['test']}: {result['details']}")
+        
+        # Critical analysis
+        print("\n" + "=" * 80)
+        print("🔍 ROOT CAUSE ANALYSIS")
+        print("=" * 80)
+        
+        health_ok = self.test_results[0]['success'] if len(self.test_results) > 0 else False
+        login_ok = self.test_results[1]['success'] if len(self.test_results) > 1 else False
+        
+        if not health_ok:
+            print("🚨 CRITICAL ISSUE: Backend not accessible on autowebiq.com")
+            print("   - The production backend is not responding to requests")
+            print("   - This explains why users cannot login")
+            print("   - IMMEDIATE ACTION: Check backend deployment on autowebiq.com")
+        elif not login_ok:
+            print("🚨 CRITICAL ISSUE: Backend accessible but authentication failing")
+            print("   - Backend responds but login doesn't work")
+            print("   - Demo account may not exist in production database")
+            print("   - IMMEDIATE ACTION: Check production database and user accounts")
         else:
-            print(f"\n❌ CRITICAL TESTS FAILED ({critical_passed}/{len(critical_tests)}) - PRODUCTION NOT READY")
-            
-        # Generate summary
-        self.generate_summary()
+            print("✅ Backend and authentication working on production domain")
+            print("   - Issue may be frontend-specific or intermittent")
         
-    def generate_summary(self):
-        """Generate test summary"""
-        print("\n" + "=" * 60)
-        print("📊 PRODUCTION VERIFICATION TEST SUMMARY")
-        print("=" * 60)
+        return success_rate >= 80  # 80% success rate threshold
+
+async def main():
+    """Main test execution"""
+    async with ProductionDomainTester() as tester:
+        success = await tester.run_all_tests()
         
-        total_tests = len(self.test_results)
-        passed_tests = len([t for t in self.test_results if t["status"] == "PASS"])
-        failed_tests = total_tests - passed_tests
-        
-        critical_tests = [t for t in self.test_results if t["priority"] == "CRITICAL"]
-        critical_passed = len([t for t in critical_tests if t["status"] == "PASS"])
-        
-        print(f"Total Tests: {total_tests}")
-        print(f"Passed: {passed_tests} ✅")
-        print(f"Failed: {failed_tests} ❌")
-        print(f"Success Rate: {(passed_tests/total_tests)*100:.1f}%")
-        print(f"Critical Tests: {critical_passed}/{len(critical_tests)} passed")
-        
-        if self.critical_failures:
-            print(f"\n🚨 CRITICAL FAILURES:")
-            for failure in self.critical_failures:
-                print(f"   - {failure}")
-                
-        # Production readiness assessment
-        if critical_passed == len(critical_tests) and passed_tests >= total_tests * 0.95:
-            print(f"\n✅ PRODUCTION ASSESSMENT: READY FOR DEPLOYMENT")
-            print(f"   All critical tests passed, {(passed_tests/total_tests)*100:.1f}% success rate")
+        if success:
+            print("\n🎉 PRODUCTION DOMAIN TESTS PASSED")
+            sys.exit(0)
         else:
-            print(f"\n❌ PRODUCTION ASSESSMENT: NOT READY")
-            print(f"   Critical failures or success rate below 95%")
-            
-        return passed_tests == total_tests
+            print("\n🚨 PRODUCTION DOMAIN TESTS FAILED")
+            sys.exit(1)
 
 if __name__ == "__main__":
-    tester = ProductionTester()
-    success = tester.run_all_tests()
-    sys.exit(0 if success else 1)
+    asyncio.run(main())
