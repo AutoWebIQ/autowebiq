@@ -1,30 +1,21 @@
 #!/usr/bin/env python3
 """
-CRITICAL PRODUCTION VERIFICATION TESTING - autowebiq.com
-Test Configuration:
-- Backend URL: http://localhost:8001
-- Host Header: api.autowebiq.com (REQUIRED)
-- Demo Account: demo@test.com / Demo123456
-- MongoDB: Local (mongodb://localhost:27017)
+AutoWebIQ Production Domain Testing - LIVE DOMAIN TESTING
+Testing the ACTUAL production site at autowebiq.com (not localhost)
+
+CRITICAL: User reports unable to login on autowebiq.com with manual signup/signin OR Google login
+Focus: Test the LIVE production domain to identify backend accessibility and auth issues
 """
 
-import requests
+import asyncio
+import aiohttp
 import json
 import sys
 from datetime import datetime
+import uuid
 
-# Test Configuration
-BASE_URL = "http://localhost:8001"
-HOST_HEADER = "api.autowebiq.com"
-DEMO_EMAIL = "demo@test.com"
-DEMO_PASSWORD = "Demo123456"
-
-# Headers with required Host header
-HEADERS = {
-    "Host": HOST_HEADER,
-    "Content-Type": "application/json",
-    "Accept": "application/json"
-}
+# LIVE PRODUCTION DOMAIN - NOT LOCALHOST
+BASE_URL = "https://autowebiq.com/api"
 
 class ProductionTester:
     def __init__(self):
