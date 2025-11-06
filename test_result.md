@@ -706,11 +706,12 @@ metadata:
 
 test_plan:
   current_focus:
-    - "PRODUCTION LOGIN FIX - Frontend Rebuild with Correct Backend URL"
-    - "Complete Authentication Flow Testing"
+    - "CRITICAL: Production Domain Login Issues - autowebiq.com"
+    - "Google OAuth Endpoint Implementation"
+    - "Demo Account Creation in Production Database"
   stuck_tasks: []
-  test_all: true
-  test_priority: "production_verification"
+  test_all: false
+  test_priority: "critical_production_fixes"
   testing_notes: |
     🎉 CRITICAL PRODUCTION VERIFICATION COMPLETED - 100% SUCCESS:
     
