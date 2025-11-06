@@ -777,6 +777,18 @@ agent_communication:
           agent: "testing"
           comment: "🎉 NEW USER FEATURES COMPREHENSIVE TESTING COMPLETED - 100% SUCCESS: Executed comprehensive testing of all NEW Emergent-like features as requested in review. VERIFIED ALL NEW ENDPOINTS: (1) POST /api/projects/{project_id}/fork - Successfully creates project copy with new ID and name 'E-commerce Store (Copy)', verified in projects list ✅. (2) POST /api/projects/{project_id}/share - Generates public share link and token correctly, returns proper share_url ✅. (3) GET /api/public/{share_token} - Public access working WITHOUT authentication, returns HTML content (1089 chars) with correct content-type ✅. (4) GET /api/projects/{project_id}/download - Downloads ZIP file (858 bytes) with correct application/zip content-type and filename in Content-Disposition header ✅. (5) GET /api/github/user-info - Proper error handling when GitHub not connected, returns 400 with 'GitHub not connected' message as expected ✅. SUCCESS CRITERIA VERIFICATION: All endpoints return correct status codes (200 for working features, 400 for expected GitHub error), fork creates new project successfully, share generates valid public URL accessible without auth, download returns proper ZIP file, no 500 errors encountered. Demo account authentication working perfectly with 1067 credits available. All 7 test cases passed (100% success rate). NEW user features fully operational and ready for production use."
 
+  - task: "CRITICAL: Production Domain Login Issues - autowebiq.com"
+    implemented: true
+    working: false
+    file: "backend/server.py"
+    stuck_count: 0
+    priority: "critical"
+    needs_retesting: false
+    status_history:
+        - working: false
+          agent: "testing"
+          comment: "🚨 CRITICAL PRODUCTION DOMAIN TESTING COMPLETED - ISSUES IDENTIFIED: Executed comprehensive testing of LIVE production site at https://autowebiq.com/api as requested in review. USER REPORT CONFIRMED: Unable to login on autowebiq.com with manual signup/signin OR Google login. DETAILED FINDINGS: ✅ Backend Infrastructure Working - Health check returns 200 with MongoDB connected, backend accessible from internet, CORS properly configured for autowebiq.com. ✅ Authentication System Working - New user registration works perfectly (creates users with 20 credits), complete auth flow functional (register → login → JWT → protected endpoints). ❌ CRITICAL ISSUES FOUND: (1) Demo Account Missing - demo@test.com login fails with 'Invalid credentials', demo account does NOT exist in production database, (2) Google OAuth Incomplete - /auth/google endpoint returns 404 Not Found, only /auth/google/session (POST) exists for session exchange but missing initial OAuth redirect endpoint. ROOT CAUSE: Backend infrastructure is solid, but specific authentication endpoints are incomplete. IMMEDIATE FIXES NEEDED: (1) Create demo@test.com account in production MongoDB with Demo123456 password, (2) Add missing GET /auth/google endpoint for Google OAuth redirect flow, (3) Verify Google OAuth client configuration. SUCCESS RATE: 3/6 tests passed (50%) - core backend working, auth endpoints need completion."
+
 frontend:
   - task: "NEW Feature Buttons UI - Download, Fork, Share, GitHub, Open, Refresh"
     implemented: true
