@@ -442,21 +442,6 @@ async def get_user_stats(
 
 # ==================== Deployment Endpoints ====================
 # Vercel deployment removed - using manual deployment only
-        
-        return {
-            'deployment_id': deployment_id,
-            'state': status['state'],
-            'ready': status['ready'],
-            'url': status.get('url'),
-            'error_message': status.get('error_message')
-        }
-        
-    except VercelDeploymentError as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Failed to check deployment status: {str(e)}"
-        )
-
 
 
 # ==================== Validation Endpoints ====================
