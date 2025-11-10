@@ -356,7 +356,7 @@ async def login(user_data: UserLogin):
     """Login user - MongoDB"""
     # Find user
     user = await db.users.find_one({"email": user_data.email})
-    if not user or not verify_password(user_data.password, user.get('password_hash', '')):
+    if not user or not verify_password(user_data.password, user.get('password_hash') or user.get('password', '')):
         raise HTTPException(status_code=401, detail="Invalid credentials")
     
     # Remove MongoDB _id to prevent serialization issues
