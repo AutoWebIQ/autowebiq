@@ -1272,19 +1272,6 @@ async def create_message(project_id: str, request: Request, user_id: str = Depen
         return {"message": error_message}
 
 # Vercel deployment removed - using manual deployment instead
-            
-    except Exception as e:
-        logger.error(f"Error generating website: {str(e)}")
-        error_message = {
-            "id": str(uuid.uuid4()),
-            "project_id": project_id,
-            "role": "assistant",
-            "content": f"❌ Error: {str(e)}",
-            "created_at": datetime.now(timezone.utc).isoformat()
-        }
-        await db.messages.insert_one(error_message)
-        raise HTTPException(status_code=500, detail=str(e))
-
 
 @api_router.delete("/projects/{project_id}")
 async def delete_project(project_id: str, user_id: str = Depends(get_current_user)):
