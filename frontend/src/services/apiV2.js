@@ -145,8 +145,6 @@ export default {
   startAsyncBuild,
   getBuildStatus,
   getCreditHistory,
-  deployToVercel,
-  checkDeploymentStatus,
   validateWebsite,
   getValidationChecks,
   connectWebSocket
