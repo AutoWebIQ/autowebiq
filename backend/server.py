@@ -1271,75 +1271,7 @@ async def create_message(project_id: str, request: Request, user_id: str = Depen
         error_message.pop('_id', None)
         return {"message": error_message}
 
-@api_router.post("/projects/{project_id}/deploy-preview")
-async def deploy_preview(project_id: str, user_id: str = Depends(get_current_user)):
-    """Deploy generated website to Vercel for live preview"""
-    try:
-        # Get project
-        project = await db.projects.find_one({"id": project_id, "user_id": user_id})
-        if not project:
-            raise HTTPException(status_code=404, detail="Project not found")
-        
-        # Check if website is generated
-        if not project.get('generated_code'):
-            raise HTTPException(status_code=400, detail="No website generated yet. Please generate a website first.")
-        
-        # Import Vercel service
-        from vercel_service import VercelService
-        
-        vercel = VercelService()
-        
-        # Get all pages or just index
-        all_pages = project.get('all_pages', {})
-        
-        if all_pages:
-            # Multi-page deployment
-            logger.info(f"Deploying multi-page website: {len(all_pages)} pages")
-            
-            result = vercel.deploy_multipage_website(
-                project_name=f"autowebiq-{project_id[:8]}",
-                pages=all_pages,
-                environment="preview"
-            )
-        else:
-            # Single page deployment
-            result = vercel.deploy_website(
-                project_name=f"autowebiq-{project_id[:8]}",
-                html_content=project['generated_code'],
-                environment="preview"
-            )
-        
-        # Save preview URL to project
-        await db.projects.update_one(
-            {"id": project_id},
-            {"$set": {
-                "preview_url": result['preview_url'],
-                "deployment_id": result['deployment_id'],
-                "deployed_at": datetime.now(timezone.utc).isoformat()
-            }}
-        )
-        
-        # Create success message
-        success_message = {
-            "id": str(uuid.uuid4()),
-            "project_id": project_id,
-            "role": "assistant",
-            "content": f"🚀 **Website deployed successfully!**\n\n**Live Preview:** {result['preview_url']}\n\nYour website is now live and accessible to anyone with the link. Share it with your clients or test it out!",
-            "created_at": datetime.now(timezone.utc).isoformat()
-        }
-        await db.messages.insert_one(success_message)
-        
-        return {
-            "success": True,
-            "preview_url": result['preview_url'],
-            "deployment_id": result['deployment_id'],
-            "pages_count": result.get('pages_count', 1),
-            "message": success_message
-        }
-        
-    except Exception as e:
-        logger.error(f"Deployment error: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Deployment failed: {str(e)}")
+# Vercel deployment removed - using manual deployment instead
             
     except Exception as e:
         logger.error(f"Error generating website: {str(e)}")
