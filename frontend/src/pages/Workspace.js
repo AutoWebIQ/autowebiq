@@ -68,9 +68,13 @@ const Workspace = () => {
         if (data.generated_code) {
           setGeneratedCode(data.generated_code);
         }
+      } else {
+        console.error('Failed to fetch project');
       }
     } catch (error) {
       console.error('Error fetching project:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
