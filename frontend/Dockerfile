@@ -4,6 +4,16 @@ FROM node:18-alpine AS builder
 
 WORKDIR /app
 
+# Build arguments for environment variables
+ARG REACT_APP_BACKEND_URL=https://autowebiq.com
+ARG REACT_APP_API_URL=https://autowebiq.com/api
+ARG REACT_APP_ENVIRONMENT=production
+
+# Set environment variables
+ENV REACT_APP_BACKEND_URL=$REACT_APP_BACKEND_URL
+ENV REACT_APP_API_URL=$REACT_APP_API_URL
+ENV REACT_APP_ENVIRONMENT=$REACT_APP_ENVIRONMENT
+
 # Copy package files
 COPY package.json yarn.lock ./
 
