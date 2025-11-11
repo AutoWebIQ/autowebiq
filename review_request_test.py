@@ -5,7 +5,7 @@ from datetime import datetime
 
 class TemplateSystemReviewTester:
     def __init__(self):
-        self.base_url = "https://multiagent-web.preview.emergentagent.com"
+        self.base_url = "https://aiweb-builder-2.preview.emergentagent.com"
         self.api_url = f"{self.base_url}/api"
         self.jwt_token = None
         self.user_id = None
@@ -397,7 +397,7 @@ class TemplateSystemReviewTester:
 
 class AutoWebIQReviewTester:
     def __init__(self):
-        self.base_url = "https://multiagent-web.preview.emergentagent.com"
+        self.base_url = "https://aiweb-builder-2.preview.emergentagent.com"
         self.api_url = f"{self.base_url}/api"
         self.jwt_token = None
         self.user_id = None

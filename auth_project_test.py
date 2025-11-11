@@ -2,7 +2,7 @@
 """
 AutoWebIQ Backend Review Request Testing
 Testing all authentication and project management endpoints as specified in the review request.
-Backend URL: https://multiagent-web.preview.emergentagent.com/api
+Backend URL: https://aiweb-builder-2.preview.emergentagent.com/api
 """
 
 import requests
@@ -15,7 +15,7 @@ from datetime import datetime, timezone
 class AutoWebIQReviewTester:
     def __init__(self):
         # Backend URL as specified in review request
-        self.base_url = "https://multiagent-web.preview.emergentagent.com"
+        self.base_url = "https://aiweb-builder-2.preview.emergentagent.com"
         self.api_url = f"{self.base_url}/api"
         self.access_token = None
         self.user_data = None

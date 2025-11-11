@@ -10,7 +10,7 @@ Test Approach:
 4. Test subscription status
 5. Test deployment listing
 
-Backend URL: https://multiagent-web.preview.emergentagent.com/api
+Backend URL: https://aiweb-builder-2.preview.emergentagent.com/api
 Demo Account: demo@test.com / Demo123456
 """
 
@@ -20,7 +20,7 @@ import sys
 from datetime import datetime
 
 # Configuration
-BASE_URL = "https://multiagent-web.preview.emergentagent.com/api"
+BASE_URL = "https://aiweb-builder-2.preview.emergentagent.com/api"
 DEMO_EMAIL = "demo@test.com"
 DEMO_PASSWORD = "Demo123456"
 

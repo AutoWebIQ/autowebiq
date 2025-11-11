@@ -11,7 +11,7 @@ import os
 class AutoWebIQMultiPageTester:
     def __init__(self):
         # Get backend URL from frontend .env
-        self.base_url = "https://multiagent-web.preview.emergentagent.com"
+        self.base_url = "https://aiweb-builder-2.preview.emergentagent.com"
         self.api_url = f"{self.base_url}/api"
         self.ws_url = self.base_url.replace("https://", "wss://").replace("http://", "ws://")
         self.jwt_token = None

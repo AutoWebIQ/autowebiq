@@ -103,7 +103,7 @@ mongosh --eval "db.adminCommand('ping')"
 
 **API Health Check:**
 ```bash
-curl -s "https://multiagent-web.preview.emergentagent.com/api/health" | python -m json.tool
+curl -s "https://aiweb-builder-2.preview.emergentagent.com/api/health" | python -m json.tool
 ```
 
 Expected output:

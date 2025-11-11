@@ -25,8 +25,8 @@ This document explains the key differences between the preview environment (Emer
 
 **Preview:**
 ```
-Backend: https://multiagent-web.preview.emergentagent.com/api
-Frontend: https://multiagent-web.preview.emergentagent.com
+Backend: https://aiweb-builder-2.preview.emergentagent.com/api
+Frontend: https://aiweb-builder-2.preview.emergentagent.com
 ```
 
 **Production:**
