@@ -143,6 +143,31 @@ const Workspace = () => {
 
   return (
     <div className="workspace">
+      {loading ? (
+        <div style={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          height: '100vh',
+          background: '#0a0a0a',
+          color: 'white',
+          fontSize: '18px'
+        }}>
+          <div style={{textAlign: 'center'}}>
+            <div className="spinner" style={{
+              width: '50px',
+              height: '50px',
+              border: '4px solid rgba(255,255,255,0.1)',
+              borderTop: '4px solid #667eea',
+              borderRadius: '50%',
+              animation: 'spin 1s linear infinite',
+              margin: '0 auto 20px'
+            }}></div>
+            Loading workspace...
+          </div>
+        </div>
+      ) : (
+        <>
       {/* Header */}
       <header className="workspace-header">
         <div className="header-left">
@@ -150,8 +175,8 @@ const Workspace = () => {
             ← Back
           </button>
           <div className="project-info">
-            <h1>{project?.name}</h1>
-            <span className="project-desc">{project?.description}</span>
+            <h1>{project?.name || 'Untitled Project'}</h1>
+            <span className="project-desc">{project?.description || 'No description'}</span>
           </div>
         </div>
         <div className="header-right">
@@ -190,7 +215,8 @@ const Workspace = () => {
             />
           </div>
           
-          <div className="chat-section">\n            <h3>AI Workspace</h3>
+          <div className="chat-section">
+            <h3>AI Workspace</h3>
             
             {/* Input Area */}
             <div className="chat-input-area">
@@ -236,6 +262,8 @@ const Workspace = () => {
           </div>
         )}
       </div>
+        </>
+      )}
     </div>
   );
 };
