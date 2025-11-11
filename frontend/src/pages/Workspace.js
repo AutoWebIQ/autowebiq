@@ -4,13 +4,13 @@ import AgentStatusPanel from '../components/AgentStatusPanel';
 import './Workspace.css';
 
 const Workspace = ({ user, onLogout }) => {
-  const { projectId } = useParams();
+  const { id: projectId } = useParams();
   const navigate = useNavigate();
   const wsRef = useRef(null);
   
   const [project, setProject] = useState(null);
   const [message, setMessage] = useState('');
-  const [credits, setCredits] = useState(user.credits);
+  const [credits, setCredits] = useState(user?.credits || 0);
   const [agentStatus, setAgentStatus] = useState([]);
   const [generating, setGenerating] = useState(false);
   const [generatedCode, setGeneratedCode] = useState('');
