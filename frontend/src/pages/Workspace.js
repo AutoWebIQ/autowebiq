@@ -3,20 +3,23 @@ import { useParams, useNavigate } from 'react-router-dom';
 import AgentStatusPanel from '../components/AgentStatusPanel';
 import './Workspace.css';
 
-const Workspace = ({ user, onLogout }) => {
+const Workspace = () => {
   const { id: projectId } = useParams();
   const navigate = useNavigate();
   const wsRef = useRef(null);
   
   const [project, setProject] = useState(null);
+  const [user, setUser] = useState(null);
   const [message, setMessage] = useState('');
-  const [credits, setCredits] = useState(user?.credits || 0);
+  const [credits, setCredits] = useState(0);
   const [agentStatus, setAgentStatus] = useState([]);
   const [generating, setGenerating] = useState(false);
   const [generatedCode, setGeneratedCode] = useState('');
   const [showPreview, setShowPreview] = useState(true);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    fetchUser();
     fetchProject();
     connectWebSocket();
     
@@ -26,6 +29,27 @@ const Workspace = ({ user, onLogout }) => {
       }
     };
   }, [projectId]);
+
+  const fetchUser = async () => {
+    try {
+      const response = await fetch(
+        `${process.env.REACT_APP_BACKEND_URL}/api/auth/me`,
+        {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          }
+        }
+      );
+      
+      if (response.ok) {
+        const data = await response.json();
+        setUser(data);
+        setCredits(data.credits || 0);
+      }
+    } catch (error) {
+      console.error('Error fetching user:', error);
+    }
+  };
 
   const fetchProject = async () => {
     try {
